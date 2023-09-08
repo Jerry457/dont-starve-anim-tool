@@ -1,0 +1,95 @@
+*,
+*::after, *::before{
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    margin: 0;
+    display: grid;
+    grid-template-rows: max-content max-content auto;
+}
+
+.navigation {
+    margin: auto;
+    overflow: auto;
+}
+
+.navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    white-space: nowrap;
+}
+
+.navigation ul li {
+    margin-right: 20px;
+}
+
+.upper_lower {
+    display: grid;
+    grid-template-rows: 6fr 4fr;
+    overflow: auto;
+    height: 100%;
+}
+
+.upper, .lower {
+    height: 100%;
+    overflow: auto;
+}
+
+.columns_container, .row_container {
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.row_container {
+    flex-direction: column;
+}
+
+.columns_container > div, .row_container > div {
+    overflow: auto;
+}
+
+.title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    font-size: 0.8vw;
+    position: sticky;
+    top: 0;
+    background-color: #f2f2f2;
+    background-clip: padding-box;
+    opacity: 1;
+}
+
+.menu_list {
+    flex-grow: 1;
+    overflow: auto
+}
+
+.menu {
+    overflow: auto;
+    display: grid;
+    grid-template-columns: 1fr max-content;
+    border: rgb(181, 181, 181) solid 1px;
+
+    height: 21px;
+}
+
+.menu .inputtext {
+    overflow: auto;
+    text-align: center;
+    font-size: 0.8vw;
+    background-color: transparent;
+    border: none;
+}
+
+#Anims, #Builds {
+    height: 100%;
+    overflow: auto;
+    /* border: 1px solid rgb(0, 0, 0) */
+}

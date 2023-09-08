@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Don't Starve Anim Tool</title>
+        <link rel="stylesheet" href="src/style.css">
+        <script type="module" src="src/index.js"></script>
+    </head>
+    <body>
+        <div class="navigation">
+            <ul>
+                <li><a href="index.html">AnimTool</a></li>
+            </ul>
+        </div>
+        <div>
+            <input type="file" accept=".zip, .json, .bin, .png, .tex">
+        </div>
+        <div class="upper_lower">
+            <div class="columns_container upper" >
+                <div style="flex: 3" class="columns_container" id="Builds">
+                    <div style="flex: 3">
+                        <div class="title">Build</div>
+                        <div class="menu_list" id="Build"></div>
+                    </div>
+                    <div style="flex: 3">
+                        <div class="title">Symbol</div>
+                        <div class="menu_list" id="Symbol"></div>
+                    </div>
+                    <div style="flex: 9">
+                        <div class="title">Frme</div>
+                        <div class="columns_container">
+                            <div style="flex: 1" class="title">Num</div>
+                            <div style="flex: 1" class="title">Druation</div>
+                            <div style="flex: 1" class="title">X</div>
+                            <div style="flex: 1" class="title">Y</div>
+                            <div style="flex: 1" class="title">W</div>
+                            <div style="flex: 1" class="title">H</div>
+                        </div>
+                        <div class="columns_container menu_list">
+                            <div style="flex: 1" id="BuildFrameNum"></div>
+                            <div style="flex: 1" id="BuildFrameDruation"></div>
+                            <div style="flex: 1" id="BuildFrameX"></div>
+                            <div style="flex: 1" id="BuildFrameY"></div>
+                            <div style="flex: 1" id="BuildFrameW"></div>
+                            <div style="flex: 1" id="BuildFrameH"></div>
+                        </div>
+                    </div>
+                    <div style="flex: 2;">
+                        <div class="title">Scale</div>
+                        <div class="menu">
+                            <input class="inputtext" type="text" id="BuildScale">
+                        </div>
+                        <div class="title">Atlas</div>
+                        <div class="menu_list" id="Atlas">
+                        </div>
+                    </div>
+                </div>
+                <div style="flex: 4" id="AnimationPlayer"></div>
+            </div>
+            <div class="columns_container lower" id="Anims">
+                <div style="flex: 2">
+                    <div class="title">Bank</div>
+                    <div class="menu_list" id="Bank"></div>
+                </div>
+                <div style="flex: 3">
+                    <div class="title">Animation</div>
+                    <div class="columns_container">
+                        <div style="flex: 5" class="title">Name</div>
+                        <div style="flex: 1" class="title">Rate</div>
+                    </div>
+                    <div>
+                        <div class="columns_container menu_list">
+                            <div style="flex: 5" id="AnimationName"></div>
+                            <div style="flex: 1" id="AnimFrameRate"></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="flex: 5">
+                    <div class="title">Frme</div>
+                    <div class="columns_container">
+                        <div style="flex: 1" class="title">idx</div>
+                        <div style="flex: 2" class="title">X</div>
+                        <div style="flex: 2" class="title">Y</div>
+                        <div style="flex: 2" class="title">W</div>
+                        <div style="flex: 2" class="title">H</div>
+                    </div>
+                    <div class="columns_container menu_list">
+                        <div style="flex: 1" id="AnimFrameIDX"></div>
+                        <div style="flex: 2" id="AnimFrameX"></div>
+                        <div style="flex: 2" id="AnimFrameY"></div>
+                        <div style="flex: 2" id="AnimFrameW"></div>
+                        <div style="flex: 2" id="AnimFrameH"></div>
+                    </div>
+                </div>
+                <div style="flex: 11">
+                    <div class="title">Element</div>
+                    <div class="columns_container">
+                        <div style="flex: 1" class="title">z_index</div>
+                        <div style="flex: 3" class="title">Symbol</div>
+                        <div style="flex: 3" class="title">Layer</div>
+                        <div style="flex: 1" class="title">Frame</div>
+                        <div style="flex: 1" class="title">m_a</div>
+                        <div style="flex: 1" class="title">m_b</div>
+                        <div style="flex: 1" class="title">m_c</div>
+                        <div style="flex: 1" class="title">m_d</div>
+                        <div style="flex: 1" class="title">m_tx</div>
+                        <div style="flex: 1" class="title">m_ty</div>
+                    </div>
+                    <div class="columns_container menu_list">
+                        <div style="flex: 1" id="ElemenZidx"></div>
+                        <div style="flex: 3" id="ElemenSymbol"></div>
+                        <div style="flex: 3" id="LayerName"></div>
+                        <div style="flex: 1" id="ElemenFrame"></div>
+                        <div style="flex: 1" id="ElemenMa"></div>
+                        <div style="flex: 1" id="ElemenMb"></div>
+                        <div style="flex: 1" id="ElemenMc"></div>
+                        <div style="flex: 1" id="ElemenMd"></div>
+                        <div style="flex: 1" id="ElemenMtx"></div>
+                        <div style="flex: 1" id="ElemenMty"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
