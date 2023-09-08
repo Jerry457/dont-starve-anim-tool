@@ -2,7 +2,6 @@
   "name": "dont-starve-anim-tool",
   "description": "",
   "version": "1.0.0",
-  "main": "webpack.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "vite build"
@@ -19,5 +18,6 @@
   },
   "devDependencies": {
     "vite": "^4.4.9"
-  }
+  },
+  "main": "index.js"
 }
