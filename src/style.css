@@ -1,18 +1,19 @@
 *,
-*::after, *::before{
-    box-sizing: border-box;
+*::after,
+*::before {
+    box-sizing: border-box
 }
 
 body {
     height: 100vh;
     margin: 0;
     display: grid;
-    grid-template-rows: max-content max-content auto;
+    grid-template-rows: max-content max-content auto
 }
 
 .navigation {
     margin: auto;
-    overflow: auto;
+    overflow: auto
 }
 
 .navigation ul {
@@ -20,37 +21,27 @@ body {
     padding: 0;
     margin: 0;
     display: flex;
-    white-space: nowrap;
+    white-space: nowrap
 }
 
 .navigation ul li {
-    margin-right: 20px;
+    margin-right: 20px
 }
 
 .upper_lower {
     display: grid;
     grid-template-rows: 6fr 4fr;
     overflow: auto;
-    height: 100%;
 }
 
-.upper, .lower {
-    height: 100%;
-    overflow: auto;
+.upper,
+.lower {
+    overflow: auto
 }
 
-.columns_container, .row_container {
-    display: flex;
-    margin: 0;
-    padding: 0;
-}
-
-.row_container {
-    flex-direction: column;
-}
-
-.columns_container > div, .row_container > div {
-    overflow: auto;
+.upper {
+    display: grid;
+    grid-template-columns: 3fr 4fr
 }
 
 .title {
@@ -59,25 +50,22 @@ body {
     align-items: center;
     overflow: auto;
     font-size: 0.8vw;
+    font-family: "Mona Sans","Mona Sans Fallback", "Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+
+    opacity: 1;
     position: sticky;
     top: 0;
-    background-color: #f2f2f2;
-    background-clip: padding-box;
-    opacity: 1;
-}
 
-.menu_list {
-    flex-grow: 1;
-    overflow: auto
+    background-color: rgb(234, 234, 234)
 }
 
 .menu {
     overflow: auto;
     display: grid;
     grid-template-columns: 1fr max-content;
-    border: rgb(181, 181, 181) solid 1px;
 
     height: 21px;
+    border: rgb(208, 215, 222) solid 1px;
 }
 
 .menu .inputtext {
@@ -85,11 +73,59 @@ body {
     text-align: center;
     font-size: 0.8vw;
     background-color: transparent;
-    border: none;
+    border: none
 }
 
-#Anims, #Builds {
+.Area {
+    background-color: rgb(243,246,252);
+
+    border-radius: 10px;
+    border: 2px solid rgb(193, 193, 193);
+    margin: 5px;
+}
+
+#Builds {
+    display: grid;
+    grid-template-columns: 3fr 3fr 9fr 2fr;
+    overflow: auto;
+}
+
+#Builds > div {
     height: 100%;
     overflow: auto;
-    /* border: 1px solid rgb(0, 0, 0) */
+}
+
+.BuildFrame {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+}
+
+#Anims {
+    display: grid;
+    grid-template-columns: 2fr 3fr 5fr 11fr;
+    overflow: auto;
+}
+
+#Anims > div {
+    height: 100%;
+    overflow: auto;
+}
+
+.Animation {
+    display: grid;
+    grid-template-columns: 5fr 1fr
+}
+
+.AnimFrame {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr 2fr 2fr;
+}
+
+.AnimElement {
+    display: grid;
+    grid-template-columns: 1fr 3fr 3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr
+}
+
+.AnimationPlayer {
+    height: 100%;
 }

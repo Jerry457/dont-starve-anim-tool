@@ -59,6 +59,8 @@ const build_frame_w = document.getElementById("BuildFrameW")
 const build_frame_h = document.getElementById("BuildFrameH")
 symbol_list.child_lists = [build_frame_num, build_frame_druation, build_frame_x, build_frame_y, build_frame_w, build_frame_h]
 
+const AnimationPlayer = document.getElementById("AnimationPlayer")
+
 const build_scale_input = document.getElementById("BuildScale")
 build_scale_input.addEventListener("change", (event) => {
     if (build_list.data) {
@@ -78,7 +80,7 @@ function MakeTextInput(data, key) {
             const number = Number(input_element.value);
             if (isNaN(number)) {
                 input_element.value = data[key]
-                alert("Type error")
+                alert("invalid number")
             }
             else {
                 data[key] = number

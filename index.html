@@ -17,107 +17,106 @@
             <input type="file" accept=".zip, .json, .bin, .png, .tex">
         </div>
         <div class="upper_lower">
-            <div class="columns_container upper" >
-                <div style="flex: 3" class="columns_container" id="Builds">
-                    <div style="flex: 3">
+            <div class="upper">
+                <div id="Builds" class="Area">
+                    <div>
                         <div class="title">Build</div>
                         <div class="menu_list" id="Build"></div>
                     </div>
-                    <div style="flex: 3">
+                    <div>
                         <div class="title">Symbol</div>
                         <div class="menu_list" id="Symbol"></div>
                     </div>
-                    <div style="flex: 9">
+                    <div>
                         <div class="title">Frame</div>
-                        <div class="columns_container">
-                            <div style="flex: 1" class="title">Num</div>
-                            <div style="flex: 1" class="title">Druation</div>
-                            <div style="flex: 1" class="title">X</div>
-                            <div style="flex: 1" class="title">Y</div>
-                            <div style="flex: 1" class="title">W</div>
-                            <div style="flex: 1" class="title">H</div>
+                        <div class="title BuildFrame">
+                            <div class="title">Num</div>
+                            <div class="title">Druation</div>
+                            <div class="title">X</div>
+                            <div class="title">Y</div>
+                            <div class="title">W</div>
+                            <div class="title">H</div>
                         </div>
-                        <div class="columns_container menu_list">
-                            <div style="flex: 1" id="BuildFrameNum"></div>
-                            <div style="flex: 1" id="BuildFrameDruation"></div>
-                            <div style="flex: 1" id="BuildFrameX"></div>
-                            <div style="flex: 1" id="BuildFrameY"></div>
-                            <div style="flex: 1" id="BuildFrameW"></div>
-                            <div style="flex: 1" id="BuildFrameH"></div>
+                        <div class="menu_list BuildFrame">
+                            <div id="BuildFrameNum"></div>
+                            <div id="BuildFrameDruation"></div>
+                            <div id="BuildFrameX"></div>
+                            <div id="BuildFrameY"></div>
+                            <div id="BuildFrameW"></div>
+                            <div id="BuildFrameH"></div>
                         </div>
                     </div>
-                    <div style="flex: 2;">
+                    <div>
                         <div class="title">Scale</div>
                         <div class="menu">
                             <input class="inputtext" type="text" id="BuildScale">
                         </div>
                         <div class="title">Atlas</div>
-                        <div class="menu_list" id="Atlas">
-                        </div>
+                        <div class="menu_list" id="Atlas"></div>
                     </div>
                 </div>
-                <div style="flex: 4" id="AnimationPlayer"></div>
+                <div id="AnimationPlayer" class="Area"></div>
             </div>
-            <div class="columns_container lower" id="Anims">
-                <div style="flex: 2">
+            <div class="lower Area" id="Anims">
+                <div>
                     <div class="title">Bank</div>
                     <div class="menu_list" id="Bank"></div>
                 </div>
-                <div style="flex: 3">
+                <div>
                     <div class="title">Animation</div>
-                    <div class="columns_container">
-                        <div style="flex: 5" class="title">Name</div>
-                        <div style="flex: 1" class="title">Rate</div>
+                    <div class="title Animation">
+                        <div class="title">Name</div>
+                        <div class="title">Rate</div>
                     </div>
                     <div>
-                        <div class="columns_container menu_list">
-                            <div style="flex: 5" id="AnimationName"></div>
-                            <div style="flex: 1" id="AnimFrameRate"></div>
+                        <div class="menu_list Animation">
+                            <div id="AnimationName"></div>
+                            <div id="AnimFrameRate"></div>
                         </div>
                     </div>
                 </div>
-                <div style="flex: 5">
+                <div>
                     <div class="title">Frame</div>
-                    <div class="columns_container">
-                        <div style="flex: 1" class="title">idx</div>
-                        <div style="flex: 2" class="title">X</div>
-                        <div style="flex: 2" class="title">Y</div>
-                        <div style="flex: 2" class="title">W</div>
-                        <div style="flex: 2" class="title">H</div>
+                    <div class="title AnimFrame">
+                        <div class="title">idx</div>
+                        <div class="title">X</div>
+                        <div class="title">Y</div>
+                        <div class="title">W</div>
+                        <div class="title">H</div>
                     </div>
-                    <div class="columns_container menu_list">
-                        <div style="flex: 1" id="AnimFrameIDX"></div>
-                        <div style="flex: 2" id="AnimFrameX"></div>
-                        <div style="flex: 2" id="AnimFrameY"></div>
-                        <div style="flex: 2" id="AnimFrameW"></div>
-                        <div style="flex: 2" id="AnimFrameH"></div>
+                    <div class="menu_list AnimFrame">
+                        <div id="AnimFrameIDX"></div>
+                        <div id="AnimFrameX"></div>
+                        <div id="AnimFrameY"></div>
+                        <div id="AnimFrameW"></div>
+                        <div id="AnimFrameH"></div>
                     </div>
                 </div>
-                <div style="flex: 11">
+                <div>
                     <div class="title">Element</div>
-                    <div class="columns_container">
-                        <div style="flex: 1" class="title">z_index</div>
-                        <div style="flex: 3" class="title">Symbol</div>
-                        <div style="flex: 3" class="title">Layer</div>
-                        <div style="flex: 1" class="title">Frame</div>
-                        <div style="flex: 1" class="title">m_a</div>
-                        <div style="flex: 1" class="title">m_b</div>
-                        <div style="flex: 1" class="title">m_c</div>
-                        <div style="flex: 1" class="title">m_d</div>
-                        <div style="flex: 1" class="title">m_tx</div>
-                        <div style="flex: 1" class="title">m_ty</div>
+                    <div class="title AnimElement">
+                        <div class="title">z_index</div>
+                        <div class="title">Symbol</div>
+                        <div class="title">Layer</div>
+                        <div class="title">Frame</div>
+                        <div class="title">m_a</div>
+                        <div class="title">m_b</div>
+                        <div class="title">m_c</div>
+                        <div class="title">m_d</div>
+                        <div class="title">m_tx</div>
+                        <div class="title">m_ty</div>
                     </div>
-                    <div class="columns_container menu_list">
-                        <div style="flex: 1" id="ElemenZidx"></div>
-                        <div style="flex: 3" id="ElemenSymbol"></div>
-                        <div style="flex: 3" id="LayerName"></div>
-                        <div style="flex: 1" id="ElemenFrame"></div>
-                        <div style="flex: 1" id="ElemenMa"></div>
-                        <div style="flex: 1" id="ElemenMb"></div>
-                        <div style="flex: 1" id="ElemenMc"></div>
-                        <div style="flex: 1" id="ElemenMd"></div>
-                        <div style="flex: 1" id="ElemenMtx"></div>
-                        <div style="flex: 1" id="ElemenMty"></div>
+                    <div class="menu_list AnimElement">
+                        <div id="ElemenZidx"></div>
+                        <div id="ElemenSymbol"></div>
+                        <div id="LayerName"></div>
+                        <div id="ElemenFrame"></div>
+                        <div id="ElemenMa"></div>
+                        <div id="ElemenMb"></div>
+                        <div id="ElemenMc"></div>
+                        <div id="ElemenMd"></div>
+                        <div id="ElemenMtx"></div>
+                        <div id="ElemenMty"></div>
                     </div>
                 </div>
             </div>

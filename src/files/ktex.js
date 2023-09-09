@@ -290,9 +290,6 @@ export class Ktex {
 
         const flipped_canvas = flipped(canvas)
 
-        const AnimationPlayer = document.getElementById("AnimationPlayer")
-        AnimationPlayer.appendChild(flipped_canvas)
-
         return flipped_canvas
     }
 
