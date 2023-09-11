@@ -1,0 +1,16 @@
+
+{
+    "configurations": [
+        {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:5173",
+            "pauseForSourceMap": false,
+            "preLaunchTask": "vite",
+            "resolveSourceMapLocations": [
+                "!**/node_modules/**"
+            ]
+        }
+    ]
+}

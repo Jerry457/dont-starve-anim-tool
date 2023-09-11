@@ -78,7 +78,6 @@ body {
 
 .Area {
     background-color: rgb(243,246,252);
-
     border-radius: 10px;
     border: 2px solid rgb(193, 193, 193);
     margin: 5px;
@@ -93,6 +92,7 @@ body {
 #Builds > div {
     height: 100%;
     overflow: auto;
+    outline: 1px solid rgb(193, 193, 193);
 }
 
 .BuildFrame {
@@ -108,12 +108,13 @@ body {
 
 #Anims > div {
     height: 100%;
+    outline: 1px solid rgb(193, 193, 193);
     overflow: auto;
 }
 
 .Animation {
     display: grid;
-    grid-template-columns: 5fr 1fr
+    grid-template-columns: 6fr 1fr
 }
 
 .AnimFrame {
@@ -126,6 +127,34 @@ body {
     grid-template-columns: 1fr 3fr 3fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr
 }
 
-.AnimationPlayer {
+#AnimationPlayer {
+    display: grid;
+    grid-template-columns: 8fr 1fr;
+    overflow: auto;
+}
+
+#AnimationPlayer #Background {
+    background-color: white;
+    overflow: auto;
+}
+
+#PlayerArea {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform-origin: center center;
+
     height: 100%;
+    width: 100%;
+    transform: scale(1);
+    /* background-color: black; */
+}
+
+#AnimationPlayer .menu_list {
+    width: 100%;
+    height: 100%;
+}
+
+.Layer {
+    position: absolute;
 }

@@ -215,7 +215,6 @@ export class Ktex {
 
         if (buff.length - offset === 1) {
             this.premultiply_alpha = Boolean(buff[offset])
-            console.log(this.premultiply_alpha)
         }
     }
 

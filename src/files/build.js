@@ -1,4 +1,4 @@
-import {crop, resize} from "./util.js"
+import { crop, resize } from "./util.js"
 import struct from "python-struct"
 
 class BuildFrame {
@@ -8,9 +8,10 @@ class BuildFrame {
     y = 0
     w = 1
     h = 1
+    used = true
     canvas
 
-    constructor(framenum, duration=1, x=0, y=0, w=1, h=1, alphaidx=0, alphacount=0) {
+    constructor(framenum, duration = 1, x = 0, y = 0, w = 1, h = 1, alphaidx = 0, alphacount = 0) {
         this.framenum = framenum
         this.duration = duration
         this.x = x
@@ -30,39 +31,46 @@ class BuildFrame {
 
     from_pivot(pivot_x, pivot_y) {
         this.x = Math.floor(this.w / 2) - pivot_x * this.w
-        this.y = - Math.floor(this.h / 2) + pivot_y * this.h
+        this.y = -Math.floor(this.h / 2) + pivot_y * this.h
     }
 }
 
 class BuildSymbol extends Array {
+    duration_frame = []
+    used = true
+
     constructor(data) {
         super()
 
-        this.name = data.name
+        this.name = data.name.toLowerCase()
 
         for (const frame of data) {
-            this.add_frame(new BuildFrame(frame.framenum, frame.duration, frame.x, frame.y, frame.w, frame.h, frame.alphaidx, frame.alphacount))
+            this.push(new BuildFrame(frame.framenum, frame.duration, frame.x, frame.y, frame.w, frame.h, frame.alphaidx, frame.alphacount))
         }
     }
 
-    add_frame(frame) {
-        if (! (frame instanceof BuildFrame)) {
+    push(frame) {
+        if (!(frame instanceof BuildFrame)) {
             throw new TypeError(`frame is no ${BuildFrame}`)
         }
 
-        const frames = this
-        const proxy_frame = new Proxy(frame, {
-            set(target, property, value) {
-                target[property] = value
-                if (property === "framenum") {
-                    frames.sort((a, b) => a.framenum - b.framenum)
-                }
-                return true
-            }
-        })
+        if (this.get_frame(frame.framenum)) {
+            throw new TypeError(`frame num repeat`)
+        }
 
-        frames.push(proxy_frame)
-        frames.sort((a, b) => a.framenum - b.framenum)
+        for (let i = 1; i < frame.duration; i++) {
+            this.duration_frame[i + frame.framenum] = frame
+        }
+        super.push(frame)
+    }
+
+    get_frame(framenum, get_duration = true) {
+        if (this[framenum]) {
+            return this[framenum]
+        }
+        if (get_duration) {
+            return this.duration_frame[framenum]
+        }
     }
 }
 
@@ -84,6 +92,7 @@ export class Build {
     symbols = {}
     atlases = []
     verts = []
+    used = true
 
     constructor(data) {
         if (!data) {
@@ -98,21 +107,26 @@ export class Build {
     }
 
     add_symbol(symbol) {
-        if (! (symbol instanceof BuildSymbol)) {
+        if (!(symbol instanceof BuildSymbol)) {
             throw new TypeError(`symbol is no ${BuildSymbol}`)
         }
 
         if (symbol.name in this.symbols) {
-            console.log(`over build symbol ${symbol.name}`)
+            alert(`repeat symbol ${symbol.name} in build ${this.name}`)
+            throw new ErrorEvent(`repeat symbol ${symbol.name} in build ${this.name}`)
         }
         this.symbols[symbol.name] = symbol
     }
 
     add_vert(vert) {
-        if (! (vert instanceof Vert)) {
+        if (!(vert instanceof Vert)) {
             throw new TypeError(`vert is no ${Vert}`)
         }
         this.verts.push(vert)
+    }
+
+    get_symbol(symbol_name) {
+        return this.symbols[symbol_name]
     }
 
     split_altas() {
@@ -152,8 +166,8 @@ export class Build {
                     region_top = Math.min(region_top, verts[i + 3].y)
                 }
 
-                if ((u_max - u_min) <= 0 || (v_max - v_min) <= 0) {
-                    frame.canvas = document.createElement("canvas", {alpha: true})
+                if (u_max - u_min <= 0 || v_max - v_min <= 0) {
+                    frame.canvas = document.createElement("canvas", { alpha: true })
                     frame.canvas.width = frame.w
                     frame.canvas.height = frame.h
                     continue
@@ -166,7 +180,7 @@ export class Build {
                 const bbox_height = Math.round((v_max - v_min) * atlas.height)
 
                 const x_offset = frame.x - Math.floor(frame.w / 2)
-                const y_offset =  frame.y - Math.floor(frame.h / 2)
+                const y_offset = frame.y - Math.floor(frame.h / 2)
 
                 const region_x = Math.round(region_left - x_offset)
                 const region_y = Math.round(region_top - y_offset)
@@ -184,13 +198,12 @@ export class Build {
                     let _w = region_x + cropped.width
                     let _h = region_y + cropped.height
                     if (_w <= 0 || _w > frame.w || _h <= 0 || _h > frame.h) {
-                        console.log(`Build: ${this.name}, Symbol: ${symbol_name}-${frame.framenum} data error, this maybe scml file image width or height error`)
+                        alert(`Build: ${this.name}, Symbol: ${symbol_name}-${frame.framenum} data error, this maybe scml file image width or height error`)
                         // const [pivot_x, pivot_y] = frame.get_pivot()  // get pivot
                         // frame.w = _w
                         // frame.h = _h
                         // frame.from_pivot(pivot_x, pivot_y)  // recalculate data
-                    }
-                    else {
+                    } else {
                         const new_canvas = document.createElement("canvas")
                         new_canvas.width = frame.w
                         new_canvas.height = frame.h
@@ -200,8 +213,7 @@ export class Build {
                     }
                 }
 
-                frame.canvas = cropped
-                // document.body.appendChild(cropped)
+                frame.canvas = cropped.toDataURL()
             }
         }
 
@@ -224,7 +236,7 @@ export function UnpackBuild(buff, atlases) {
     offset += 24 + build_name_len
 
     for (let atlas_idx = 0; atlas_idx < atlas_num; atlas_idx++) {
-        const atlas_name_len = struct.unpack("<I", buff.subarray(offset , offset + 4))[0]
+        const atlas_name_len = struct.unpack("<I", buff.subarray(offset, offset + 4))[0]
         const atlas_name = struct.unpack("<" + atlas_name_len + "s", buff.subarray(offset + 4, offset + 4 + atlas_name_len))[0]
         offset += 4 + atlas_name_len
 
@@ -269,7 +281,7 @@ export function UnpackBuild(buff, atlases) {
         const hash_str = struct.unpack("<" + hash_str_len + "s", buff.subarray(offset + 8, offset + 8 + hash_str_len))[0]
 
         if (hash in symbols) {
-            symbols[hash].name = hash_str.toLowerCase()
+            symbols[hash].name = hash_str
             build.add_symbol(new BuildSymbol(symbols[hash]))
         }
 
