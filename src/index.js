@@ -265,7 +265,7 @@ function ListAnim(anim) {
 }
 
 function ListBuildFrame(symbol) {
-    for (const frame of symbol) {
+    for (const frame of symbol.get_all_frame()) {
         MakeMenu(build_frame_num, frame, "framenum", null, () => {})
         MakeMenu(build_frame_druation, frame, "duration")
         MakeMenu(build_frame_x, frame, "x")
@@ -448,7 +448,7 @@ function ScaleAnim(scale) {
 }
 
 let scale = 1
-AnimationPlayer.addEventListener(
+PlayerArea.addEventListener(
     "wheel",
     function (event) {
         event.preventDefault()

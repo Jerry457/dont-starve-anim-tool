@@ -55,13 +55,15 @@ class BuildSymbol extends Array {
         }
 
         if (this.get_frame(frame.framenum)) {
-            throw new TypeError(`frame num repeat`)
+            alert(`${this.name} frame num: ${frame.framenum} repeat`)
+            throw new TypeError(`${this.name} frame num: ${frame.framenum} repeat`)
         }
+
+        this[frame.framenum] = frame
 
         for (let i = 1; i < frame.duration; i++) {
             this.duration_frame[i + frame.framenum] = frame
         }
-        super.push(frame)
     }
 
     get_frame(framenum, get_duration = true) {
@@ -71,6 +73,16 @@ class BuildSymbol extends Array {
         if (get_duration) {
             return this.duration_frame[framenum]
         }
+    }
+
+    get_all_frame() {
+        const frames = []
+        for (const frame of this) {
+            if (frame) {
+                frames.push(frame)
+            }
+        }
+        return frames
     }
 }
 
@@ -138,7 +150,7 @@ export class Build {
         let scale = 0
 
         for (const symbol_name in this.symbols) {
-            for (const frame of this.symbols[symbol_name]) {
+            for (const frame of this.symbols[symbol_name].get_all_frame()) {
                 const verts = this.verts.slice(frame.alphaidx, frame.alphaidx + frame.alphacount)
                 if (verts.length % 6 !== 0) {
                     throw Error("vert num error")
