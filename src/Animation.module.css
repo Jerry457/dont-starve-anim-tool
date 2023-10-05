@@ -52,12 +52,12 @@ input[type="color"]::-webkit-color-swatch {
     position: relative;
 }
 
-.OverrideSymbol {
+.Popup {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.OverrideSymbol .buttion {
+.Popup .buttion {
     transform: translateY(15%);
 }

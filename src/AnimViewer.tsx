@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js"
 
-import { banks, animations, setAnimations, setPlayAnimation } from "./data/data"
+import { banks, animations, setAnimations, setPlayAnimation, hideLayer, setHideLayer } from "./data/ui_data"
 import { RowData, DataViewer } from "./components/DataViewer"
 
 import style from "./AnimViewer.module.css"

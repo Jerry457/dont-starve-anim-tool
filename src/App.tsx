@@ -6,7 +6,7 @@ import { onMount } from "solid-js";
 import { Buffer } from "buffer"
 import { FileDropEvent } from "file-drop-element"
 
-import { setBanks, setBuilds } from "./data/data"
+import { setBanks, setBuilds } from "./data/ui_data"
 import { Ktex } from "./kfiles/tex"
 import { UnpackAnim } from "./kfiles/anim"
 import { UnpackBuild } from "./kfiles/build"
