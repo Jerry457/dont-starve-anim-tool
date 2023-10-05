@@ -1,0 +1,31 @@
+.vertical {
+    height: 7px;
+    z-index: 1;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    cursor: ns-resize;
+}
+
+.vertical:hover {
+    background-color: hsl(206, 100%, 50%);
+}
+
+.horizontal {
+    width: 7px;
+    z-index: 1;
+
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+
+    cursor: ew-resize;
+}
+
+.horizontal:hover {
+    background-color: hsl(206, 100%, 50%);
+}

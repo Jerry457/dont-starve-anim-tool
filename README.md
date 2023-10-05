@@ -1,1 +1,1 @@
-# ds_anim_web
+# dont-starve-anim-tool

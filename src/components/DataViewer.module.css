@@ -1,0 +1,71 @@
+.DataViewer {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.AddButton {
+    margin: 5px;
+}
+
+table {
+    border-collapse: collapse;
+    /* border: 2px solid rgb(200, 200, 200); */
+    margin: 0 auto;
+    letter-spacing: 1px;
+    width: 100%;
+    max-height: 100%;
+    border-spacing: 0;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+}
+
+td,
+th {
+    text-align: center;
+    border: 1px solid rgb(190, 190, 190);
+}
+
+th {
+    background-color: rgb(235, 235, 235);
+}
+
+td input[type="text"] {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 1px solid transparent;
+    padding: 0.5em 1em;
+    text-align: center;
+    box-sizing: border-box;
+    font-size: 0.3em;
+
+    background-color: transparent;
+
+    outline: none;
+}
+
+td input[type=text]:focus {
+    border-color: #1a73e8;
+}
+
+input[readonly=""] {
+    cursor: default
+}
+
+.chosen_tr td {
+    background-color: hsl(214 80% 55%);
+}
+
+.chosen_tr input[type="text"] {
+    color: white;
+}

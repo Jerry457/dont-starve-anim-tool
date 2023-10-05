@@ -1,0 +1,63 @@
+.Animation {
+    display: flex;
+    height: 100%;
+}
+
+.animation_container {
+    flex: 1;
+    overflow: hidden;
+}
+
+.tool_menu {
+    /* display: flex; */
+    overflow: auto;
+    height: 100%;
+}
+
+.tool_button {
+    width: 100%;
+}
+
+.color_picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.color_picker_icon {
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+input[type="color"] {
+    border: none;
+    width: 100px;
+    height: 20px;
+    background-color: transparent;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+}
+
+.AnimationPlayer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.OverrideSymbol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.OverrideSymbol .buttion {
+    transform: translateY(15%);
+}

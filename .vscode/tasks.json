@@ -2,25 +2,20 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "npm",
-			"label": "vite",
-			"script": "dev",
-			"problemMatcher": {
-				"pattern": [
-					{
-						"regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
-						"file": 1,
-						"location": 2,
-						"message": 3
-					}
-				],
-				"background": {
-					"activeOnStart": true,
-					"beginsPattern": "Server running at .*",
-					"endsPattern": "."
-				}
-			},
-			"isBackground": true
-		}
+			"type": "shell",
+			"command": "npm run dev",
+			"problemMatcher": [],
+			"label": "dev",
+			"detail": "npx vite --port=4000",
+			"isBackground": true,
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel":"new",
+				"showReuseMessage": true,
+				"clear": false
+			}
+		},
 	]
 }

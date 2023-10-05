@@ -1,0 +1,29 @@
+.TextButton{
+    --button-normal-color: hsl(0, 0%, 0%);
+    --button-hover-color: hsl(204, 85%, 35%);
+    --button-active-color: hsl(204, 85%, 30%);
+
+    --button-normal-color-light: hsl(204, 85%, 96%);
+    --button-hover-color-light: hsl(204, 85%, 93%);
+
+    border: none;
+
+    padding: 5px;
+
+    font-size: 1rem;
+
+    color: var(--button-normal-color);
+    background-color: transparent;
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.TextButton:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.TextButton:active {
+    /* box-shadow: inset -2px -2px 3px rgba(255, 255, 255, 0.6), inset 2px 2px 3px rgba(0, 0, 0, 0.6); */
+    color: var(--button-active-color);
+}

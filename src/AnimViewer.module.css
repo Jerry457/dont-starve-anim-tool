@@ -1,0 +1,6 @@
+.AnimViewer {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 2fr 3fr 5fr 11fr;
+    overflow: hidden;
+}
