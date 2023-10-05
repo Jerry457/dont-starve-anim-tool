@@ -66,10 +66,10 @@ export default function ZoomDragDiv(props: JSX.ElementProp) {
             return
         }
 
-        if (delta > 0) {
-            // isZoomIn
+        if (delta < 0) {
             scale *= SCALE_FACTOR
         } else {
+            // isZoomIn
             scale /= SCALE_FACTOR
         }
 
