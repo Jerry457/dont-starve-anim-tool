@@ -1,11 +1,10 @@
 import { createSignal } from "solid-js"
-import { createStore } from "solid-js/store"
+import { createStore, createMutable } from "solid-js/store"
 import { SymbolMap } from "./symbol_map"
 import { RowData } from "../components/DataViewer"
 
-export const [banks, setBanks] = createSignal<RowData[]>([])
-export const [builds, setBuilds] = createSignal<RowData[]>([])
-export const [animations, setAnimations] = createSignal<RowData[]>([])
+export const banks = createMutable<RowData[]>([])
+export const builds = createMutable<RowData[]>([])
 
 export const [playAnimation, setPlayAnimation] = createSignal<RowData>()
 

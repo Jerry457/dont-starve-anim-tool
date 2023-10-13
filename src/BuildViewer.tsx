@@ -12,7 +12,7 @@ export default function BuildViewer() {
     return (
         <div class={style.BuildViewer}>
             <DataViewer
-                rows={builds()}
+                rows={builds}
                 keys={[{ key: "name" }, { key: "scale", readOnly: true }]}
                 titles={{ title: "Build", hasButton: true, sub_titles: ["Name", "Scale"] }}
                 checkable={true}

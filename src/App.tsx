@@ -1,12 +1,12 @@
 import JSZip from "jszip"
 import Image from "image-js"
 import struct from "python-struct"
-import { onMount } from "solid-js";
+import { onMount } from "solid-js"
 
 import { Buffer } from "buffer"
 import { FileDropEvent } from "file-drop-element"
 
-import { setBanks, setBuilds } from "./data/ui_data"
+import { banks, builds } from "./data/ui_data"
 import { Ktex } from "./kfiles/tex"
 import { UnpackAnim } from "./kfiles/anim"
 import { UnpackBuild } from "./kfiles/build"
@@ -49,11 +49,11 @@ export default function App() {
                             }
 
                             const build = UnpackBuild(Buffer.from(await zip.files["build.bin"].async("array")), atlases)
-                            setBuilds(pre => [...pre, toRowData(build)])
+                            builds.push(toRowData(build))
                         }
                         if ("anim.bin" in zip.files) {
                             const anim = UnpackAnim(Buffer.from(await zip.files["anim.bin"].async("array")))
-                            setBanks(pre => [...pre, ...anim.banks.map(bank => toRowData(bank))])
+                            banks.push(...anim.banks.map(bank => toRowData(bank)))
                         }
                     })
                     break
@@ -70,11 +70,11 @@ export default function App() {
                     switch (head) {
                         case "A,N,I,M":
                             const anim = UnpackAnim(buff)
-                            setBanks(pre => [...pre, ...anim.banks.map(bank => toRowData(bank))])
+                            banks.push(...anim.banks.map(bank => toRowData(bank)))
                             break
                         case "B,I,L,D":
                             const build = UnpackBuild(buff)
-                            setBuilds(pre => [...pre, toRowData(build)])
+                            builds.push(toRowData(build))
                             break
                         case "K,T,E,X":
                             const ktex = new Ktex(file_name)
