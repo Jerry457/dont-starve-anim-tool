@@ -1,145 +1,205 @@
-import ColorPickerIcon from "~icons/mdi/palette"
-import AddIcon from "~icons/mdi/plus-circle-outline"
-import DeleteIcon from "~icons/mdi/delete-forever-outline"
-import { JSX, Setter, createSignal, createEffect, Show, For } from "solid-js"
-import { produce } from "solid-js/store"
+import { JSX, createSignal, createMemo, onMount, onCleanup, Show, For } from "solid-js"
+import { createStore, produce } from "solid-js/store"
+import { Animation, AnimElement } from "./lib/kfiles/anim"
+import { Build, BuildFrame, BuildSymbol } from "./lib/kfiles/build"
+import { clamp } from "./lib/math"
 
-import ZoomDragDiv from "./components/ZoomDragDiv"
+import Pause from "~icons/mdi/pause"
+import Play from "~icons/mdi/play"
+import Previous from "~icons/mdi/skip-previous"
+import Next from "~icons/mdi/skip-next"
+import ColorPickerIcon from "~icons/mdi/palette"
+
 import { Popup } from "./components/Popup"
-import { TextButton } from "./components/TextButton"
 import { IconButton } from "./components/IconButton"
-import { playAnimation, builds, symbolMap, setSymbolMap, hideLayers, setHideLayers } from "./data/ui_data"
-import { RowData } from "./components/DataViewer"
+import { playAnimation, builds, hideLayers } from "./data/ui_data"
+import { isHided, HideLayer } from "./AnimTool/HideLayer"
+import { OverrideSymbol, mapSymbol } from "./AnimTool/OverrideSymbol"
+import ZoomDragDiv from "./components/ZoomDragDiv"
 
 import style from "./Animation.module.css"
 
-function AnimationFrames(props: RowData) {
-    function mapSymbol(symbol_name: string) {
-        for (const symbol_map of symbolMap) {
-            if (symbol_map.used && symbol_name === symbol_map.symbol) {
-                for (const map of symbol_map.maps) {
-                    if (map.used) {
-                        return map.overSymbol
-                    }
-                }
-            }
+function getBuildFrame(symbol_name: string, frame_num: number) {
+    for (const build of builds) {
+        if (!build.sub || !build.shown) {
+            continue
         }
 
-        return symbol_name
-    }
-
-    function getBuildFrame(symbol_name: string, frame_num: number) {
-        for (const build of builds()) {
-            if (!build.sub || !build.shown) {
+        for (const symbol of build.sub!) {
+            if (!symbol.sub || !symbol.shown || (symbol.data as BuildSymbol).name !== symbol_name) {
                 continue
             }
 
-            for (const symbol of build.sub!) {
-                if (!symbol.sub || !symbol.shown || symbol.cell.name !== symbol_name) {
-                    continue
-                }
-
-                for (const frame of symbol.sub) {
-                    const duration = frame.cell.duration as number
-                    const _frame_num = frame.cell.frame_num as number
-                    if (_frame_num <= frame_num && frame_num < _frame_num + duration) {
-                        return frame
-                    }
+            for (const frame of symbol.sub) {
+                const frameData = frame.data as BuildFrame
+                const duration = frameData.duration
+                const _frame_num = frameData.frame_num
+                if (_frame_num <= frame_num && frame_num < _frame_num + duration) {
+                    return frame
                 }
             }
         }
     }
-
-    return (
-        <>
-            <Show when={props.sub}>
-                <For each={props.sub}>
-                    {(element, index) => {
-                        if (!element.shown) {
-                            return
-                        }
-
-                        const elementCell = element.cell as {
-                            symbol: string
-                            frame: number
-                            layer_name: string
-                            m_a: number
-                            m_b: number
-                            m_c: number
-                            m_d: number
-                            m_tx: number
-                            m_ty: number
-                        }
-
-                        for (const data of hideLayers) {
-                            if (data.used && data.layer === elementCell.layer_name) {
-                                return
-                            }
-                        }
-
-                        const symbol = mapSymbol(elementCell.symbol)
-                        const buildFrame = getBuildFrame(symbol, elementCell.frame)
-                        const buildFrameCell = buildFrame?.cell as {
-                            x: number
-                            y: number
-                            w: number
-                            h: number
-                            imageURL: string
-                        }
-
-                        return (
-                            <Show when={buildFrame && buildFrame.shown && buildFrameCell}>
-                                <img
-                                    src={buildFrameCell.imageURL}
-                                    style={[
-                                        "position: absolute",
-                                        `transform-origin: ${buildFrameCell.w / 2 - buildFrameCell.x}px ${buildFrameCell.h / 2 - buildFrameCell.y}px`,
-                                        `transform: matrix(${elementCell.m_a}, ${elementCell.m_b}, ${elementCell.m_c}, ${elementCell.m_d}, ${
-                                            elementCell.m_tx + buildFrameCell.x
-                                        }, ${elementCell.m_ty + buildFrameCell.y})`,
-                                        `z-index: ${props.sub!.length - index()}`,
-                                    ].join(";")}
-                                />
-                            </Show>
-                        )
-                    }}
-                </For>
-            </Show>
-        </>
-    )
 }
 
 function AnimationPlayer() {
-    const [playAnimationFrame, setPlayAnimationFrame] = createSignal<RowData>()
+    const [pause, setPause] = createSignal(true)
 
-    createEffect(intervalID => {
+    let div: HTMLDivElement
+    let progress: HTMLDivElement
+
+    let [frameIndex, setFrameIndex] = createSignal(0)
+    let [frameNum, setFrameNum] = createSignal(1)
+    let frameRate: number = 30
+    let frameDuration: number = 1000 / frameRate
+    let [frames, setFrames] = createStore<HTMLImageElement[][]>([])
+
+    function onClickprogress(e: MouseEvent) {
+        const progressBoundingClientRect = progress.getBoundingClientRect()
+
+        const offsetX = e.clientX - progressBoundingClientRect.left
+        const percent = offsetX / progressBoundingClientRect.width
+
+        setFrameIndex(clamp(Math.round(percent * (frameNum() - 1)), 0, frameNum() - 1))
+    }
+
+    function nextFrame() {
+        setFrameIndex((frameIndex() + 1) % frameNum())
+    }
+
+    function previousFrame() {
+        setFrameIndex(Math.max(frameIndex() - 1, 0) % frameNum())
+    }
+
+    async function renderFrame(frameIndex: number) {
         const animation = playAnimation()
+        if (frames[frameIndex] || !animation || !animation.sub) {
+            return
+        }
+
+        const animFrame = animation.sub[frameIndex]
+        if (!animFrame || !animFrame.shown || !animFrame.sub) {
+            return
+        }
+
+        const animElements = animFrame.sub
+        let renderFrames: HTMLImageElement[] = []
+        for (const [indxex, element] of animElements.entries()) {
+            const { symbol, frame, layer_name: layer, m_a, m_b, m_c, m_d, m_tx, m_ty } = element.data as AnimElement
+
+            if (isHided(layer)) {
+                continue
+            }
+
+            const overSymbol = mapSymbol(symbol) || symbol
+            const buildFamre = getBuildFrame(overSymbol, frame)
+
+            if (!buildFamre || !buildFamre.shown) {
+                continue
+            }
+
+            const { x, y, w, h, imageURL } = buildFamre.data as BuildFrame
+
+            const img = document.createElement("img")
+            img.src = imageURL!
+            img.style.position = "absolute"
+            img.style.transformOrigin = `${w / 2 - x}px ${h / 2 - y}px`
+            img.style.transform = `matrix(${m_a}, ${m_b}, ${m_c}, ${m_d}, ${m_tx + x}, ${m_ty + y})`
+            img.style.zIndex = `${animElements.length - indxex}`
+            renderFrames.push(img)
+            // const transfromed = transform(canvas!, m_a, m_b, m_c, m_d, 0, 0)
+            // const offestX = m_tx + x * m_a + y * m_c
+            // const offestY = m_ty + x * m_b + y * m_d
+
+            // const elementTop = offestY - transfromed.height / 2
+            // const elementBottom = offestY + transfromed.height / 2
+            // const elementLeft = offestX - transfromed.width / 2
+            // const elementRight = offestX + transfromed.width / 2
+
+            // elementDatas.push({ canvas: transfromed, offestX: elementLeft, offestY: elementTop })
+
+            // top = Math.min(top, elementTop)
+            // bottom = Math.max(bottom, elementBottom)
+            // left = Math.min(left, elementLeft)
+            // right = Math.max(right, elementRight)
+        }
+
+        setFrames(
+            produce(pre => {
+                pre[frameIndex] = renderFrames
+            })
+        )
+    }
+
+    function onUpdate() {
+        setFrames([])
+    }
+
+    createMemo(() => {
+        const animation = playAnimation()
+
         if (!animation || !animation.sub) {
             return
         }
 
-        let index = 0
-        const frames = animation.sub
-        const frame_num = animation.sub.length
-        const timeout = 1000 / (animation.cell.frame_rate as number)
-
-        clearInterval(intervalID as number)
-        return setInterval(() => {
-            setPlayAnimationFrame(frames[index])
-            index = (index + 1) % frame_num
-        }, timeout)
+        setFrameIndex(0)
+        setFrameNum(animation.sub.length)
+        frameRate = (animation.data as Animation).frameRate
+        frameDuration = 1000 / frameRate
+        onUpdate()
     })
 
+    onMount(() => {
+        addEventListener("dataChange", onUpdate)
+    })
+
+    onCleanup(() => {
+        removeEventListener("dataChange", onUpdate)
+    })
+
+    let startTime: number | undefined = undefined
+    function playAnim(timeStamp: number) {
+        startTime = startTime || timeStamp
+        const elapsed = timeStamp - startTime
+        if (elapsed >= frameDuration) {
+            renderFrame((frameIndex() - 1) % frameNum())
+            renderFrame(frameIndex())
+            renderFrame((frameIndex() + 1) % frameNum())
+            if (!pause()) {
+                nextFrame()
+            }
+
+            startTime = timeStamp
+        }
+        requestAnimationFrame(playAnim)
+    }
+    requestAnimationFrame(playAnim)
+
     return (
-        <ZoomDragDiv classList={{ [style.AnimationPlayer]: true }}>
-            <Show when={playAnimationFrame() && playAnimationFrame()!.shown}>
-                <AnimationFrames {...playAnimationFrame()!} />
-            </Show>
-        </ZoomDragDiv>
+        <>
+            <ZoomDragDiv dragable={true} zoomable={true}>
+                <div class={style.AnimationPlayer} ref={div!}>
+                    {...frames[frameIndex()]}
+                </div>
+            </ZoomDragDiv>
+            <div class={style.AnimationPlayerBar}>
+                <IconButton icon={Previous} classList={{ [style.control_button]: true }} onClick={previousFrame} />
+                <Show // pause
+                    when={pause()}
+                    fallback={<IconButton icon={Pause} classList={{ [style.control_button]: true }} onClick={() => setPause(true)} />}>
+                    <IconButton icon={Play} classList={{ [style.control_button]: true }} onClick={() => setPause(false)} />
+                </Show>
+                <IconButton icon={Next} classList={{ [style.control_button]: true }} onClick={nextFrame} />
+                <div>{`${frameIndex()}/${frameNum() - 1}`}</div>
+                <div class={style.progress} onClick={onClickprogress} ref={progress!}>
+                    <div class={style.progress_value} style={`width: ${frameNum() === 0 ? 1 : ((frameIndex() + 1) / frameNum()) * 100}%`}></div>
+                </div>
+            </div>
+        </>
     )
 }
 
-export default function Animation() {
+export default function AnimationArea() {
     const [color, setColor] = createSignal<string>("#C8C8C8")
 
     function onPickColor(e: JSX.ChangeEvent) {
@@ -155,7 +215,7 @@ export default function Animation() {
             </div>
             <div class={style.tool_menu}>
                 <div class={style.color_picker}>
-                    <IconButton icon={ColorPickerIcon} onClick={() => colorInput.click()} />
+                    <IconButton icon={ColorPickerIcon} onClick={() => colorInput.click()} classList={{ [style.color_picker_icon]: true }} />
                     <input type="color" value={color()} onInput={onPickColor} ref={colorInput!} />
                 </div>
                 <div>
@@ -168,170 +228,6 @@ export default function Animation() {
                         <HideLayer />
                     </Popup>
                 </div>
-            </div>
-        </div>
-    )
-}
-
-function OverrideSymbol() {
-    function onOverSymbolCheckChange(data: number[], e: JSX.ChangeEvent) {
-        const [index, over_index] = data
-
-        setSymbolMap(
-            produce(pre => {
-                pre[index].maps[over_index].used = e.target.checked
-            })
-        )
-    }
-
-    function onChangeOverSymbol(data: number[], e: JSX.ChangeEvent) {
-        const [index, over_index] = data
-
-        setSymbolMap(
-            produce(pre => {
-                pre[index].maps[over_index].overSymbol = e.target.value
-            })
-        )
-    }
-
-    function addOverSymbol(index: number) {
-        setSymbolMap(
-            produce(pre => {
-                pre[index].maps.push({ overSymbol: "", used: true })
-            })
-        )
-    }
-
-    function deleteOverSymbol(data: number[], e: MouseEvent) {
-        const [index, over_index] = data
-
-        setSymbolMap(
-            produce(pre => {
-                pre[index].maps.splice(over_index)
-            })
-        )
-    }
-
-    function onSymbolMapsCheckChange(index: number, e: JSX.ChangeEvent) {
-        setSymbolMap(
-            produce(pre => {
-                pre[index].used = e.target.checked
-            })
-        )
-    }
-
-    function onChangeSymbolMaps(index: number, e: JSX.ChangeEvent) {
-        setSymbolMap(
-            produce(pre => {
-                pre[index].symbol = e.target.value
-            })
-        )
-    }
-
-    function addSymbolMaps() {
-        setSymbolMap(
-            produce(pre => {
-                pre.push({ symbol: "", used: true, maps: [] })
-            })
-        )
-    }
-
-    function deleteSymbolMaps(index: number, e: MouseEvent) {
-        setSymbolMap(
-            produce(pre => {
-                pre.splice(index)
-            })
-        )
-    }
-
-    return (
-        <div class={style.Popup}>
-            <h1> OverrideSymbol </h1>
-            <For each={symbolMap}>
-                {(symbol_map, index) => {
-                    return (
-                        <details>
-                            <summary>
-                                <input type="checkbox" checked={symbol_map.used} onChange={[onSymbolMapsCheckChange, index()]} />
-                                <input type="text" value={symbol_map.symbol} onChange={[onChangeSymbolMaps, index()]} />
-                                <IconButton classList={{ [style.buttion]: true }} icon={DeleteIcon} onClick={[deleteSymbolMaps, index()]} />
-                            </summary>
-                            <ol>
-                                <For each={symbol_map.maps}>
-                                    {(map, _index) => (
-                                        <li>
-                                            <input type="checkbox" checked={map.used} onChange={[onOverSymbolCheckChange, [index(), _index()]]} />
-                                            <input type="text" value={map.overSymbol} onChange={[onChangeOverSymbol, [index(), _index()]]} />
-                                            <IconButton
-                                                classList={{ [style.buttion]: true }}
-                                                icon={DeleteIcon}
-                                                onClick={[deleteOverSymbol, [index(), _index()]]}
-                                            />
-                                        </li>
-                                    )}
-                                </For>
-                                <div>
-                                    <IconButton icon={AddIcon} onClick={[addOverSymbol, index()]} />
-                                </div>
-                            </ol>
-                        </details>
-                    )
-                }}
-            </For>
-            <div>
-                <IconButton classList={{ [style.buttion]: true }} icon={AddIcon} onClick={addSymbolMaps} />
-            </div>
-        </div>
-    )
-}
-
-function HideLayer() {
-    function onCheckedChange(index: number, e: JSX.ChangeEvent) {
-        setHideLayers(
-            produce(pre => {
-                pre[index].used = e.target.checked
-            })
-        )
-    }
-
-    function onChange(index: number, e: JSX.ChangeEvent) {
-        setHideLayers(
-            produce(pre => {
-                pre[index].layer = e.target.value
-            })
-        )
-    }
-
-    function onAdd() {
-        setHideLayers(
-            produce(pre => {
-                pre.push({layer: "", used: true})
-            })
-        )
-    }
-
-    function onDelete(index: number){
-        setHideLayers(
-            produce(pre => {
-                pre.splice(index)
-            })
-        )
-    }
-
-    return (
-        <div class={style.Popup}>
-            <h1> Hide Layer </h1>
-            <div>
-                <For each={hideLayers}>
-                    {(data, index) => (
-                        <li>
-                            <input type="checkbox" checked={data.used} onChange={[onCheckedChange, index()]} />
-                            <input type="text" value={data.layer} onChange={[onChange, index()]} />
-                            <IconButton classList={{ [style.buttion]: true }} icon={DeleteIcon} onClick={[onDelete, index()]} />
-                        </li>
-                    )}
-                </For>
-                <IconButton classList={{ [style.buttion]: true }} icon={AddIcon} onClick={onAdd}/>
             </div>
         </div>
     )

@@ -6,3 +6,8 @@
     height: 100%;
     transition: scale 150ms;
 }
+
+.reSstIcon {
+    position: absolute;
+    --button-normal-color: hsl(0, 0%, 0%);
+}

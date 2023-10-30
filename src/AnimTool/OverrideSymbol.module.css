@@ -1,0 +1,65 @@
+.OverrideSymbolPopup {
+    display: grid;
+    grid-template-rows: max-content auto max-content;
+
+    /* width: 400px; */
+    height: 400px;
+}
+
+.OverrideSymbolPopup h2 {
+    text-align: center;
+}
+
+.unUsed {
+    opacity: 0.5;
+}
+
+.list {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: scroll;
+    margin: 10px;
+}
+
+.list_li {
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.subMenu {
+    margin-left: 3em;
+}
+
+.list_li input[type="text"] {
+    font-size: inherit;
+    font-family: inherit;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-bottom-color: hsla(0, 0%, 0%, 0.2);
+
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.list_li input:focus {
+    outline: none;
+}
+
+.addButton {
+    width: 100px;
+    margin: 10px;
+    bottom: 10px;
+}
+
+.collapseButtion {
+    font-size: 0.7em;
+    transform: rotate(90deg);
+}
+
+.expandButtion {
+    font-size: 0.7em;
+    transform: rotate(180deg);
+}

@@ -6,6 +6,75 @@
 .animation_container {
     flex: 1;
     overflow: hidden;
+    position: relative;
+}
+
+.AnimationPlayerBar {
+    position: absolute;
+
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    display: flex;
+    align-items: center;
+
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(100px);
+    z-index: 999;
+}
+
+.control_button {
+    font-size: 1.2rem;
+}
+
+.animation_progress {
+    flex: 1;
+    /* width: 100%; */
+
+    -webkit-appearance: none;
+    appearance: none;
+
+    padding-left: 10px;
+    padding-right: 10px;
+    height: 8px;
+}
+
+.progress {
+    background-color: white;
+    flex: 1;
+    height: 8px;
+    margin-left: 10px;
+    margin-right: 10px;
+
+    cursor: pointer;
+}
+
+.progress_value {
+    background-color: hsl(204, 80%, 55%);
+    height: 100%;
+    border-radius: 2px;
+    background-size: 20px 15px, 100% 100%, 100% 100%;
+}
+
+.animation_progress::-webkit-progress-bar {
+    background-color: white;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.26) inset;
+}
+
+.animation_progress::-webkit-progress-value {
+    background-color: hsl(204, 80%, 55%);
+    border-radius: 2px;
+    background-size: 20px 15px, 100% 100%, 100% 100%;
+}
+
+.AnimationPlayer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 }
 
 .tool_menu {
@@ -16,6 +85,7 @@
 
 .tool_button {
     width: 100%;
+    --button-normal-color: hsl(0, 0%, 0%);
 }
 
 .color_picker {
@@ -25,9 +95,7 @@
 }
 
 .color_picker_icon {
-    height: 100%;
-    top: 0;
-    left: 0;
+    --button-normal-color: hsl(0, 0%, 0%);
 }
 
 input[type="color"] {
@@ -43,13 +111,6 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 
 input[type="color"]::-webkit-color-swatch {
     border: none;
-}
-
-.AnimationPlayer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
 }
 
 .Popup {

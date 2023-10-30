@@ -22,13 +22,13 @@ export default function ResizeBar(
     }
 
     onMount(() => {
-        window.addEventListener("mouseup", onMouseUp)
-        window.addEventListener("mousemove", onMouseMove)
+        addEventListener("mouseup", onMouseUp)
+        addEventListener("mousemove", onMouseMove)
     })
 
     onCleanup(() => {
-        window.removeEventListener("mouseup", onMouseUp)
-        window.removeEventListener("mousemove", onMouseMove)
+        removeEventListener("mouseup", onMouseUp)
+        removeEventListener("mousemove", onMouseMove)
     })
 
     return (

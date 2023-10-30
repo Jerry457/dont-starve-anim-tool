@@ -1,9 +1,8 @@
 import dxt from "dxt-js"
 import { flags } from "dxt-js"
-import Image from "image-js"
-import struct from "python-struct"
+import { newCanvas, resize, flipY, unPreMultiplyAlpha } from "../image-canvas"
 
-import { Buffer } from "buffer"
+import BinaryDataReader from "../binary-data/BinaryDataReader"
 
 enum Platform {
     Default = 0, // Unknown
@@ -124,7 +123,7 @@ class KtexHeader {
                 (BigInt(this.flags) << specification.offset_flags) |
                 (BigInt(this.fill) << specification.offset_fill)
         )
-        return struct.pack("<ccccI", ...this.MAGIC_NUM.split(""), data)
+        // return struct.pack("<ccccI", ...this.MAGIC_NUM.split(""), data)
     }
 }
 
@@ -171,7 +170,7 @@ class KtexMipmap {
     }
 
     get_meta_data() {
-        return struct.pack("<HHHI", this.width, this.height, this.pitch, this.data_size)
+        // return struct.pack("<HHHI", this.width, this.height, this.pitch, this.data_size)
     }
 
     get_block_data() {
@@ -192,54 +191,45 @@ export class Ktex {
         this.name = name
     }
 
-    read_tex(buff: Buffer) {
-        this.header.set_specification_data(struct.unpack("<I", buff.subarray(4, 8))[0] as number)
+    read_tex(data: BinaryDataReader | ArrayBuffer) {
+        const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)
+        this.header.set_specification_data(reader.readUint32(4))
 
-        let offset = 8
         for (let i = 0; i < this.header.mipmap_count; i++) {
-            const [width, height, pitch, data_size] = struct.unpack("<HHHI", buff.subarray(offset, offset + 10)) as number[]
+            const width = reader.readtHex()
+            const height = reader.readtHex()
+            const pitch = reader.readtHex()
+            const data_size = reader.readUint32()
+
             const mipmap = new KtexMipmap(width, height)
             mipmap.data_size = data_size
             this.mipmaps.push(mipmap)
-
-            offset += 10
         }
 
         for (const mipmap of this.mipmaps) {
-            mipmap.block_data = new Uint8Array(buff.subarray(offset, offset + mipmap.data_size))
-            offset += mipmap.data_size
+            mipmap.block_data = reader.readBytes(mipmap.data_size)
         }
 
-        if (buff.length - offset === 1) {
-            this.preMultiplyAlpha = Boolean(buff[offset])
+        if (reader.buffer.byteLength - reader.cursor === 1) {
+            this.preMultiplyAlpha = Boolean(reader.readByte())
         }
     }
 
-    from_image(image: Image, preMultiplyAlpha: boolean = true) {
-        this.preMultiplyAlpha = Boolean(image.alpha) && preMultiplyAlpha
+    from_image(canvas: HTMLCanvasElement, preMultiplyAlpha: boolean = true) {
+        this.preMultiplyAlpha = preMultiplyAlpha
 
-        if (preMultiplyAlpha) {
-            for (let i = 0; i < image.data.length; i += 4) {
-                let [r, g, b, a] = image.data.slice(i, i + 4)
+        canvas = unPreMultiplyAlpha(canvas)
+        canvas = flipY(canvas)
 
-                const alpha = a / 255
-                r = Math.floor(r * alpha)
-                g = Math.floor(g * alpha)
-                b = Math.floor(b * alpha)
-
-                image.data[i] = r
-                image.data[i + 1] = g
-                image.data[i + 2] = b
-                image.data[i + 3] = a
-            }
-        }
-        image.flipY()
-
-        let width = image.width
-        let height = image.height
+        let width = canvas.width
+        let height = canvas.height
         while ((width > 1 || height > 1) && this.mipmaps.length <= this.header.specification.max_mipmap_count) {
-            const resized = image.resize({ width: width, height: height })
-            const mipmap = new KtexMipmap(width, height, new Uint8Array(resized.data))
+            const resized = resize(canvas, width, height)
+            const mipmap = new KtexMipmap(
+                width,
+                height,
+                new Uint8Array(resized.getContext("2d")!.getImageData(0, 0, resized.width, resized.height).data)
+            )
             mipmap.compress(this.header.pixel_format)
             this.mipmaps.push(mipmap)
 
@@ -251,55 +241,61 @@ export class Ktex {
         this.header.mipmap_count = this.mipmaps.length
     }
 
-    async to_image(preMultiplyAlpha: boolean = true) {
+    to_image(preMultiplyAlpha: boolean = true) {
         const mipmap = this.mipmaps[0]
         mipmap.decompress(this.header.pixel_format)
+        const mipmapData = mipmap.data!
 
         const hasAlpha = this.header.pixel_format !== PixelFormat.RGB
         this.preMultiplyAlpha = preMultiplyAlpha && hasAlpha
+
+        let canvas = newCanvas(mipmap.width, mipmap.height)
+        const ctx = canvas.getContext("2d", { willReadFrequently: true })!
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
+
         const channelNum = hasAlpha ? 4 : 3
-        const image = new Image(mipmap.width, mipmap.height, { alpha: 1 })
-        const width = image.width
-        const height = image.height
-        const data = mipmap.data!
-        for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height; y++) {
-                const i = (y * width + x) * channelNum
-                let r = data[i]
-                let g = data[i + 1]
-                let b = data[i + 2]
-                const a = hasAlpha ? data[i + 3] : 255
+        for (let i = 0; i < mipmapData.length; i += channelNum) {
+            let [r, g, b] = mipmapData.slice(i, i + 3)
+            const a = hasAlpha ? mipmapData[i + 3] : 255
 
-                if (this.preMultiplyAlpha) {
-                    const alpha = a / 255
-                    r = Math.min(Math.ceil(r / alpha), 255)
-                    g = Math.min(Math.ceil(g / alpha), 255)
-                    b = Math.min(Math.ceil(b / alpha), 255)
-                }
-                image.setPixelXY(x, y, [r, g, b, a])
+            if (this.preMultiplyAlpha) {
+                const alpha = a / 255
+                r = Math.ceil(r / alpha)
+                g = Math.ceil(g / alpha)
+                b = Math.ceil(b / alpha)
             }
-        }
-        image.flipY()
 
-        return image
+            const index = (i / channelNum) * 4
+            data[index] = r
+            data[index + 1] = g
+            data[index + 2] = b
+            data[index + 3] = a
+        }
+        ctx.putImageData(imageData, 0, 0)
+
+        canvas = flipY(canvas)
+        // document.body.appendChild(canvas)
+
+        return canvas
     }
 
-    get_file(name?: string) {
-        let content = this.header.get_data()
+    // get_file(name?: string) {
+    //     let content = this.header.get_data()
 
-        for (const mipmap of this.mipmaps) {
-            content = Buffer.concat([content, mipmap.get_meta_data()])
-        }
-        for (const mipmap of this.mipmaps) {
-            content = Buffer.concat([content, mipmap.get_block_data()])
-        }
-        content = Buffer.concat([content, new Uint8Array([this.preMultiplyAlpha ? 1 : 0])])
+    //     for (const mipmap of this.mipmaps) {
+    //         content = Buffer.concat([content, mipmap.get_meta_data()])
+    //     }
+    //     for (const mipmap of this.mipmaps) {
+    //         content = Buffer.concat([content, mipmap.get_block_data()])
+    //     }
+    //     content = Buffer.concat([content, new Uint8Array([this.preMultiplyAlpha ? 1 : 0])])
 
-        const blob = new Blob([content])
-        const downloadLink = document.createElement("a")
-        downloadLink.href = URL.createObjectURL(blob)
-        downloadLink.download = name || `${this.name}.tex`
-        downloadLink.click()
-        URL.revokeObjectURL(downloadLink.href)
-    }
+    //     const blob = new Blob([content])
+    //     const downloadLink = document.createElement("a")
+    //     downloadLink.href = URL.createObjectURL(blob)
+    //     downloadLink.download = name || `${this.name}.tex`
+    //     downloadLink.click()
+    //     URL.revokeObjectURL(downloadLink.href)
+    // }
 }

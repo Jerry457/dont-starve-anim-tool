@@ -1,5 +1,5 @@
 import ReSzie from "~icons/mdi/restore"
-import { onMount, onCleanup, JSX } from "solid-js"
+import { onMount, onCleanup, JSX, Show } from "solid-js"
 
 import { IconButton } from "./IconButton"
 
@@ -7,7 +7,7 @@ import style from "./ZoomDragDiv.module.css"
 
 const SCALE_FACTOR = 1.2
 
-export default function ZoomDragDiv(props: JSX.ElementProp) {
+export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolean; dragable?: boolean }) {
     let container: HTMLDivElement
     let zoomDragDiv: HTMLDivElement
 
@@ -16,17 +16,36 @@ export default function ZoomDragDiv(props: JSX.ElementProp) {
     let deltaX = 0
     let deltaY = 0
 
-    onMount(() => {
-        container.addEventListener("mousedown", onMouseDown, { passive: false })
-        container.addEventListener("mousewheel", onWheel as EventListener, { passive: false })
+    let _alert = window.alert
+    window.alert = function (...args) {
+        dragging = false
+        _alert(...args)
+    }
 
-        window.addEventListener("mouseup", onMouseUp)
-        window.addEventListener("mousemove", onMouseMove)
+    onMount(() => {
+        if (props.zoomable) {
+            container.addEventListener("mousewheel", onWheel as EventListener, { passive: false })
+        }
+
+        if (props.dragable) {
+            container.addEventListener("mousedown", onMouseDown, { passive: false })
+            removeEventListener("alert", onMouseUp)
+            addEventListener("mouseup", onMouseUp)
+            addEventListener("mousemove", onMouseMove)
+        }
     })
 
     onCleanup(() => {
-        window.removeEventListener("mouseup", onMouseUp)
-        window.removeEventListener("mousemove", onMouseMove)
+        if (props.zoomable) {
+            container.removeEventListener("mousewheel", onWheel as EventListener)
+        }
+
+        if (props.dragable) {
+            container.removeEventListener("mousedown", onMouseDown)
+            removeEventListener("alert", onMouseUp)
+            removeEventListener("mouseup", onMouseUp)
+            removeEventListener("mousemove", onMouseMove)
+        }
     })
 
     function updateStyle() {
@@ -35,11 +54,15 @@ export default function ZoomDragDiv(props: JSX.ElementProp) {
     }
 
     function onMouseDown(ev: MouseEvent) {
-        dragging = true
-        ev.preventDefault()
+        if (!(ev.target as HTMLElement).dataset.cantdrag) {
+            dragging = true
+        }
+
+        // ev.preventDefault()
     }
 
-    function onMouseUp(ev: MouseEvent) {
+    function onMouseUp() {
+        console.log(2)
         dragging = false
     }
 
@@ -79,7 +102,9 @@ export default function ZoomDragDiv(props: JSX.ElementProp) {
 
     return (
         <div class={style.container} ref={container!}>
-            <IconButton icon={ReSzie} onClick={onReszie} />
+            <Show when={props.zoomable}>
+                <IconButton icon={ReSzie} onClick={onReszie} classList={{ [style.reSstIcon]: true }} />
+            </Show>
             <div class={style.ZoomDragDiv} ref={zoomDragDiv!} children={props.children} classList={{ ...props.classList }} />
         </div>
     )

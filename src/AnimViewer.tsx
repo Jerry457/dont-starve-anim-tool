@@ -15,10 +15,10 @@ export default function AnimViewer() {
             <DataViewer rows={banks} keys={[{ key: "name" }]} titles={{ title: "Bank", hasButton: true }} subSignal={setAnimations} />
             <DataViewer
                 rows={animations()}
-                keys={[{ key: "name" }, { key: "frame_rate" }]}
+                keys={[{ key: "name" }, { key: "frameRate" }]}
                 titles={{ title: "Animation", sub_titles: ["Name", "Rate"], hasButton: true }}
                 subSignal={setAnimFrames}
-                OnClickRow={(row)=>setPlayAnimation(row)}
+                OnClickRow={row => setPlayAnimation(row)}
             />
             <DataViewer
                 rows={animFrames()}
@@ -34,7 +34,7 @@ export default function AnimViewer() {
             <DataViewer
                 rows={animElements()}
                 keys={[
-                    { key: "z_index" },
+                    { key: "z_index", readOnly: true },
                     { key: "symbol" },
                     { key: "frame" },
                     { key: "layer_name" },

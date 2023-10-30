@@ -1,4 +1,4 @@
-import struct from "python-struct"
+import BinaryDataReader from "../binary-data/BinaryDataReader"
 
 const FACING_RIGHT = 1 << 0
 const FACING_UP = 1 << 1
@@ -61,21 +61,6 @@ export class AnimElement {
         this.z_index = z_index
     }
 
-    getCell() {
-        return {
-            z_index: this.z_index,
-            symbol: this.symbol,
-            frame: this.frame,
-            layer_name: this.layer_name,
-            m_a: this.m_a,
-            m_b: this.m_b,
-            m_c: this.m_c,
-            m_d: this.m_d,
-            m_tx: this.m_tx,
-            m_ty: this.m_ty,
-        }
-    }
-
     getSubRow = undefined
 }
 
@@ -100,16 +85,6 @@ export class AnimFrame {
         this.elements.sort((a, b) => a.z_index - b.z_index)
     }
 
-    getCell() {
-        return {
-            idx: this.idx,
-            x: this.x,
-            y: this.y,
-            w: this.w,
-            h: this.h,
-        }
-    }
-
     getSubRow() {
         return this.elements
     }
@@ -117,24 +92,17 @@ export class AnimFrame {
 
 export class Animation {
     name: string
-    frame_rate: number
+    frameRate: number
     frames: AnimFrame[]
 
     constructor(name: string = "", frame_rate: number = 30, frames: AnimFrame[] = []) {
         this.name = name
-        this.frame_rate = frame_rate
+        this.frameRate = frame_rate
         this.frames = frames
     }
 
     sort() {
         this.frames.sort((a, b) => a.idx - b.idx)
-    }
-
-    getCell() {
-        return {
-            name: this.name,
-            frame_rate: this.frame_rate,
-        }
     }
 
     getSubRow() {
@@ -143,18 +111,14 @@ export class Animation {
 }
 
 export class Bank {
+    [key: string]: any
+
     name: string
     animations: Animation[]
 
     constructor(name: string = "", animations: Animation[] = []) {
         this.name = name
         this.animations = animations
-    }
-
-    getCell() {
-        return {
-            name: this.name,
-        }
     }
 
     getSubRow() {
@@ -180,42 +144,43 @@ export class Anim {
     }
 }
 
-export function UnpackAnim(buff: Buffer) {
+export function UnpackAnim(data: BinaryDataReader | ArrayBuffer) {
     const anim = new Anim()
-    const animation_num = struct.unpack("<I", buff.subarray(20, 24))[0] as number
 
-    // calculate hast dist offset, beacuse unpack hash dict first
-    let offset = 24
+    const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)
+    reader.cursor = 20
+
+    const animation_num = reader.readUint32()
+
+    // unpack hash dict first
     for (let i = 0; i < animation_num; i++) {
-        const animation_name_len = struct.unpack("<i", buff.subarray(offset, offset + 4))[0] as number
-        const frame_num = struct.unpack("<I", buff.subarray(offset + 13 + animation_name_len, offset + 17 + animation_name_len))[0] as number
-        offset += 17 + animation_name_len
+        const animation_name_len = reader.readUint32()
+        const frame_num = reader.readUint32(reader.cursor + 9 + animation_name_len)
         for (let idx = 0; idx < frame_num; idx++) {
-            const event_num = struct.unpack("<I", buff.subarray(offset + 16, offset + 20))[0] as number // is 0, no use
-            const element_num = struct.unpack("<I", buff.subarray(offset + 20 + event_num * 4, offset + 24 + event_num * 4))[0] as number
-            offset += 24 + event_num * 4 + 40 * element_num
+            const event_num = reader.readUint32(reader.cursor + 16) // is 0, no use
+            const element_num = reader.readUint32(reader.cursor + event_num * 4)
+            reader.cursor += 40 * element_num
         }
     }
-    const hash_dict_len = struct.unpack("<I", buff.subarray(offset, offset + 4))[0] as number
+    const hash_dict_len = reader.readUint32()
     const hash_dict = new Map<number, string>()
-    offset += 4
     for (let i = 0; i < hash_dict_len; i++) {
-        const hash = struct.unpack("<I", buff.subarray(offset, offset + 4))[0] as number
-        const str_len = struct.unpack("<i", buff.subarray(offset + 4, offset + 8))[0] as number
-        const str = struct.unpack("<" + str_len + "s", buff.subarray(offset + 8, offset + 8 + str_len))[0] as string
+        const hash = reader.readUint32()
+        const str_len = reader.readInt32()
+        const str = reader.readString(str_len)
         hash_dict.set(hash, str)
-        offset += 8 + str_len
     }
+    //
 
-    offset = 24
+    reader.cursor = 24
     for (let i = 0; i < animation_num; i++) {
-        const animation_name_len = struct.unpack("<i", buff.subarray(offset, offset + 4))[0] as number
-        let animation_name = struct.unpack("<" + animation_name_len + "s", buff.subarray(offset + 4, offset + 4 + animation_name_len))[0] as string
-        const facing_byte = struct.unpack("<B", buff.subarray(offset + 4 + animation_name_len, offset + 5 + animation_name_len))[0] as number
-        const bank_name_hash = struct.unpack("<I", buff.subarray(offset + 5 + animation_name_len, offset + 9 + animation_name_len))[0] as number
-        const bank_name = hash_dict.get(bank_name_hash) as string
-        const frame_rate = struct.unpack("<f", buff.subarray(offset + 9 + animation_name_len, offset + 13 + animation_name_len))[0] as number
-        const frame_num = struct.unpack("<I", buff.subarray(offset + 13 + animation_name_len, offset + 17 + animation_name_len))[0] as number
+        const animation_name_len = reader.readInt32()
+        let animation_name = reader.readString(animation_name_len)
+        const facing_byte = reader.readByte()
+        const bank_name_hash = reader.readUint32()
+        const bank_name = hash_dict.get(bank_name_hash)!
+        const frame_rate = reader.readFloat32()
+        const frame_num = reader.readInt32()
 
         let bank = anim.getBank(bank_name)
         if (!bank) {
@@ -226,31 +191,36 @@ export function UnpackAnim(buff: Buffer) {
         const animation = new Animation(animation_name, frame_rate)
         bank.animations.push(animation)
 
-        offset += 17 + animation_name_len
-
         for (let idx = 0; idx < frame_num; idx++) {
-            const [x, y, w, h] = struct.unpack("<ffff", buff.subarray(offset, offset + 16)) as number[]
-            const event_num = struct.unpack("<I", buff.subarray(offset + 16, offset + 20))[0] as number // is 0, no use
-            const element_num = struct.unpack("<I", buff.subarray(offset + 20 + event_num * 4, offset + 24 + event_num * 4))[0] as number
+            const x = reader.readFloat32()
+            const y = reader.readFloat32()
+            const w = reader.readFloat32()
+            const h = reader.readFloat32()
+
+            const event_num = reader.readUint32() // is 0, no use
+            const element_num = reader.readUint32(reader.cursor + event_num * 4)
             const anim_frame = new AnimFrame(idx, x, y, w, h)
             animation.frames.push(anim_frame)
 
-            offset += 24 + event_num * 4
-
             for (let z_index = 0; z_index < element_num; z_index++) {
-                const symbol_name_hash = struct.unpack("<I", buff.subarray(offset, offset + 4))[0] as number
-                const symbol = hash_dict.get(symbol_name_hash) as string
-                const frame = struct.unpack("<I", buff.subarray(offset + 4, offset + 8))[0] as number
-                const layer_name_hash = struct.unpack("<I", buff.subarray(offset + 8, offset + 12))[0] as number
-                const layer_name = hash_dict.get(layer_name_hash) as string
-                const [m_a, m_b, m_c, m_d, m_tx, m_ty, z] = struct.unpack("<fffffff", buff.subarray(offset + 12, offset + 40)) as number[]
+                const symbol_name_hash = reader.readUint32()
+                const symbol = hash_dict.get(symbol_name_hash)!
+                const frame = reader.readUint32()
+                const layer_name_hash = reader.readUint32()
+                const layer_name = hash_dict.get(layer_name_hash)!
+
+                const m_a = reader.readFloat32()
+                const m_b = reader.readFloat32()
+                const m_c = reader.readFloat32()
+                const m_d = reader.readFloat32()
+                const m_tx = reader.readFloat32()
+                const m_ty = reader.readFloat32()
+                const z = reader.readFloat32()
 
                 const element = new AnimElement(z_index, symbol, frame, layer_name, m_a, m_b, m_c, m_d, m_tx, m_ty)
                 anim_frame.elements.push(element)
-                anim_frame.sort()
-
-                offset += 40
             }
+            anim_frame.sort()
         }
         animation.sort()
     }

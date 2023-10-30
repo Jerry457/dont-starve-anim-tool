@@ -1,13 +1,12 @@
 import { JSX, Show, For, createSignal, Setter } from "solid-js"
-
 import AddIcon from "~icons/mdi/plus-box-outline"
 import DeleteIcon from "~icons/mdi/delete-forever-outline"
+
 import { IconButton } from "./IconButton"
+import { Bank, Animation, AnimFrame, AnimElement } from "../lib/kfiles/anim"
+import { Build, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
 
 import style from "./DataViewer.module.css"
-
-import { Bank, Animation, AnimFrame, AnimElement } from "../kfiles/anim"
-import { Build, BuildSymbol, BuildFrame } from "../kfiles/build"
 
 type TitleData = {
     title: string
@@ -17,12 +16,10 @@ type TitleData = {
     sub_titles?: string[]
 }
 
-type CellData = {
-    [key: string]: string | number
-}
+export const dataChangeEvent = new CustomEvent("dataChange")
 
 export type RowData = {
-    cell: CellData
+    data: Bank | Animation | AnimFrame | AnimElement | Build | BuildSymbol | BuildFrame
     shown?: boolean
     sub?: RowData[]
 }
@@ -30,7 +27,7 @@ export type RowData = {
 export function toRowData(data: Bank | Animation | AnimFrame | AnimElement | Build | BuildSymbol | BuildFrame): RowData {
     return {
         shown: true,
-        cell: data.getCell(),
+        data: data,
         sub: data.getSubRow?.().map(subElement => toRowData(subElement)),
     }
 }
@@ -110,8 +107,11 @@ function DataViewerRow(props: {
     function onCheckChange(e: JSX.ChangeEvent) {
         if (e.target) {
             props.row.shown = e.target.checked
+            dispatchEvent(dataChangeEvent)
         }
     }
+
+    const data = props.row.data as { [key: string]: string | number }
 
     return (
         <tr class={props.chosen ? style.chosen_tr : ""} onClick={props.onClick}>
@@ -124,8 +124,15 @@ function DataViewerRow(props: {
                 {cell_data => {
                     return (
                         <DataViewerCell
-                            value={props.row.cell[cell_data.key]}
-                            setValue={cell_data.readOnly ? undefined : (value: string | number) => (props.row.cell[cell_data.key] = value)}
+                            value={data[cell_data.key]}
+                            setValue={
+                                cell_data.readOnly
+                                    ? undefined
+                                    : (value: string | number) => {
+                                          data[cell_data.key] = value
+                                          dispatchEvent(dataChangeEvent)
+                                      }
+                            }
                         />
                     )
                 }}

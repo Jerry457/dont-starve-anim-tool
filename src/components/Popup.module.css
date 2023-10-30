@@ -1,9 +1,7 @@
 .Popup {
     position: fixed;
-    top: 20%;
-    left: 20%;
-    /* right: 0;
-    bottom: 0; */
+    top: 5%;
+    left: 30%;
 
     z-index: 999;
 
@@ -11,9 +9,11 @@
     flex-direction: column;
     align-items: center;
 
-    background-color: wheat;
-    border: solid 1px black;
-    padding: 10px;
+    background-color: white;
+    box-shadow: 0 0 10px 3px rgba(0, 0, 0, 0.5);
+    padding: 0px 10px 0px 10px;
+
+    height: auto !important;
 }
 
 .popup_body {
@@ -21,6 +21,16 @@
     justify-content: center;
 }
 
-.close_button{
+.close_button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 1.2rem;
 
+    --button-normal-color: hsl(341, 97%, 59%);
+    --button-hover-color: hsl(0, 100%, 50%);
+    --button-active-color: hsl(0, 72%, 44%);
+
+    font-size: inherit;
+    font-family: inherit;
 }

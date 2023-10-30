@@ -1,0 +1,56 @@
+.HideLayerPopup {
+    width: 330px;
+    height: 400px;
+
+    display: grid;
+    grid-template-rows: max-content auto max-content;
+}
+
+.HideLayerPopup h2 {
+    text-align: center;
+}
+
+.list {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    /* align-items: center; */
+    overflow-y: scroll;
+    margin: 10px;
+}
+
+.list_li {
+    list-style: none;
+    display: flex;
+    /* align-items: center; */
+    justify-content: center;
+    margin: 10px;
+}
+
+.unUsed {
+    opacity: 0.5;
+}
+
+.list input[type="text"] {
+    /* width: 6.5em; */
+    /* color: white; */
+    font-size: inherit;
+    font-family: inherit;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-bottom-color: hsla(0, 0%, 0%, 0.2);
+
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.list input:focus {
+    outline: none;
+}
+
+.addButton {
+    width: 100px;
+    /* position: absolute; */
+    margin: 10px;
+    bottom: 10px;
+}

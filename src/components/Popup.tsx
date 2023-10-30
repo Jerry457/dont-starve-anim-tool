@@ -1,11 +1,11 @@
-import Close from "~icons/mdi/close-circle-outline"
+import Close from "~icons/mdi/close"
 import { createSignal, Show, JSX } from "solid-js"
 
 import { TextButton } from "./TextButton"
 import { IconButton } from "./IconButton"
+import ZoomDragDiv from "./ZoomDragDiv"
 
 import style from "./Popup.module.css"
-
 
 export function Popup(props: { buttonText: string; buttonClassList?: { [k: string]: boolean | undefined } } & JSX.ElementProp) {
     const [shown, setShown] = createSignal(false)
@@ -13,10 +13,10 @@ export function Popup(props: { buttonText: string; buttonClassList?: { [k: strin
         <>
             <TextButton text={props.buttonText} onClick={() => setShown(!shown())} classList={{ ...props.buttonClassList }} />
             <Show when={shown()}>
-                <div classList={{ [style.Popup]: true, ...props.classList }}>
+                <ZoomDragDiv classList={{ [style.Popup]: true, ...props.classList }} dragable={true}>
                     <IconButton classList={{ [style.close_button]: true }} onClick={() => setShown(false)} icon={Close} />
                     <div children={props.children} />
-                </div>
+                </ZoomDragDiv>
             </Show>
         </>
     )
