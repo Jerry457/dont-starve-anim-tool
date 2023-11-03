@@ -1,14 +1,16 @@
 import { createSignal } from "solid-js"
 import { createStore, createMutable } from "solid-js/store"
-import { SymbolMaps } from "./symbol_map"
+import { SymbolMaps } from "./symbol_maps"
 import { RowData } from "../components/DataViewer"
-import { OverrideSymbol } from "../AnimTool/OverrideSymbol"
+
+export const updateAnimationEvent = new CustomEvent("updateAnimation")
 
 export const banks = createMutable<RowData[]>([])
 export const builds = createMutable<RowData[]>([])
 
 export const [playAnimation, setPlayAnimation] = createSignal<RowData>()
-
+export const [colourCube, setColourCube] = createSignal("")
+export const [hideLayers, setHideLayers] = createStore<{ [layer: string]: boolean | undefined }>({})
 export const [symbolMaps, setSymbolMaps] = createStore(
     Object.entries(SymbolMaps).reduce(
         (
@@ -29,5 +31,3 @@ export const [symbolMaps, setSymbolMaps] = createStore(
         {}
     )
 )
-
-export const [hideLayers, setHideLayers] = createStore<{ [layer: string]: boolean | undefined }>({})

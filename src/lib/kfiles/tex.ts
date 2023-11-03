@@ -4,14 +4,14 @@ import { newCanvas, resize, flipY, unPreMultiplyAlpha } from "../image-canvas"
 
 import BinaryDataReader from "../binary-data/BinaryDataReader"
 
-enum Platform {
+export enum Platform {
     Default = 0, // Unknown
     PC = 12,
     PS3 = 10,
     Xbox360 = 11,
 }
 
-enum PixelFormat {
+export enum PixelFormat {
     DXT1 = 0,
     DXT3 = 1,
     DXT5 = 2,
@@ -20,14 +20,14 @@ enum PixelFormat {
     Unknown = 7,
 }
 
-enum TextureType {
+export enum TextureType {
     OneD = 0,
     TwoD = 1,
     ThreeD = 2,
     CubeMapped = 3,
 }
 
-const Specifications = Object.freeze({
+export const Specifications = Object.freeze({
     PreCaveSpec: Object.freeze({
         max_platform: 8, // 3
         max_pixel_format: 8, // 3
@@ -241,7 +241,7 @@ export class Ktex {
         this.header.mipmap_count = this.mipmaps.length
     }
 
-    to_image(preMultiplyAlpha: boolean = true) {
+    async to_image(preMultiplyAlpha: boolean = true) {
         const mipmap = this.mipmaps[0]
         mipmap.decompress(this.header.pixel_format)
         const mipmapData = mipmap.data!

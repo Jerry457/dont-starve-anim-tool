@@ -11,7 +11,7 @@ export class BuildFrame {
     vert_idx: number
     vert_count: number
 
-    imageURL?: string
+    canvas?: HTMLCanvasElement
 
     constructor(
         frame_num: number = 0,
@@ -143,7 +143,7 @@ export class Build {
         return this.symbols
     }
 
-    splitAltas(atlases: { [fileName: string]: HTMLCanvasElement }) {
+    async splitAltas(atlases: { [fileName: string]: HTMLCanvasElement }) {
         if (this.atlas_names.length === 0) {
             return
         }
@@ -200,7 +200,7 @@ export class Build {
                 const regionH = Math.round(regionBottom - regionTop)
 
                 if (uMax - uMin <= 0 || vMax - vMin <= 0) {
-                    frame.imageURL = newCanvas(frame.w, frame.h).toDataURL()
+                    frame.canvas = newCanvas(frame.w, frame.h)
                     continue
                 }
 
@@ -227,7 +227,7 @@ export class Build {
                         cropped = paste(image, cropped, regionX, regionY)
                     }
                 }
-                frame.imageURL = cropped.toDataURL()
+                frame.canvas = cropped
 
                 // document.body.appendChild(newCanvas(cropped.width, cropped.height, cropped))
             }
@@ -239,7 +239,7 @@ export class Build {
     }
 }
 
-export function UnpackBuild(data: BinaryDataReader | ArrayBuffer) {
+export async function UnpackBuild(data: BinaryDataReader | ArrayBuffer) {
     const build = new Build()
 
     const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)

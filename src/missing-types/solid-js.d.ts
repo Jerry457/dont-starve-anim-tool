@@ -10,8 +10,12 @@ declare module "solid-js" {
             onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>
         }
 
-        interface ChangeEvent extends Event {
+        interface InputChangeEvent extends Event {
             target: HTMLInputElement
+        }
+
+        interface SelectChangeEvent extends Event {
+            target: HTMLSelectElement
         }
     }
 }

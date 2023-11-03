@@ -2,6 +2,7 @@ import { JSX, Show, For, createSignal, Setter } from "solid-js"
 import AddIcon from "~icons/mdi/plus-box-outline"
 import DeleteIcon from "~icons/mdi/delete-forever-outline"
 
+import { updateAnimationEvent } from "../data"
 import { IconButton } from "./IconButton"
 import { Bank, Animation, AnimFrame, AnimElement } from "../lib/kfiles/anim"
 import { Build, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
@@ -15,8 +16,6 @@ type TitleData = {
     block?: boolean
     sub_titles?: string[]
 }
-
-export const dataChangeEvent = new CustomEvent("dataChange")
 
 export type RowData = {
     data: Bank | Animation | AnimFrame | AnimElement | Build | BuildSymbol | BuildFrame
@@ -70,7 +69,7 @@ function DataViewerTitles(props: TitleData) {
 
 function DataViewerCell(props: { value: string | number; setValue?: (value: string | number) => void }) {
     const value_type = typeof props.value
-    function onTextChange(e: JSX.ChangeEvent) {
+    function onTextChange(e: JSX.InputChangeEvent) {
         if (e.target) {
             const target = e.target
             const value = target.value
@@ -104,10 +103,10 @@ function DataViewerRow(props: {
     checkable?: boolean
     onClick: (e: MouseEvent) => void
 }) {
-    function onCheckChange(e: JSX.ChangeEvent) {
+    function onCheckChange(e: JSX.InputChangeEvent) {
         if (e.target) {
             props.row.shown = e.target.checked
-            dispatchEvent(dataChangeEvent)
+            dispatchEvent(updateAnimationEvent)
         }
     }
 
@@ -130,7 +129,7 @@ function DataViewerRow(props: {
                                     ? undefined
                                     : (value: string | number) => {
                                           data[cell_data.key] = value
-                                          dispatchEvent(dataChangeEvent)
+                                          dispatchEvent(updateAnimationEvent)
                                       }
                             }
                         />

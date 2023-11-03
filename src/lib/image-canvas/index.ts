@@ -1,3 +1,5 @@
+import { Ktex, PixelFormat } from "../kfiles/tex"
+
 export function newCanvas(width: number, height: number, image?: CanvasImageSource) {
     const canvas = document.createElement("canvas")
     canvas.width = width
@@ -43,8 +45,7 @@ export function flipY(canvas: HTMLCanvasElement) {
 
 export function resize(canvas: HTMLCanvasElement, width: number, height: number) {
     const resized = newCanvas(width, height)
-    const ctx = resized.getContext("2d")!
-    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
+    resized.getContext("2d")!.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
 
     return resized
 }
@@ -58,7 +59,13 @@ export function transform(canvas: HTMLCanvasElement, m_a: number, m_b: number, m
     const top = Math.max(...borderY)
     const bottom = Math.min(...borderY)
 
-    const transformed = newCanvas(Math.round(right - left), Math.round(top - bottom))
+    const transformedWidth = Math.round(right - left)
+    const transformedHeight = Math.round(top - bottom)
+    if (transformedWidth <= 0 || transformedHeight <= 0) {
+        return
+    }
+    const transformed = newCanvas(transformedWidth, transformedHeight)
+
     const transformedContext = transformed.getContext("2d")!
     transformedContext.setTransform(m_a, m_b, m_c, m_d, -left + m_tx, -bottom + m_ty)
     transformedContext.drawImage(canvas, 0, 0)
@@ -68,8 +75,7 @@ export function transform(canvas: HTMLCanvasElement, m_a: number, m_b: number, m
 
 export function crop(canvas: HTMLCanvasElement, x: number, y: number, w: number, h: number) {
     // const canvas = newCanvas(image.width, image.height, image)
-    const ctx = canvas.getContext("2d")!
-    const crop_data = ctx.getImageData(x, y, w, h)
+    const crop_data = canvas.getContext("2d")!.getImageData(x, y, w, h)
 
     const croped = newCanvas(w, h)
     croped.getContext("2d")!.putImageData(crop_data, 0, 0)
@@ -78,15 +84,13 @@ export function crop(canvas: HTMLCanvasElement, x: number, y: number, w: number,
 }
 
 export function paste(pasted: HTMLCanvasElement, canvas: HTMLCanvasElement, dx: number, dy: number) {
-    const ctx = pasted.getContext("2d")!
-    ctx.drawImage(canvas, dx, dy)
+    pasted.getContext("2d")!.drawImage(canvas, dx, dy)
 
     return pasted
 }
 
 export function preMultiplyAlpha(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext("2d")!
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const imageData = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height)
 
     for (let i = 0; i < imageData.data.length; i += 4) {
         let [r, g, b, a] = imageData.data.slice(i, i + 4)
@@ -108,9 +112,7 @@ export function preMultiplyAlpha(canvas: HTMLCanvasElement) {
 }
 
 export function unPreMultiplyAlpha(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext("2d")!
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const imageData = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height)
     for (let i = 0; i < imageData.data.length; i += 4) {
         let [r, g, b, a] = imageData.data.slice(i, i + 4)
 
@@ -129,4 +131,36 @@ export function unPreMultiplyAlpha(canvas: HTMLCanvasElement) {
     unPreMultiplied.getContext("2d")!.putImageData(imageData, 0, 0)
 
     return unPreMultiplied
+}
+
+export function applyColourCube(canvas: HTMLCanvasElement, colourCubeKtex: Ktex) {
+    if (colourCubeKtex.header.pixel_format !== PixelFormat.RGB || colourCubeKtex.mipmaps[0].data_size !== 32 * 32 * 32 * 3) {
+        throw new TypeError("this ktex no colour cube file")
+    }
+
+    const imageData = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height)
+    const pixelData = imageData.data
+    const colourCubeData = colourCubeKtex.mipmaps[0].block_data!
+    for (let i = 0; i < pixelData.length; i += 4) {
+        let r = pixelData[i]
+        let g = pixelData[i + 1]
+        let b = pixelData[i + 2]
+        const a = pixelData[i + 3]
+
+        r = r >> 3 // r / 8
+        g = g >> 3
+        b = b >> 3
+
+        let offset = (((31 - g) << 10) + (b << 5) + r) * 3 // ((31 - g) * 32 * 32 + b * 32 + r * 1) * 3
+
+        pixelData[i] = colourCubeData[offset]
+        pixelData[i + 1] = colourCubeData[offset + 1]
+        pixelData[i + 2] = colourCubeData[offset + 2]
+        pixelData[i + 3] = a
+    }
+
+    const applied = newCanvas(canvas.width, canvas.height, canvas)
+    applied.getContext("2d")!.putImageData(imageData, 0, 0)
+
+    return applied
 }

@@ -6,7 +6,7 @@ import DeleteIcon from "~icons/mdi/delete-outline"
 
 import { IconButton } from "../components/IconButton"
 import { TextButton } from "../components/TextButton"
-import { symbolMaps, setSymbolMaps } from "../data/ui_data"
+import { symbolMaps, setSymbolMaps } from "../data"
 
 import style from "./OverrideSymbol.module.css"
 
@@ -27,7 +27,7 @@ export function mapSymbol(symbol_name: string) {
 }
 
 export function OverrideSymbol() {
-    function onOverSymbolCheck(data: string[], e: JSX.ChangeEvent) {
+    function onOverSymbolCheck(data: string[], e: JSX.InputChangeEvent) {
         const [symbol, overSymbol] = data
 
         setSymbolMaps(
@@ -37,7 +37,7 @@ export function OverrideSymbol() {
         )
     }
 
-    function onChangeOverSymbol(data: string[], e: JSX.ChangeEvent) {
+    function onChangeOverSymbol(data: string[], e: JSX.InputChangeEvent) {
         const [symbol, overSymbol] = data
 
         if (symbolMaps[symbol]!.overSymbols[e.target.value]) {
@@ -72,7 +72,7 @@ export function OverrideSymbol() {
         )
     }
 
-    function onSymbolMapCheck(symbol: string, e: JSX.ChangeEvent) {
+    function onSymbolMapCheck(symbol: string, e: JSX.InputChangeEvent) {
         setSymbolMaps(
             produce(pre => {
                 pre[symbol]!.used = e.target.checked
@@ -80,7 +80,7 @@ export function OverrideSymbol() {
         )
     }
 
-    function onChangeSymbolMap(symbol: string, e: JSX.ChangeEvent) {
+    function onChangeSymbolMap(symbol: string, e: JSX.InputChangeEvent) {
         if (symbolMaps[e.target.value]) {
             alert(`${e.target.value} already exists`)
             e.target.value = symbol
@@ -114,6 +114,7 @@ export function OverrideSymbol() {
     return (
         <div class={style.OverrideSymbolPopup}>
             <h2> Override Symbol </h2>
+            <a href="https://github.com/Jerry457/dont-starve-anim-tool/blob/main/src/data/symbol_map.ts">src</a>
             <div class={style.list}>
                 <For each={Object.entries(symbolMaps)}>
                     {([symbol, data]) => {

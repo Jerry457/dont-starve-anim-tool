@@ -1,12 +1,16 @@
 .OverrideSymbolPopup {
     display: grid;
-    grid-template-rows: max-content auto max-content;
+    grid-template-rows: max-content max-content auto max-content;
 
     /* width: 400px; */
     height: 400px;
 }
 
 .OverrideSymbolPopup h2 {
+    text-align: center;
+}
+
+.OverrideSymbolPopup a {
     text-align: center;
 }
 

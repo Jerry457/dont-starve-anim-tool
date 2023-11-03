@@ -1,17 +1,17 @@
 import { createSignal } from "solid-js"
 
-import { banks, setPlayAnimation } from "./data/ui_data"
+import { banks, setPlayAnimation } from "./data"
 import { RowData, DataViewer } from "./components/DataViewer"
 
-import style from "./AnimViewer.module.css"
+import style from "./AnimDataViewer.module.css"
 
-export default function AnimViewer() {
+export default function AnimDataViewer() {
     const [animations, setAnimations] = createSignal<RowData[]>([])
     const [animFrames, setAnimFrames] = createSignal<RowData[]>([])
     const [animElements, setAnimElements] = createSignal<RowData[]>([])
 
     return (
-        <div class={style.AnimViewer}>
+        <div class={style.AnimDataViewer}>
             <DataViewer rows={banks} keys={[{ key: "name" }]} titles={{ title: "Bank", hasButton: true }} subSignal={setAnimations} />
             <DataViewer
                 rows={animations()}

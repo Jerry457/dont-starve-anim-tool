@@ -144,7 +144,7 @@ export class Anim {
     }
 }
 
-export function UnpackAnim(data: BinaryDataReader | ArrayBuffer) {
+export async function UnpackAnim(data: BinaryDataReader | ArrayBuffer) {
     const anim = new Anim()
 
     const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)

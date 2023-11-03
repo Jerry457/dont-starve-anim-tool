@@ -83,6 +83,10 @@
     height: 100%;
 }
 
+.tool_menu > div {
+    width: 100%;
+}
+
 .tool_button {
     width: 100%;
     --button-normal-color: hsl(0, 0%, 0%);
@@ -114,11 +118,6 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 .Popup {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.Popup .buttion {
-    transform: translateY(15%);
+    top: 5%;
+    left: 30%;
 }

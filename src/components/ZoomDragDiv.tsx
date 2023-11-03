@@ -62,7 +62,6 @@ export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolea
     }
 
     function onMouseUp() {
-        console.log(2)
         dragging = false
     }
 
@@ -105,7 +104,9 @@ export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolea
             <Show when={props.zoomable}>
                 <IconButton icon={ReSzie} onClick={onReszie} classList={{ [style.reSstIcon]: true }} />
             </Show>
-            <div class={style.ZoomDragDiv} ref={zoomDragDiv!} children={props.children} classList={{ ...props.classList }} />
+            <div class={style.ZoomDragDiv} ref={zoomDragDiv!} classList={{ ...props.classList }}>
+                {props.children}
+            </div>
         </div>
     )
 }

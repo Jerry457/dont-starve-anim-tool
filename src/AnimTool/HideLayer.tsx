@@ -5,8 +5,7 @@ import DeleteIcon from "~icons/mdi/delete-outline"
 
 import { IconButton } from "../components/IconButton"
 import { TextButton } from "../components/TextButton"
-import { hideLayers, setHideLayers } from "../data/ui_data"
-import { dataChangeEvent } from "../components/DataViewer"
+import { hideLayers, setHideLayers, updateAnimationEvent } from "../data"
 
 import style from "./HideLayer.module.css"
 
@@ -15,16 +14,16 @@ export function isHided(layer: string) {
 }
 
 export function HideLayer() {
-    function onChecked(layer: string, e: JSX.ChangeEvent) {
+    function onChecked(layer: string, e: JSX.InputChangeEvent) {
         setHideLayers(
             produce(pre => {
                 pre[layer] = e.target.checked
             })
         )
-        dispatchEvent(dataChangeEvent)
+        dispatchEvent(updateAnimationEvent)
     }
 
-    function onChange(layer: string, e: JSX.ChangeEvent) {
+    function onChange(layer: string, e: JSX.InputChangeEvent) {
         if (hideLayers[e.target.value]) {
             alert(`${e.target.value} already exists`)
             e.target.value = layer
@@ -37,7 +36,7 @@ export function HideLayer() {
                 pre[layer] = undefined
             })
         )
-        dispatchEvent(dataChangeEvent)
+        dispatchEvent(updateAnimationEvent)
     }
 
     function onAdd() {
@@ -46,7 +45,7 @@ export function HideLayer() {
                 pre[""] = true
             })
         )
-        dispatchEvent(dataChangeEvent)
+        dispatchEvent(updateAnimationEvent)
     }
 
     function onDelete(layer: string) {
@@ -55,7 +54,7 @@ export function HideLayer() {
                 pre[layer] = undefined
             })
         )
-        dispatchEvent(dataChangeEvent)
+        dispatchEvent(updateAnimationEvent)
     }
 
     return (
