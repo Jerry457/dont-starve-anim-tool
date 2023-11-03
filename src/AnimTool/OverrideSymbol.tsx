@@ -114,7 +114,7 @@ export function OverrideSymbol() {
     return (
         <div class={style.OverrideSymbolPopup}>
             <h2> Override Symbol </h2>
-            <a href="https://github.com/Jerry457/dont-starve-anim-tool/blob/main/src/data/symbol_map.ts">src</a>
+            <a href="https://github.com/Jerry457/dont-starve-anim-tool/blob/main/src/data/symbol_maps.ts">src</a>
             <div class={style.list}>
                 <For each={Object.entries(symbolMaps)}>
                     {([symbol, data]) => {
