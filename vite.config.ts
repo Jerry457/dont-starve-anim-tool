@@ -19,4 +19,5 @@ export default defineConfig({
     build: {
         target: "esnext",
     },
+    assetsInclude: ["**/*.tex"],
 })

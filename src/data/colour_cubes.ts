@@ -1,8 +1,6 @@
 import { Ktex } from "../lib/kfiles/tex"
 import { updateAnimationEvent } from "./index"
 
-const assetPath = "/colour_cubes/"
-
 const language = navigator.language
 function en_zh(en: string, zh: string) {
     return language === "zh-CN" || language === "zh-TW" ? zh : en
@@ -91,12 +89,14 @@ export const colourCubes: { [name: string]: Ktex | undefined } = {}
 const promises = []
 for (const [_, fileName] of colourCubeNames) {
     promises.push(
-        fetch(assetPath + fileName + ".tex").then(response => {
-            response.arrayBuffer().then(arrayBuffer => {
-                colourCubes[fileName] = new Ktex(fileName)
-                colourCubes[fileName]!.read_tex(arrayBuffer)
+        import(`../assets/colour_cubes/${fileName}.tex`).then(module =>
+            fetch(module.default).then(response => {
+                response.arrayBuffer().then(arrayBuffer => {
+                    colourCubes[fileName] = new Ktex(fileName)
+                    colourCubes[fileName]!.read_tex(arrayBuffer)
+                })
             })
-        })
+        )
     )
 }
 Promise.all(promises).then(() => {
