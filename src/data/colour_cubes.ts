@@ -1,7 +1,7 @@
 import { Ktex } from "../lib/kfiles/tex"
 import { updateAnimationEvent } from "./index"
 
-const assetPath = "../src/assets/colour_cubes/"
+const assetPath = "/colour_cubes/"
 
 const language = navigator.language
 function en_zh(en: string, zh: string) {

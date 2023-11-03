@@ -78,7 +78,7 @@ export function crop(canvas: HTMLCanvasElement, x: number, y: number, w: number,
     const crop_data = canvas.getContext("2d")!.getImageData(x, y, w, h)
 
     const croped = newCanvas(w, h)
-    croped.getContext("2d")!.putImageData(crop_data, 0, 0)
+    croped.getContext("2d", { willReadFrequently: true })!.putImageData(crop_data, 0, 0)
 
     return croped
 }
