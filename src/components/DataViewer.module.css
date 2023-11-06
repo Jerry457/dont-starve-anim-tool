@@ -47,19 +47,18 @@ td input[type="text"] {
     padding: 0.5em 1em;
     text-align: center;
     box-sizing: border-box;
-    font-size: 0.3em;
 
     background-color: transparent;
 
     outline: none;
 }
 
-td input[type=text]:focus {
+td input[type="text"]:focus {
     border-color: #1a73e8;
 }
 
 input[readonly=""] {
-    cursor: default
+    cursor: default;
 }
 
 .chosen_tr td {

@@ -64,7 +64,7 @@ export function HideLayer() {
                 <For each={Object.entries(hideLayers)}>
                     {([layer, used]) => {
                         return (
-                            <li classList={{ [style.list_li]: true, [style.unUsed]: !used }}>
+                            <li classList={{ [style.listLi]: true, [style.unUsed]: !used }}>
                                 <input type="checkbox" checked={used!} onChange={[onChecked, layer]} data-cantdrag={true} />
                                 <input type="text" value={layer} onChange={[onChange, layer]} data-cantdrag={true} />
                                 <IconButton

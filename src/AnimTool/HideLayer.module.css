@@ -19,7 +19,7 @@
     margin: 10px;
 }
 
-.list_li {
+.listLi {
     list-style: none;
     display: flex;
     /* align-items: center; */

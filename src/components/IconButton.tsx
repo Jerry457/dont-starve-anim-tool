@@ -11,7 +11,7 @@ export function IconButton(
         <button
             classList={{
                 ...props.classList,
-                [style["icon-button"]]: true,
+                [style["IconButton"]]: true,
             }}
             onClick={props.onClick}>
             <props.icon />

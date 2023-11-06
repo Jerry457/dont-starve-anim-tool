@@ -11,10 +11,10 @@ import Play from "~icons/mdi/play"
 import Previous from "~icons/mdi/skip-previous"
 import Next from "~icons/mdi/skip-next"
 import ColorPickerIcon from "~icons/mdi/palette"
+import DownloadIcon from "~icons/mdi/download"
 
 import { Popup } from "./components/Popup"
 import { IconButton } from "./components/IconButton"
-import { TextButton } from "./components/TextButton"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
 import { builds, playAnimation, colourCube } from "./data"
@@ -335,6 +335,7 @@ export default function AnimationArea() {
         <div class={style.Animation}>
             <div class={style.animationContainer} style={{ "background-color": color() }}>
                 <AnimationPlayer />
+                <IconButton icon={DownloadIcon} classList={{ [style.downloadButton]: true }} onClick={onClick} />
             </div>
             <div class={style.toolMenu}>
                 <div class={style.colorPicker}>
@@ -353,9 +354,6 @@ export default function AnimationArea() {
                     <Popup buttonText={"HideLayer"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.Popup]: true }}>
                         <HideLayer />
                     </Popup>
-                </div>
-                <div>
-                    <TextButton text={"DownloadAnim"} classList={{ [style.toolButton]: true }} onClick={onClick}></TextButton>
                 </div>
             </div>
         </div>

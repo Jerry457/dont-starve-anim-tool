@@ -14,12 +14,12 @@
     height: auto !important;
 }
 
-.popup_body {
+.popupBody {
     display: flex;
     justify-content: center;
 }
 
-.close_button {
+.closeButton {
     position: absolute;
     right: 10px;
     top: 10px;

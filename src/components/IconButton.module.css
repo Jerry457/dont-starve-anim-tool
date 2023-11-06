@@ -1,4 +1,4 @@
-.icon-button {
+.IconButton {
     --button-normal-color: hsl(204, 85%, 40%);
     --button-hover-color: hsl(204, 85%, 35%);
     --button-active-color: hsl(204, 85%, 30%);
@@ -42,8 +42,8 @@ For after click animation
 Not doing this on the element it self is
 because it's impossible to do transition/animation only on switching state away from :active
 */
-.icon-button::before,
-.icon-button::after {
+.IconButton::before,
+.IconButton::after {
     content: "";
 
     position: absolute;
@@ -60,28 +60,28 @@ because it's impossible to do transition/animation only on switching state away 
     /* Android YouTube app (1/6s, 1/3s) */
     /* transition: background-color 0.17s, border-color 0.33s; */
 }
-.icon-button:active::before,
-.icon-button.ontouch::before,
-.icon-button:active::after,
-.icon-button.ontouch::after {
+.IconButton:active::before,
+.IconButton.ontouch::before,
+.IconButton:active::after,
+.IconButton.ontouch::after {
     transition: none;
 }
-.icon-button:active::before,
-.icon-button.ontouch::before {
+.IconButton:active::before,
+.IconButton.ontouch::before {
     background-color: rgba(0, 0, 0, 0.1);
 }
-.icon-button:active::after,
-.icon-button.ontouch::after {
+.IconButton:active::after,
+.IconButton.ontouch::after {
     opacity: 0;
     border-color: rgba(0, 0, 0, 0.2);
 }
 @media (hover: hover) {
-    .icon-button:hover {
+    .IconButton:hover {
         color: var(--button-hover-color);
         background-color: rgba(0, 0, 0, 0.1);
     }
 }
-.icon-button:active,
-.icon-button.ontouch {
+.IconButton:active,
+.IconButton.ontouch {
     color: var(--button-active-color);
 }

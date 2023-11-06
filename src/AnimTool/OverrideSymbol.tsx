@@ -122,7 +122,7 @@ export function OverrideSymbol() {
 
                         return (
                             <div classList={{ [style.unUsed]: !data!.used }}>
-                                <div class={style.list_li}>
+                                <div class={style.listLi}>
                                     <IconButton
                                         icon={TriangleIcon}
                                         classList={{ [expand() ? style.expandButtion : style.collapseButtion]: true }}
@@ -138,7 +138,7 @@ export function OverrideSymbol() {
                                 <Show when={expand()}>
                                     <For each={Object.entries(data!.overSymbols)}>
                                         {([overSymbol, used]) => (
-                                            <div classList={{ [style.subMenu]: true, [style.list_li]: true, [style.unUsed]: !used }}>
+                                            <div classList={{ [style.subMenu]: true, [style.listLi]: true, [style.unUsed]: !used }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={used}

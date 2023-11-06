@@ -27,7 +27,7 @@
     margin: 10px;
 }
 
-.list_li {
+.listLi {
     display: flex;
     justify-content: center;
     margin: 10px;
@@ -37,7 +37,7 @@
     margin-left: 3em;
 }
 
-.list_li input[type="text"] {
+.listLi input[type="text"] {
     font-size: inherit;
     font-family: inherit;
     background-color: transparent;
@@ -48,7 +48,7 @@
     margin-right: 10px;
 }
 
-.list_li input:focus {
+.listLi input:focus {
     outline: none;
 }
 
