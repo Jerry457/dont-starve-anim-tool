@@ -3,7 +3,7 @@ import { onMount } from "solid-js"
 import { FileDropEvent } from "file-drop-element"
 
 import BinaryDataReader from "./lib/binary-data/BinaryDataReader"
-import { Ktex } from "./lib/kfiles/tex"
+import { Ktex } from "./lib/kfiles/ktex"
 import { UnpackAnim } from "./lib/kfiles/anim"
 import { Build, UnpackBuild } from "./lib/kfiles/build"
 import { newCanvas } from "./lib/image-canvas"

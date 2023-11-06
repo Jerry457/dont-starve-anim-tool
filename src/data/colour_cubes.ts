@@ -1,4 +1,4 @@
-import { Ktex } from "../lib/kfiles/tex"
+import { Ktex } from "../lib/kfiles/ktex"
 import { updateAnimationEvent } from "./index"
 
 const language = navigator.language

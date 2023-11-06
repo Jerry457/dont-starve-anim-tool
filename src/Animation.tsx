@@ -3,6 +3,7 @@ import { createStore, produce } from "solid-js/store"
 import { Animation, AnimElement } from "./lib/kfiles/anim"
 import { BuildFrame, BuildSymbol } from "./lib/kfiles/build"
 import { newCanvas, applyColourCube, transform, paste } from "./lib/image-canvas"
+import { encodeDownload } from "./lib/gif"
 import { clamp } from "./lib/math"
 
 import Pause from "~icons/mdi/pause"
@@ -13,6 +14,7 @@ import ColorPickerIcon from "~icons/mdi/palette"
 
 import { Popup } from "./components/Popup"
 import { IconButton } from "./components/IconButton"
+import { TextButton } from "./components/TextButton"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
 import { builds, playAnimation, colourCube } from "./data"
@@ -47,12 +49,11 @@ function getBuildFrame(symbol_name: string, frame_num: number) {
 }
 
 function AnimationPlayer() {
-    const [pause, setPause] = createSignal(true)
-
     let animCanvas: HTMLCanvasElement
     let animCanvascontext: CanvasRenderingContext2D
     let progress: HTMLDivElement
 
+    let renderedIndex = 0
     let frameRate = 30
     let frameDuration = 1000 / frameRate
     let frameTop = Infinity
@@ -61,6 +62,8 @@ function AnimationPlayer() {
     let [frameIndex, setFrameIndex] = createSignal(0)
     let [frameNum, setFrameNum] = createSignal(1)
     let [renderedFrames, setRenderFrames] = createStore<(HTMLCanvasElement | undefined)[]>([])
+
+    const [pause, setPause] = createSignal(true)
 
     function onClickprogress(e: MouseEvent) {
         const progressBoundingClientRect = progress.getBoundingClientRect()
@@ -71,20 +74,20 @@ function AnimationPlayer() {
         setFrameIndex(clamp(Math.round(percent * (frameNum() - 1)), 0, frameNum() - 1))
     }
 
-    function getNextFrameIndex() {
-        return (frameIndex() + 1) % frameNum()
+    function getNextFrameIndex(index: number) {
+        return (index + 1) % frameNum()
     }
 
-    function getPreFrameIndex() {
-        return Math.max(frameIndex() - 1, 0) % frameNum()
+    function getPreFrameIndex(index: number) {
+        return Math.max(index - 1, 0) % frameNum()
     }
 
     function nextFrame() {
-        setFrameIndex(getNextFrameIndex())
+        setFrameIndex(getNextFrameIndex(frameIndex()))
     }
 
     function preFrame() {
-        setFrameIndex(getPreFrameIndex())
+        setFrameIndex(getPreFrameIndex(frameIndex()))
     }
 
     function calculateFrameBorder() {
@@ -149,8 +152,12 @@ function AnimationPlayer() {
         animCanvas.height = Math.round(frameBottom - frameTop)
     }
 
+    function isRendered(index: number) {
+        return renderedFrames[index] !== undefined
+    }
+
     async function renderFrame(index: number) {
-        if (renderedFrames[index] || animCanvas.width <= 0 || animCanvas.height <= 0) {
+        if (isRendered(index) || animCanvas.width <= 0 || animCanvas.height <= 0) {
             return
         }
 
@@ -214,12 +221,23 @@ function AnimationPlayer() {
         setRenderFrames(produce(pre => (pre[index] = renderedFrame)))
     }
 
-    function onUpdateAnimation() {
+    async function onUpdateAnimation() {
         setRenderFrames([])
         calculateFrameBorder()
+        renderedIndex = 0
+    }
+
+    async function onDownloadAnim() {
+        const animation = playAnimation()
+        if (!animation) return
+        encodeDownload((animation.data as Animation).name, animCanvas.width, animCanvas.height, frameDuration, renderedFrames)
     }
 
     createEffect(() => {
+        if (!animCanvas) {
+            return
+        }
+
         if (!animCanvascontext) {
             animCanvascontext = animCanvas.getContext("2d", { willReadFrequently: true })!
         }
@@ -230,10 +248,10 @@ function AnimationPlayer() {
         }
     })
 
-    createMemo(() => {
+    createMemo(async () => {
         const animation = playAnimation()
 
-        if (!animation || !animation.sub) {
+        if (!animCanvas || !animation || !animation.sub) {
             return
         }
 
@@ -241,15 +259,17 @@ function AnimationPlayer() {
         setFrameNum(animation.sub.length)
         frameRate = (animation.data as Animation).frameRate
         frameDuration = 1000 / frameRate
-        onUpdateAnimation()
+        await onUpdateAnimation()
     })
 
     onMount(() => {
+        addEventListener("downloadAnim", onDownloadAnim)
         addEventListener("updateColourCube", onUpdateAnimation)
         addEventListener("updateAnimation", onUpdateAnimation)
     })
 
     onCleanup(() => {
+        removeEventListener("downloadAnim", onDownloadAnim)
         removeEventListener("updateColourCube", onUpdateAnimation)
         removeEventListener("updateAnimation", onUpdateAnimation)
     })
@@ -259,9 +279,12 @@ function AnimationPlayer() {
         startTime = startTime || timeStamp
         const elapsed = timeStamp - startTime
         if (elapsed >= frameDuration) {
-            renderFrame(getPreFrameIndex())
-            await renderFrame(frameIndex())
-            renderFrame(getNextFrameIndex())
+            if (!isRendered(frameIndex())) {
+                renderedIndex = frameIndex()
+                await renderFrame(renderedIndex)
+            }
+            renderedIndex = getNextFrameIndex(renderedIndex)
+            renderFrame(renderedIndex)
 
             if (!pause()) {
                 nextFrame()
@@ -279,16 +302,16 @@ function AnimationPlayer() {
                 <canvas ref={animCanvas!}></canvas>
             </ZoomDragDiv>
             <div class={style.AnimationPlayerBar}>
-                <IconButton icon={Previous} classList={{ [style.control_button]: true }} onClick={preFrame} />
+                <IconButton icon={Previous} classList={{ [style.controlButton]: true }} onClick={preFrame} />
                 <Show // pause
                     when={pause()}
-                    fallback={<IconButton icon={Pause} classList={{ [style.control_button]: true }} onClick={() => setPause(true)} />}>
-                    <IconButton icon={Play} classList={{ [style.control_button]: true }} onClick={() => setPause(false)} />
+                    fallback={<IconButton icon={Pause} classList={{ [style.controlButton]: true }} onClick={() => setPause(true)} />}>
+                    <IconButton icon={Play} classList={{ [style.controlButton]: true }} onClick={() => setPause(false)} />
                 </Show>
-                <IconButton icon={Next} classList={{ [style.control_button]: true }} onClick={nextFrame} />
+                <IconButton icon={Next} classList={{ [style.controlButton]: true }} onClick={nextFrame} />
                 <div>{`${frameIndex()}/${frameNum() - 1}`}</div>
                 <div class={style.progress} onClick={onClickprogress} ref={progress!}>
-                    <div class={style.progress_value} style={`width: ${frameNum() === 0 ? 1 : ((frameIndex() + 1) / frameNum()) * 100}%`}></div>
+                    <div class={style.progressValue} style={`width: ${frameNum() === 0 ? 1 : ((frameIndex() + 1) / frameNum()) * 100}%`}></div>
                 </div>
             </div>
         </>
@@ -296,36 +319,43 @@ function AnimationPlayer() {
 }
 
 export default function AnimationArea() {
+    let colorInput: HTMLInputElement
+
     const [color, setColor] = createSignal<string>("#C8C8C8")
 
     function onPickColor(e: JSX.InputChangeEvent) {
         setColor(e.target.value)
     }
 
-    let colorInput: HTMLInputElement
+    function onClick() {
+        dispatchEvent(new CustomEvent("downloadAnim"))
+    }
 
     return (
         <div class={style.Animation}>
-            <div class={style.animation_container} style={{ "background-color": color() }}>
+            <div class={style.animationContainer} style={{ "background-color": color() }}>
                 <AnimationPlayer />
             </div>
-            <div class={style.tool_menu}>
-                <div class={style.color_picker}>
-                    <IconButton icon={ColorPickerIcon} onClick={() => colorInput.click()} classList={{ [style.color_picker_icon]: true }} />
+            <div class={style.toolMenu}>
+                <div class={style.colorPicker}>
+                    <IconButton icon={ColorPickerIcon} onClick={() => colorInput.click()} classList={{ [style.colorPickerIcon]: true }} />
                     <input type="color" value={color()} onInput={onPickColor} ref={colorInput!} />
                 </div>
                 <div>
                     <SelectColourCube />
                 </div>
                 <div>
-                    <Popup buttonText={"OverrideSymbol"} buttonClassList={{ [style.tool_button]: true }} classList={{ [style.Popup]: true }}>
+                    <Popup buttonText={"OverrideSymbol"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.Popup]: true }}>
                         <OverrideSymbol />
                     </Popup>
                 </div>
                 <div>
-                    <Popup buttonText={"HideLayer"} buttonClassList={{ [style.tool_button]: true }} classList={{ [style.Popup]: true }}>
+                    <Popup buttonText={"HideLayer"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.Popup]: true }}>
                         <HideLayer />
                     </Popup>
+                </div>
+                <div>
+                    <TextButton text={"DownloadAnim"} classList={{ [style.toolButton]: true }} onClick={onClick}></TextButton>
                 </div>
             </div>
         </div>

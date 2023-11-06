@@ -1,4 +1,4 @@
-import { Ktex, PixelFormat } from "../kfiles/tex"
+import { Ktex, PixelFormat } from "../kfiles/ktex"
 
 export function newCanvas(width: number, height: number, image?: CanvasImageSource) {
     const canvas = document.createElement("canvas")
@@ -84,7 +84,7 @@ export function crop(canvas: HTMLCanvasElement, x: number, y: number, w: number,
 }
 
 export function paste(pasted: HTMLCanvasElement, canvas: HTMLCanvasElement, dx: number, dy: number) {
-    pasted.getContext("2d")!.drawImage(canvas, dx, dy)
+    pasted.getContext("2d", { willReadFrequently: true })!.drawImage(canvas, dx, dy)
 
     return pasted
 }

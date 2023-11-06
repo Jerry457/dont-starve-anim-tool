@@ -3,7 +3,7 @@
     height: 100%;
 }
 
-.animation_container {
+.animationContainer {
     flex: 1;
     overflow: hidden;
     position: relative;
@@ -24,11 +24,18 @@
     z-index: 999;
 }
 
-.control_button {
+.controlButton {
     font-size: 1.2rem;
 }
 
-.animation_progress {
+.recordButton {
+    position: absolute;
+    right: 0;
+    top: 0;
+    --button-normal-color: hsl(0, 0%, 0%);
+}
+
+.animationProgress {
     flex: 1;
     /* width: 100%; */
 
@@ -50,19 +57,19 @@
     cursor: pointer;
 }
 
-.progress_value {
+.progressValue {
     background-color: hsl(204, 80%, 55%);
     height: 100%;
     border-radius: 2px;
     background-size: 20px 15px, 100% 100%, 100% 100%;
 }
 
-.animation_progress::-webkit-progress-bar {
+.animationProgress::-webkit-progress-bar {
     background-color: white;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.26) inset;
 }
 
-.animation_progress::-webkit-progress-value {
+.animationProgress::-webkit-progress-value {
     background-color: hsl(204, 80%, 55%);
     border-radius: 2px;
     background-size: 20px 15px, 100% 100%, 100% 100%;
@@ -77,28 +84,28 @@
     position: relative;
 }
 
-.tool_menu {
+.toolMenu {
     /* display: flex; */
     overflow: auto;
     height: 100%;
 }
 
-.tool_menu > div {
+.toolMenu > div {
     width: 100%;
 }
 
-.tool_button {
+.toolButton {
     width: 100%;
     --button-normal-color: hsl(0, 0%, 0%);
 }
 
-.color_picker {
+.colorPicker {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.color_picker_icon {
+.colorPickerIcon {
     --button-normal-color: hsl(0, 0%, 0%);
 }
 
