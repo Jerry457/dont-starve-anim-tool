@@ -88,6 +88,8 @@
     /* display: flex; */
     overflow: auto;
     height: 100%;
+
+    border-left: var(--border-color);
 }
 
 .toolMenu > div {

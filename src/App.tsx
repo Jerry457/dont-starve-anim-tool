@@ -11,6 +11,8 @@ import { newCanvas } from "./lib/image-canvas"
 import { banks, builds, updateAnimationEvent } from "./data"
 import { toRowData } from "./components/DataViewer"
 import ResizeBar from "./components/ResizeBar"
+import { TextButton } from "./components/TextButton"
+
 import AnimDataViewer from "./AnimDataViewer"
 import BuildViewer from "./BuildViewer"
 import AnimPlayer from "./Animation"
@@ -160,8 +162,10 @@ export default function App() {
 
     return (
         <file-drop class={styles.App} multiple={true} onfiledrop={handleFiles}>
-            <div>
-                <input type="file" multiple={true} onChange={handleFiles} accept=".zip, .json, .bin, .png, .tex .dyn" />
+            <div class={styles.ioBar}>
+                <input type="file" multiple={true} class={styles.inputFile} onChange={handleFiles} accept=".zip, .json, .bin, .png, .tex .dyn" />
+                <TextButton text={"Open"} classList={{ [styles.IOButton]: true }} />
+                <TextButton text={"Export"} classList={{ [styles.IOButton]: true }} />
             </div>
             <div classList={{ [styles.main]: true }}>
                 <div class={styles.top} ref={topPart!}>

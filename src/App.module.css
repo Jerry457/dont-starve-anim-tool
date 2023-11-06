@@ -4,24 +4,32 @@
     grid-template-rows: max-content auto;
 }
 
-.nav {
-    margin: auto;
-    overflow: auto;
+.ioBar {
+    display: flex;
+    align-items: center;
+}
 
-    > ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        white-space: nowrap;
+.inputFile {
+    display: none;
+}
 
-        > li {
-            margin-right: 20px;
-        }
-    }
+.IOButton {
+    font-size: 0.8rem;
+    width: 100px;
+    margin: 10px;
+
+    background-color: rgba(0, 0, 0, 0.1);
+    --button-normal-color: black;
+    --button-hover-color: rgba(0, 0, 0, 0.2);
+
+    --button-active-color: hsl(204, 85%, 30%);
+
+    border: solid 1px rgba(0, 0, 0, 0.3);
 }
 
 .main {
+    --border-color: solid 1px rgba(0, 0, 0, 0.3);
+
     height: 100%;
 
     display: flex;
@@ -41,12 +49,16 @@
             min-width: 10%;
             width: 50%;
 
-            border: solid 1px black;
+            border: var(--border-color);
         }
         .right {
             height: 100%;
             min-width: 10%;
             flex: 1;
+
+            border-top: var(--border-color);
+            border-right: var(--border-color);
+            border-bottom: var(--border-color);
         }
     }
 
@@ -55,5 +67,9 @@
         min-height: 10%;
 
         position: relative;
+
+        border-left: var(--border-color);
+        border-right: var(--border-color);
+        border-bottom: var(--border-color);
     }
 }

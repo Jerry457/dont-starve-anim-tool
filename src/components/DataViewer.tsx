@@ -1,6 +1,6 @@
 import { JSX, Show, For, createSignal, Setter } from "solid-js"
 import AddIcon from "~icons/mdi/plus-box-outline"
-import DeleteIcon from "~icons/mdi/delete-forever-outline"
+import DeleteIcon from "~icons/mdi/delete-outline"
 
 import { updateAnimationEvent } from "../data"
 import { IconButton } from "./IconButton"
@@ -103,6 +103,8 @@ function DataViewerRow(props: {
     checkable?: boolean
     onClick: (e: MouseEvent) => void
 }) {
+    const data = props.row.data as { [key: string]: string | number }
+
     function onCheckChange(e: JSX.InputChangeEvent) {
         if (e.target) {
             props.row.shown = e.target.checked
@@ -110,7 +112,10 @@ function DataViewerRow(props: {
         }
     }
 
-    const data = props.row.data as { [key: string]: string | number }
+    function onDataChange(value: string | number, key: string) {
+        data[key] = value
+        dispatchEvent(updateAnimationEvent)
+    }
 
     return (
         <tr class={props.chosen ? style.chosen_tr : ""} onClick={props.onClick}>
@@ -124,14 +129,7 @@ function DataViewerRow(props: {
                     return (
                         <DataViewerCell
                             value={data[cell_data.key]}
-                            setValue={
-                                cell_data.readOnly
-                                    ? undefined
-                                    : (value: string | number) => {
-                                          data[cell_data.key] = value
-                                          dispatchEvent(updateAnimationEvent)
-                                      }
-                            }
+                            setValue={cell_data.readOnly ? undefined : value => onDataChange(value, cell_data.key)}
                         />
                     )
                 }}
@@ -147,7 +145,7 @@ export function DataViewer(props: {
 
     checkable?: boolean
     subSignal?: Setter<RowData[]>
-    OnClickRow?: (row: RowData) => void
+    OnClickRow?: (row: RowData, index: number) => void
 }) {
     const [chosenRow, setChosenRow] = createSignal<number | undefined>()
 
@@ -166,7 +164,7 @@ export function DataViewer(props: {
                                 }
 
                                 if (props.OnClickRow) {
-                                    props.OnClickRow(row)
+                                    props.OnClickRow(row, index())
                                 }
                             }
                             if (index() === props.rows.length - 1) {
