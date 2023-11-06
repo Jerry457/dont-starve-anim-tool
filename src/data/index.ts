@@ -9,6 +9,8 @@ export const banks = createMutable<RowData[]>([])
 export const builds = createMutable<RowData[]>([])
 
 export const [playAnimation, setPlayAnimation] = createSignal<RowData>()
+export const [playFrame, setPlayFrame] = createSignal<number>(0)
+
 export const [colourCube, setColourCube] = createSignal("")
 export const [hideLayers, setHideLayers] = createStore<{ [layer: string]: boolean | undefined }>({})
 export const [symbolMaps, setSymbolMaps] = createStore(

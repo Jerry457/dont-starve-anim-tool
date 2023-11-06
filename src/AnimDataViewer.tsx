@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js"
 
-import { banks, setPlayAnimation } from "./data"
+import { banks, setPlayAnimation, setPlayFrame } from "./data"
 import { RowData, DataViewer } from "./components/DataViewer"
 
 import style from "./AnimDataViewer.module.css"
@@ -30,6 +30,7 @@ export default function AnimDataViewer() {
                 }}
                 checkable={true}
                 subSignal={setAnimElements}
+                OnClickRow={(row, index) => setPlayFrame(index)}
             />
             <DataViewer
                 rows={animElements()}

@@ -1,4 +1,4 @@
-import { JSX, createSignal, createMemo, createEffect, onMount, onCleanup, Show, For } from "solid-js"
+import { JSX, createSignal, createEffect, onMount, onCleanup, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import { Animation, AnimElement } from "./lib/kfiles/anim"
 import { BuildFrame, BuildSymbol } from "./lib/kfiles/build"
@@ -17,7 +17,7 @@ import { Popup } from "./components/Popup"
 import { IconButton } from "./components/IconButton"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
-import { builds, playAnimation, colourCube } from "./data"
+import { builds, playAnimation, playFrame, colourCube } from "./data"
 import { colourCubes } from "./data/colour_cubes"
 import { SelectColourCube } from "./AnimTool/colour_cube"
 import { isHided, HideLayer } from "./AnimTool/HideLayer"
@@ -234,6 +234,12 @@ function AnimationPlayer() {
     }
 
     createEffect(() => {
+        if (pause()) {
+            setFrameIndex(playFrame())
+        }
+    })
+
+    createEffect(() => {
         if (!animCanvas) {
             return
         }
@@ -248,7 +254,7 @@ function AnimationPlayer() {
         }
     })
 
-    createMemo(async () => {
+    createEffect(async () => {
         const animation = playAnimation()
 
         if (!animCanvas || !animation || !animation.sub) {
