@@ -9,17 +9,42 @@ import { Build, UnpackBuild } from "./lib/kfiles/build"
 import { newCanvas } from "./lib/image-canvas"
 
 import { banks, builds, updateAnimationEvent } from "./data"
-import { toRowData } from "./components/DataViewer"
 import ResizeBar from "./components/ResizeBar"
+import { toRowData } from "./components/DataViewer"
 import { TextButton } from "./components/TextButton"
+import { Popup } from "./components/Popup"
 
 import AnimDataViewer from "./AnimDataViewer"
 import BuildViewer from "./BuildViewer"
 import AnimPlayer from "./Animation"
 
-import styles from "./App.module.css"
+import style from "./App.module.css"
 
 export default function App() {
+    let topPart: HTMLDivElement
+    let topPartHeight: number
+    function onDragVertical(dx: number, dy: number) {
+        topPartHeight = Math.max(0, topPartHeight + dy)
+        topPart.style.height = `${topPartHeight}px`
+    }
+
+    let leftPart: HTMLDivElement
+    let leftPartWidth: number
+    function onDragHorizontal(dx: number, dy: number) {
+        leftPartWidth = Math.max(0, leftPartWidth + dx)
+        leftPart.style.width = `${leftPartWidth}px`
+    }
+
+    onMount(() => {
+        topPartHeight = topPart.getBoundingClientRect().height
+        leftPartWidth = leftPart.getBoundingClientRect().width
+    })
+
+    let inputFile: HTMLInputElement
+    function OnClickOpen() {
+        inputFile.click()
+    }
+
     async function handleFiles(e: FileDropEvent | (Event & { currentTarget: HTMLInputElement; target: HTMLInputElement })) {
         let files: FileList | File[] | null = null
         if (e instanceof FileDropEvent) {
@@ -141,43 +166,31 @@ export default function App() {
         }
     }
 
-    let topPart: HTMLDivElement
-    let topPartHeight: number
-    function onDragVertical(dx: number, dy: number) {
-        topPartHeight = Math.max(0, topPartHeight + dy)
-        topPart.style.height = `${topPartHeight}px`
-    }
-
-    let leftPart: HTMLDivElement
-    let leftPartWidth: number
-    function onDragHorizontal(dx: number, dy: number) {
-        leftPartWidth = Math.max(0, leftPartWidth + dx)
-        leftPart.style.width = `${leftPartWidth}px`
-    }
-
-    onMount(() => {
-        topPartHeight = topPart.getBoundingClientRect().height
-        leftPartWidth = leftPart.getBoundingClientRect().width
-    })
-
     return (
-        <file-drop class={styles.App} multiple={true} onfiledrop={handleFiles}>
-            <div class={styles.ioBar}>
-                <input type="file" multiple={true} class={styles.inputFile} onChange={handleFiles} accept=".zip, .json, .bin, .png, .tex .dyn" />
-                <TextButton text={"Open"} classList={{ [styles.IOButton]: true }} />
-                <TextButton text={"Export"} classList={{ [styles.IOButton]: true }} />
+        <file-drop class={style.App} multiple={true} onfiledrop={handleFiles}>
+            <div class={style.ioBar}>
+                <input
+                    type="file"
+                    multiple={true}
+                    class={style.inputFile}
+                    onChange={handleFiles}
+                    ref={inputFile!}
+                    accept=".zip, .json, .bin, .png, .tex .dyn"
+                />
+                <TextButton text={"Open"} classList={{ [style.ioButton]: true }} onClick={OnClickOpen} />
+                <Popup buttonText={"Export"} buttonClassList={{ [style.ioButton]: true }} classList={{ [style.exportPopup]: true }}></Popup>
             </div>
-            <div classList={{ [styles.main]: true }}>
-                <div class={styles.top} ref={topPart!}>
-                    <div class={styles.left} ref={leftPart!}>
+            <div classList={{ [style.main]: true }}>
+                <div class={style.top} ref={topPart!}>
+                    <div class={style.left} ref={leftPart!}>
                         <ResizeBar onDrag={onDragHorizontal} resizeDirection="horizontal" />
                         <BuildViewer />
                     </div>
-                    <div class={styles.right}>
+                    <div class={style.right}>
                         <AnimPlayer />
                     </div>
                 </div>
-                <div class={styles.bottom}>
+                <div class={style.bottom}>
                     <ResizeBar onDrag={onDragVertical} resizeDirection="vertical" />
                     <AnimDataViewer />
                 </div>

@@ -1,6 +1,6 @@
-import { JSX, createSignal, createEffect, onMount, onCleanup, Show } from "solid-js"
+import { JSX, createSignal, Accessor, createEffect, onMount, onCleanup, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
-import { Animation, AnimElement } from "./lib/kfiles/anim"
+import { Animation, AnimElement, AnimFrame } from "./lib/kfiles/anim"
 import { BuildFrame, BuildSymbol } from "./lib/kfiles/build"
 import { newCanvas, applyColourCube, transform, paste } from "./lib/image-canvas"
 import { encodeDownload } from "./lib/gif"
@@ -15,6 +15,7 @@ import DownloadIcon from "~icons/mdi/download"
 
 import { Popup } from "./components/Popup"
 import { IconButton } from "./components/IconButton"
+import { TextButton } from "./components/TextButton"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
 import { builds, playAnimation, playFrame, colourCube } from "./data"
@@ -48,9 +49,12 @@ function getBuildFrame(symbol_name: string, frame_num: number) {
     }
 }
 
+const [showCollisionBox, SetShowCollisionBox] = createSignal<boolean>(false)
 function AnimationPlayer() {
     let animCanvas: HTMLCanvasElement
-    let animCanvascontext: CanvasRenderingContext2D
+    let frameCollisionBoxCanvas: HTMLCanvasElement
+    let animCanvasContext: CanvasRenderingContext2D
+    let animCollisionBoxContext: CanvasRenderingContext2D
     let progress: HTMLDivElement
 
     let renderedIndex = 0
@@ -62,6 +66,7 @@ function AnimationPlayer() {
     let [frameIndex, setFrameIndex] = createSignal(0)
     let [frameNum, setFrameNum] = createSignal(1)
     let [renderedFrames, setRenderFrames] = createStore<(HTMLCanvasElement | undefined)[]>([])
+    let [frameCollisions, setFrameCollisions] = createStore<{ x: number; y: number; w: number; h: number }[]>([])
 
     const [pause, setPause] = createSignal(true)
 
@@ -102,7 +107,12 @@ function AnimationPlayer() {
         let frameBottom = -Infinity
         let frameRight = -Infinity
 
+        const frameCollisions: { x: number; y: number; w: number; h: number }[] = []
+
         for (const animFrame of animation.sub) {
+            const { x, y, w, h } = animFrame.data as AnimFrame
+            frameCollisions.push({ x, y, w, h })
+
             if (!animFrame.sub) {
                 continue
             }
@@ -112,13 +122,13 @@ function AnimationPlayer() {
                 const { symbol, frame, m_a, m_b, m_c, m_d, m_tx, m_ty } = animElement.data as AnimElement
 
                 const overSymbol = mapSymbol(symbol) || symbol
-                const buildFamre = getBuildFrame(overSymbol, frame)
+                const buildFrame = getBuildFrame(overSymbol, frame)
 
-                if (!buildFamre) {
+                if (!buildFrame) {
                     continue
                 }
 
-                let { x, y, canvas } = buildFamre.data as BuildFrame
+                const { x: buildX, y: buildY, canvas } = buildFrame.data as BuildFrame
 
                 if (!canvas) {
                     continue
@@ -133,13 +143,13 @@ function AnimationPlayer() {
                     continue
                 }
 
-                const offestX = m_tx + x * m_a + y * m_c
-                const offestY = m_ty + x * m_b + y * m_d
+                const offsetX = m_tx + buildX * m_a + buildY * m_c
+                const offsetY = m_ty + buildX * m_b + buildY * m_d
 
-                const elementTop = offestY - transformedHeight / 2
-                const elementBottom = offestY + transformedHeight / 2
-                const elementLeft = offestX - transformedWidth / 2
-                const elementRight = offestX + transformedWidth / 2
+                const elementTop = offsetY - transformedHeight / 2
+                const elementBottom = offsetY + transformedHeight / 2
+                const elementLeft = offsetX - transformedWidth / 2
+                const elementRight = offsetX + transformedWidth / 2
 
                 frameTop = Math.min(frameTop, elementTop)
                 frameBottom = Math.max(frameBottom, elementBottom)
@@ -148,8 +158,42 @@ function AnimationPlayer() {
             }
         }
 
-        animCanvas.width = Math.round(frameRight - frameLeft)
-        animCanvas.height = Math.round(frameBottom - frameTop)
+        const width = Math.round(frameRight - frameLeft)
+        const height = Math.round(frameBottom - frameTop)
+        animCanvas.width = width
+        animCanvas.height = height
+
+        setFrameCollisions(frameCollisions)
+    }
+
+    function drawFrame(index: number) {
+        if (!animCanvasContext) if (!animCanvas) return
+        animCanvasContext = animCanvas.getContext("2d", { willReadFrequently: true })!
+
+        animCanvasContext.clearRect(0, 0, animCanvas.width, animCanvas.height)
+        const renderedFrame = renderedFrames[index]
+        if (renderedFrame) animCanvasContext.drawImage(renderedFrame, 0, 0)
+    }
+
+    function drawFrameCollisionBox(index: number) {
+        if (!animCanvas) return
+        if (!animCollisionBoxContext) if (!frameCollisionBoxCanvas) return
+        animCollisionBoxContext = frameCollisionBoxCanvas.getContext("2d", { willReadFrequently: true })!
+        animCollisionBoxContext.strokeStyle = "red"
+        animCollisionBoxContext.lineWidth = 5
+
+        animCollisionBoxContext.clearRect(0, 0, frameCollisionBoxCanvas.width, frameCollisionBoxCanvas.height)
+        const frameCollisionBox = frameCollisions[index]
+        if (frameCollisionBox) {
+            const { x, y, w, h } = frameCollisionBox
+            if (w >= frameCollisionBoxCanvas.width) frameCollisionBoxCanvas.width = w * 2
+            if (h >= frameCollisionBoxCanvas.height) frameCollisionBoxCanvas.height = h * 2
+
+            let boxX = x - w / 2 + frameCollisionBoxCanvas.width / 2 + (-animCanvas.width / 2 - frameLeft)
+            let boxY = y - h / 2 + frameCollisionBoxCanvas.height / 2 + (-animCanvas.height / 2 - frameTop)
+
+            animCollisionBoxContext.strokeRect(boxX, boxY, w, h)
+        }
     }
 
     function isRendered(index: number) {
@@ -234,23 +278,19 @@ function AnimationPlayer() {
     }
 
     createEffect(() => {
-        if (pause()) {
-            setFrameIndex(playFrame())
+        const index = frameIndex()
+        drawFrame(index)
+    })
+
+    createEffect(() => {
+        if (showCollisionBox()) {
+            drawFrameCollisionBox(frameIndex())
         }
     })
 
     createEffect(() => {
-        if (!animCanvas) {
-            return
-        }
-
-        if (!animCanvascontext) {
-            animCanvascontext = animCanvas.getContext("2d", { willReadFrequently: true })!
-        }
-        const renderedFrame = renderedFrames[frameIndex()]
-        animCanvascontext.clearRect(0, 0, animCanvas.width, animCanvas.height)
-        if (renderedFrame) {
-            animCanvascontext.drawImage(renderedFrame, 0, 0)
+        if (pause()) {
+            setFrameIndex(playFrame())
         }
     })
 
@@ -265,7 +305,7 @@ function AnimationPlayer() {
         setFrameNum(animation.sub.length)
         frameRate = (animation.data as Animation).frameRate
         frameDuration = 1000 / frameRate
-        await onUpdateAnimation()
+        onUpdateAnimation()
     })
 
     onMount(() => {
@@ -305,7 +345,10 @@ function AnimationPlayer() {
     return (
         <>
             <ZoomDragDiv dragable={true} zoomable={true} classList={{ [style.AnimationPlayer]: true }}>
-                <canvas ref={animCanvas!}></canvas>
+                <canvas ref={animCanvas!} class={style.animCanvas}></canvas>
+                <Show when={showCollisionBox()}>
+                    <canvas ref={frameCollisionBoxCanvas!} class={style.frameCollisionBoxCanvas} width={1000} height={1000}></canvas>
+                </Show>
             </ZoomDragDiv>
             <div class={style.AnimationPlayerBar}>
                 <IconButton icon={Previous} classList={{ [style.controlButton]: true }} onClick={preFrame} />
@@ -342,6 +385,7 @@ export default function AnimationArea() {
             <div class={style.animationContainer} style={{ "background-color": color() }}>
                 <AnimationPlayer />
                 <IconButton icon={DownloadIcon} classList={{ [style.downloadButton]: true }} onClick={onClick} />
+                <input type="checkbox" />
             </div>
             <div class={style.toolMenu}>
                 <div class={style.colorPicker}>
@@ -349,16 +393,28 @@ export default function AnimationArea() {
                     <input type="color" value={color()} onInput={onPickColor} ref={colorInput!} />
                 </div>
                 <div>
+                    <input type="checkbox" checked={showCollisionBox()} disabled={true} class={style.collisionCheck} />
+                    <TextButton
+                        text={"CollisionBox"}
+                        classList={{ [style.toolButton]: true }}
+                        onClick={() => {
+                            SetShowCollisionBox(pre => !pre)
+                        }}></TextButton>
+                </div>
+                <div>
                     <SelectColourCube />
                 </div>
                 <div>
-                    <Popup buttonText={"OverrideSymbol"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.Popup]: true }}>
-                        <OverrideSymbol />
+                    <Popup buttonText={"HideLayer"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.hideLayerPopup]: true }}>
+                        <HideLayer />
                     </Popup>
                 </div>
                 <div>
-                    <Popup buttonText={"HideLayer"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.Popup]: true }}>
-                        <HideLayer />
+                    <Popup
+                        buttonText={"OverrideSymbol"}
+                        buttonClassList={{ [style.toolButton]: true }}
+                        classList={{ [style.overrideSymbolPopup]: true }}>
+                        <OverrideSymbol />
                     </Popup>
                 </div>
             </div>

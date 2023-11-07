@@ -1,6 +1,6 @@
 .SelectColourCube {
     --button-normal-color: hsl(204, 85%, 40%);
-    --button-hover-color: hsl(204, 85%, 35%);
+    --button-hover-color: rgba(0, 0, 0, 0.1);
     --button-active-color: hsl(204, 85%, 30%);
 
     --button-normal-color-light: hsl(204, 85%, 96%);
@@ -14,13 +14,11 @@
     padding: 5px;
 
     text-align: center;
-}
 
-.SelectColourCube::selection {
-    background-color: DodgerBlue;
+    cursor: pointer;
+    user-select: none;
 }
 
 .SelectColourCube:active {
-    /* box-shadow: inset -2px -2px 3px rgba(255, 255, 255, 0.6), inset 2px 2px 3px rgba(0, 0, 0, 0.6); */
     color: var(--button-active-color);
 }

@@ -71,7 +71,7 @@ export const colourCubeNames = [
 
     [en_zh("Interior", "室内"), "pigshop_interior_cc"],
 
-    [en_zh("Quagmire", "暴食"), "quagmire_cc"],
+    // [en_zh("Quagmire", "暴食"), "quagmire_cc"],
     [en_zh("Lavaarena", "熔炉"), "lavaarena2_cc"],
 
     [en_zh("Bat Vision", "蝙蝠声呐"), "bat_vision_on_cc"],

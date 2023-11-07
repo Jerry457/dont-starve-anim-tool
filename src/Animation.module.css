@@ -33,6 +33,7 @@
     right: 0;
     top: 0;
     --button-normal-color: hsl(0, 0%, 0%);
+    z-index: 998;
 }
 
 .animationProgress {
@@ -84,6 +85,16 @@
     position: relative;
 }
 
+.animCanvas {
+    z-index: 2;
+    position: absolute;
+}
+
+.frameCollisionBoxCanvas {
+    z-index: 1;
+    position: absolute;
+}
+
 .toolMenu {
     /* display: flex; */
     overflow: auto;
@@ -94,6 +105,9 @@
 
 .toolMenu > div {
     width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .toolButton {
@@ -111,6 +125,11 @@
     --button-normal-color: hsl(0, 0%, 0%);
 }
 
+.collisionCheck {
+    left: 10px;
+    position: absolute;
+}
+
 input[type="color"] {
     border: none;
     width: 100px;
@@ -126,7 +145,12 @@ input[type="color"]::-webkit-color-swatch {
     border: none;
 }
 
-.Popup {
+.overrideSymbolPopup {
     top: 5%;
     left: 30%;
+}
+
+.hideLayerPopup {
+    top: 5%;
+    left: 5%;
 }
