@@ -21,7 +21,7 @@
 
     background-color: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(100px);
-    z-index: 999;
+    z-index: 998;
 }
 
 .controlButton {
@@ -123,11 +123,6 @@
 
 .colorPickerIcon {
     --button-normal-color: hsl(0, 0%, 0%);
-}
-
-.collisionCheck {
-    left: 10px;
-    position: absolute;
 }
 
 input[type="color"] {

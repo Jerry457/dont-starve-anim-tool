@@ -3,7 +3,9 @@ import { createStore, createMutable } from "solid-js/store"
 import { SymbolMaps } from "./symbol_maps"
 import { RowData } from "../components/DataViewer"
 
-export const updateAnimationEvent = new CustomEvent("updateAnimation")
+export function updateData() {
+    dispatchEvent(new CustomEvent("updateData"))
+}
 
 export const banks = createMutable<RowData[]>([])
 export const builds = createMutable<RowData[]>([])

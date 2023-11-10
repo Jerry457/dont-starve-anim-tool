@@ -14,7 +14,6 @@
 }
 
 .ioButton {
-    font-size: 0.8rem;
     width: 100px;
     margin: 10px;
 
@@ -27,9 +26,13 @@
     border: solid 1px rgba(0, 0, 0, 0.3);
 }
 
+.ioButton div {
+    font-size: 0.8rem;
+}
+
 .exportPopup {
     top: 10%;
-    left: 40%;
+    left: 30%;
 }
 
 .main {

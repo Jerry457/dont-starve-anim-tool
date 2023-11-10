@@ -1,4 +1,4 @@
-import { JSX, createSignal, Accessor, createEffect, onMount, onCleanup, Show } from "solid-js"
+import { JSX, createSignal, createEffect, onMount, onCleanup, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import { Animation, AnimElement, AnimFrame } from "./lib/kfiles/anim"
 import { BuildFrame, BuildSymbol } from "./lib/kfiles/build"
@@ -62,6 +62,7 @@ function AnimationPlayer() {
     let frameDuration = 1000 / frameRate
     let frameTop = Infinity
     let frameLeft = Infinity
+    let lastAnimation = ""
 
     let [frameIndex, setFrameIndex] = createSignal(0)
     let [frameNum, setFrameNum] = createSignal(1)
@@ -301,9 +302,15 @@ function AnimationPlayer() {
             return
         }
 
-        setFrameIndex(0)
+        const data = animation.data as Animation
+
+        if (lastAnimation !== data.name) {
+            setFrameIndex(0)
+            lastAnimation = data.name
+        }
+
         setFrameNum(animation.sub.length)
-        frameRate = (animation.data as Animation).frameRate
+        frameRate = data.frameRate
         frameDuration = 1000 / frameRate
         onUpdateAnimation()
     })
@@ -311,13 +318,13 @@ function AnimationPlayer() {
     onMount(() => {
         addEventListener("downloadAnim", onDownloadAnim)
         addEventListener("updateColourCube", onUpdateAnimation)
-        addEventListener("updateAnimation", onUpdateAnimation)
+        addEventListener("updateData", onUpdateAnimation)
     })
 
     onCleanup(() => {
         removeEventListener("downloadAnim", onDownloadAnim)
         removeEventListener("updateColourCube", onUpdateAnimation)
-        removeEventListener("updateAnimation", onUpdateAnimation)
+        removeEventListener("updateData", onUpdateAnimation)
     })
 
     let startTime: number | undefined = undefined
@@ -393,8 +400,8 @@ export default function AnimationArea() {
                     <input type="color" value={color()} onInput={onPickColor} ref={colorInput!} />
                 </div>
                 <div>
-                    <input type="checkbox" checked={showCollisionBox()} disabled={true} class={style.collisionCheck} />
                     <TextButton
+                        checkbox={true}
                         text={"CollisionBox"}
                         classList={{ [style.toolButton]: true }}
                         onClick={() => {

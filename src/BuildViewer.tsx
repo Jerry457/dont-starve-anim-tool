@@ -1,9 +1,28 @@
 import { createSignal } from "solid-js"
 
-import { builds } from "./data"
+import { builds, updateData } from "./data"
 import { RowData, DataViewer } from "./components/DataViewer"
 
 import style from "./BuildViewer.module.css"
+
+function buildUpdate() {
+    dispatchEvent(new CustomEvent("updateBuild"))
+}
+
+function rowChecked(row: RowData, index: number) {
+    return row.shown
+}
+
+function onCheckChange(index: number, row: RowData, checked: boolean) {
+    row.shown = checked
+    updateData()
+}
+
+function onRowDataChange(index: number, row: RowData, key: string, value: string | number) {
+    const data = row.data as { [key: string]: string | number }
+    data[key] = value
+    updateData()
+}
 
 export default function BuildViewer() {
     const [symbols, setSymbols] = createSignal<RowData[]>([])
@@ -13,9 +32,12 @@ export default function BuildViewer() {
         <div class={style.BuildViewer}>
             <DataViewer
                 rows={builds}
-                keys={[{ key: "name" }, { key: "scale", readOnly: true }]}
+                keys={[{ key: "name" }, { key: "scale" }]}
                 titles={{ title: "Build", hasButton: true, sub_titles: ["Name", "Scale"] }}
                 checkable={true}
+                rowChecked={rowChecked}
+                onRowCheckChange={onCheckChange}
+                onRowDataChange={onRowDataChange}
                 subSignal={setSymbols}
             />
             <DataViewer
@@ -23,6 +45,9 @@ export default function BuildViewer() {
                 keys={[{ key: "name" }]}
                 titles={{ title: "Symbol", hasButton: true }}
                 checkable={true}
+                rowChecked={rowChecked}
+                onRowCheckChange={onCheckChange}
+                onRowDataChange={onRowDataChange}
                 subSignal={setBuildFrames}
             />
             <DataViewer
@@ -30,19 +55,20 @@ export default function BuildViewer() {
                 keys={[
                     { key: "frame_num" },
                     { key: "duration" },
-                    { key: "x" },
-                    { key: "y" },
+                    { key: "x", readOnly: true },
+                    { key: "y", readOnly: true },
                     { key: "w", readOnly: true },
                     { key: "h", readOnly: true },
-                    { key: "vert_idx", readOnly: true },
-                    { key: "vert_count", readOnly: true },
                 ]}
                 titles={{
                     title: "Frame",
-                    sub_titles: ["Num", "Druation", "X", "Y", "W", "H", "Vidx", "Vcont"],
+                    sub_titles: ["Num", "Druation", "X", "Y", "W", "H"],
                     hasButton: true,
                 }}
                 checkable={true}
+                rowChecked={rowChecked}
+                onRowCheckChange={onCheckChange}
+                onRowDataChange={onRowDataChange}
             />
         </div>
     )

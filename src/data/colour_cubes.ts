@@ -1,5 +1,5 @@
 import { Ktex } from "../lib/kfiles/ktex"
-import { updateAnimationEvent } from "./index"
+import { updateData } from "./index"
 
 const language = navigator.language
 function en_zh(en: string, zh: string) {
@@ -99,6 +99,4 @@ for (const [_, fileName] of colourCubeNames) {
         )
     )
 }
-Promise.all(promises).then(() => {
-    dispatchEvent(updateAnimationEvent)
-})
+Promise.all(promises).then(updateData)

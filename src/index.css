@@ -22,7 +22,7 @@ file-drop::after {
     display: block;
     pointer-events: none;
     transition: 200ms;
-    z-index: 999;
+    z-index: 9999;
 }
 
 @media (prefers-reduced-motion: reduce) {

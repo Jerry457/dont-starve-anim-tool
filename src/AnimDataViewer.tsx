@@ -1,9 +1,24 @@
 import { createSignal } from "solid-js"
 
-import { banks, setPlayAnimation, setPlayFrame } from "./data"
+import { banks, setPlayAnimation, setPlayFrame, updateData } from "./data"
 import { RowData, DataViewer } from "./components/DataViewer"
 
 import style from "./AnimDataViewer.module.css"
+
+function rowChecked(row: RowData, index: number) {
+    return row.shown
+}
+
+function onCheckChange(index: number, row: RowData, checked: boolean) {
+    row.shown = checked
+    updateData()
+}
+
+function onRowDataChange(index: number, row: RowData, key: string, value: string | number) {
+    const data = row.data as { [key: string]: string | number }
+    data[key] = value
+    updateData()
+}
 
 export default function AnimDataViewer() {
     const [animations, setAnimations] = createSignal<RowData[]>([])
@@ -18,7 +33,8 @@ export default function AnimDataViewer() {
                 keys={[{ key: "name" }, { key: "frameRate" }]}
                 titles={{ title: "Animation", sub_titles: ["Name", "Rate"], hasButton: true }}
                 subSignal={setAnimFrames}
-                OnClickRow={row => setPlayAnimation(row)}
+                onRowDataChange={onRowDataChange}
+                onChosenRow={row => setPlayAnimation(row)}
             />
             <DataViewer
                 rows={animFrames()}
@@ -29,8 +45,11 @@ export default function AnimDataViewer() {
                     hasButton: true,
                 }}
                 checkable={true}
+                rowChecked={rowChecked}
+                onRowCheckChange={onCheckChange}
+                onRowDataChange={onRowDataChange}
                 subSignal={setAnimElements}
-                OnClickRow={(row, index) => setPlayFrame(index)}
+                onChosenRow={(row, index) => setPlayFrame(index)}
             />
             <DataViewer
                 rows={animElements()}
@@ -52,6 +71,9 @@ export default function AnimDataViewer() {
                     hasButton: true,
                 }}
                 checkable={true}
+                rowChecked={rowChecked}
+                onRowCheckChange={onCheckChange}
+                onRowDataChange={onRowDataChange}
             />
         </div>
     )

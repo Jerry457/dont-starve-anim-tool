@@ -7,13 +7,15 @@
 
     padding: 5px;
 
-    font-size: 1rem;
-
     color: var(--button-normal-color);
     background-color: transparent;
 
     cursor: pointer;
     user-select: none;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .TextButton:hover {
@@ -23,4 +25,13 @@
 .TextButton:active {
     /* box-shadow: inset -2px -2px 3px rgba(255, 255, 255, 0.6), inset 2px 2px 3px rgba(0, 0, 0, 0.6); */
     color: var(--button-active-color);
+}
+
+.text {
+    font-size: 1rem;
+    text-align: center;
+}
+
+.checkBox {
+    pointer-events: none;
 }

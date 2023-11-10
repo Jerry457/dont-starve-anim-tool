@@ -159,7 +159,7 @@ export function OverrideSymbol() {
                                             </div>
                                         )}
                                     </For>
-                                    <TextButton text={"Add Item"} classList={{ [style.addButton]: true }} onClick={[addOverSymbol, symbol]} />
+                                    <TextButton text={"Add Item"} classList={{ [style.addButton]: true }} onClick={() => addOverSymbol(symbol)} />
                                 </Show>
                             </div>
                         )

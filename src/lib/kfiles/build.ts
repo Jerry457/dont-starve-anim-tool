@@ -123,6 +123,16 @@ export class Vert {
     }
 }
 
+export class Altas {
+    name: string
+    canvas?: HTMLCanvasElement
+
+    constructor(name: string, canvas?: HTMLCanvasElement) {
+        this.name = name
+        this.canvas = canvas
+    }
+}
+
 export class Build {
     version = 6
     scale = 1
@@ -131,6 +141,7 @@ export class Build {
     name: string
     symbols: BuildSymbol[]
 
+    atlases?: Altas[]
     atlas_names: string[] = []
     verts: Vert[] = []
 
@@ -143,10 +154,17 @@ export class Build {
         return this.symbols
     }
 
+    getAltasSubRow() {
+        return this.atlases ? this.atlases?.map(atlas => ({ data: atlas })) : []
+    }
+
     async splitAltas(atlases: { [fileName: string]: HTMLCanvasElement }) {
         if (this.atlas_names.length === 0) {
             return
         }
+        this.atlases = this.atlas_names.map(name => {
+            return new Altas(name, atlases[name])
+        })
 
         let scaled_size = 0
         let origin_size = 0

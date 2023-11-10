@@ -2,15 +2,15 @@ import { JSX, Show, For, createSignal, Setter } from "solid-js"
 import AddIcon from "~icons/mdi/plus-box-outline"
 import DeleteIcon from "~icons/mdi/delete-outline"
 
-import { updateAnimationEvent } from "../data"
+import { updateData } from "../data"
 import { IconButton } from "./IconButton"
 import { Bank, Animation, AnimFrame, AnimElement } from "../lib/kfiles/anim"
-import { Build, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
+import { Build, Altas, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
 
 import style from "./DataViewer.module.css"
 
 type TitleData = {
-    title: string
+    title?: string
     hasButton?: boolean
 
     block?: boolean
@@ -18,7 +18,7 @@ type TitleData = {
 }
 
 export type RowData = {
-    data: Bank | Animation | AnimFrame | AnimElement | Build | BuildSymbol | BuildFrame
+    data: Bank | Animation | AnimFrame | AnimElement | Build | Altas | BuildSymbol | BuildFrame
     shown?: boolean
     sub?: RowData[]
 }
@@ -46,14 +46,18 @@ function Title(props: { title: string; hasButton?: boolean }) {
 function DataViewerTitles(props: TitleData) {
     return (
         <thead>
-            <tr>
-                <th colspan={(props.sub_titles ? props.sub_titles.length : 1) + Number(props.block)}>
-                    <Title title={props.title} hasButton={props.hasButton} />
-                </th>
-            </tr>
+            <Show when={props.title}>
+                <tr>
+                    <th colspan={(props.sub_titles ? props.sub_titles.length : 1) + Number(props.block)}>
+                        <Title title={props.title!} hasButton={props.hasButton} />
+                    </th>
+                </tr>
+            </Show>
             <tr>
                 <Show when={props.block && props.sub_titles}>
-                    <th>{}</th>
+                    <th>
+                        <input type="checkbox" style="visibility: hidden;" />
+                    </th>
                 </Show>
                 <For each={props.sub_titles}>
                     {title => (
@@ -69,61 +73,60 @@ function DataViewerTitles(props: TitleData) {
 
 function DataViewerCell(props: { value: string | number; setValue?: (value: string | number) => void }) {
     const value_type = typeof props.value
-    function onTextChange(e: JSX.InputChangeEvent) {
-        if (e.target) {
-            const target = e.target
-            const value = target.value
+    function onChange(e: JSX.InputChangeEvent) {
+        const value = e.target.value
 
-            if (value_type == "number") {
-                const number = Number(value)
-                if (isNaN(number)) {
-                    alert("invalid number")
-                    target.value = String(props.value)
-                } else {
-                    props.setValue?.(number)
-                }
+        if (value_type == "number") {
+            const number = Number(value)
+            if (isNaN(number)) {
+                alert("invalid number")
+                e.target.value = String(props.value)
             } else {
-                props.setValue?.(value)
+                props.setValue?.(number)
             }
+        } else {
+            props.setValue?.(value)
         }
     }
 
     return (
         <td>
-            <input type="text" value={props.value} onChange={onTextChange} readOnly={!props.setValue} />
+            <input type="text" value={props.value} onChange={onChange} readOnly={!props.setValue} />
         </td>
     )
 }
 
 function DataViewerRow(props: {
+    index: number
     row: RowData
     keys: { key: string; readOnly?: boolean }[]
 
     chosen: boolean
-    checkable?: boolean
     onClick: (e: MouseEvent) => void
+    checkable?: boolean
+    checked?: boolean
+    onDataChange?: (index: number, row: RowData, key: string, value: string | number) => void
+    onCheckChange?: (index: number, row: RowData, checked: boolean) => void
 }) {
     const data = props.row.data as { [key: string]: string | number }
 
     function onCheckChange(e: JSX.InputChangeEvent) {
-        if (e.target) {
-            props.row.shown = e.target.checked
-            dispatchEvent(updateAnimationEvent)
-        }
+        props.onCheckChange?.(props.index, props.row, e.target.checked)
     }
 
     function onDataChange(value: string | number, key: string) {
         data[key] = value
-        dispatchEvent(updateAnimationEvent)
+        props.onDataChange?.(props.index, props.row, key, value)
     }
 
     return (
         <tr class={props.chosen ? style.chosen_tr : ""} onClick={props.onClick}>
             <Show when={props.checkable}>
                 <td>
-                    <input type="checkbox" checked={props.row.shown} onChange={onCheckChange} />
+                    <input type="checkbox" checked={props.checked} onChange={onCheckChange} />
                 </td>
             </Show>
+
             <For each={props.keys}>
                 {cell_data => {
                     return (
@@ -141,11 +144,14 @@ function DataViewerRow(props: {
 export function DataViewer(props: {
     rows: RowData[]
     keys: { key: string; readOnly?: boolean }[]
-    titles: TitleData
+    titles?: TitleData
 
     checkable?: boolean
     subSignal?: Setter<RowData[]>
-    OnClickRow?: (row: RowData, index: number) => void
+    rowChecked?: (row: RowData, index: number) => boolean | undefined
+    onChosenRow?: (row: RowData, index: number) => void
+    onRowDataChange?: (index: number, row: RowData, key: string, value: string | number) => void
+    onRowCheckChange?: (index: number, row: RowData, checked: boolean) => void
 }) {
     const [chosenRow, setChosenRow] = createSignal<number | undefined>()
 
@@ -156,28 +162,33 @@ export function DataViewer(props: {
                 <tbody>
                     <For each={props.rows}>
                         {(row, index) => {
+                            const _index = index()
                             function onClickRow(e?: MouseEvent) {
-                                setChosenRow(index())
+                                setChosenRow(_index)
 
                                 if (row.sub) {
                                     props.subSignal?.(pre => row.sub!)
                                 }
 
-                                if (props.OnClickRow) {
-                                    props.OnClickRow(row, index())
+                                if (props.onChosenRow) {
+                                    props.onChosenRow(row, _index)
                                 }
                             }
-                            if (index() === props.rows.length - 1) {
+                            if (props.subSignal && _index === props.rows.length - 1) {
                                 onClickRow()
                             }
 
                             return (
                                 <DataViewerRow
-                                    checkable={props.checkable}
-                                    chosen={chosenRow() === index()}
-                                    keys={props.keys}
+                                    index={_index}
                                     row={row}
+                                    keys={props.keys}
+                                    checkable={props.checkable}
+                                    checked={props.rowChecked?.(row, _index)}
+                                    chosen={chosenRow() === _index}
                                     onClick={onClickRow}
+                                    onDataChange={props.onRowDataChange}
+                                    onCheckChange={props.onRowCheckChange}
                                 />
                             )
                         }}

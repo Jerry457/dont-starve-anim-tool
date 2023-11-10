@@ -45,7 +45,7 @@ export function flipY(canvas: HTMLCanvasElement) {
 
 export function resize(canvas: HTMLCanvasElement, width: number, height: number) {
     const resized = newCanvas(width, height)
-    resized.getContext("2d")!.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
+    resized.getContext("2d", { willReadFrequently: true })!.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height)
 
     return resized
 }

@@ -1,0 +1,110 @@
+.ExportFile {
+    width: 700px;
+
+    margin: 2em 1em 0em 1em;
+}
+
+.unUse > *:not(.useControl) {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.fieldset {
+    border-color: rgba(0, 0, 0, 0.2);
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+}
+
+.fileTypeFieldset {
+    display: flex;
+}
+
+.fileTypeFieldset > div {
+    margin: 10px;
+}
+
+.main {
+    height: 500px;
+    display: grid;
+    grid-template-columns: 1fr 10px 1fr;
+}
+
+.anim {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+}
+
+.buttonLegend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.build {
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr;
+}
+
+.BuildSelect {
+    --button-normal-color: hsl(204, 85%, 40%);
+    --button-hover-color: rgba(0, 0, 0, 0.1);
+    --button-active-color: hsl(204, 85%, 30%);
+
+    --button-normal-color-light: hsl(204, 85%, 96%);
+    --button-hover-color-light: hsl(204, 85%, 93%);
+
+    width: 100%;
+    font-size: 1rem;
+
+    border-color: rgba(0, 0, 0, 0.3);
+    outline: none;
+    padding: 5px;
+
+    text-align: center;
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.BuildSelect:active {
+    color: var(--button-active-color);
+}
+
+.main fieldset {
+    padding: 10px;
+}
+
+.download {
+    margin: 10px;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+.normalButton {
+    --button-normal-color: hsl(0, 0%, 0%);
+    cursor: default;
+}
+
+.chosenButton {
+    justify-content: left;
+}
+
+.downloadButton {
+    width: 100px;
+
+    background-color: rgba(0, 0, 0, 0.1);
+    --button-normal-color: black;
+    --button-hover-color: rgba(0, 0, 0, 0.2);
+
+    --button-active-color: hsl(204, 85%, 30%);
+
+    border: solid 1px rgba(0, 0, 0, 0.3);
+
+    margin-left: 10px;
+}
+
+.downloadButton > div {
+    font-size: 0.8rem;
+}

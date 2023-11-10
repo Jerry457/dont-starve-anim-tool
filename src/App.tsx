@@ -8,7 +8,7 @@ import { UnpackAnim } from "./lib/kfiles/anim"
 import { Build, UnpackBuild } from "./lib/kfiles/build"
 import { newCanvas } from "./lib/image-canvas"
 
-import { banks, builds, updateAnimationEvent } from "./data"
+import { banks, builds } from "./data"
 import ResizeBar from "./components/ResizeBar"
 import { toRowData } from "./components/DataViewer"
 import { TextButton } from "./components/TextButton"
@@ -17,6 +17,7 @@ import { Popup } from "./components/Popup"
 import AnimDataViewer from "./AnimDataViewer"
 import BuildViewer from "./BuildViewer"
 import AnimPlayer from "./Animation"
+import ExportFile from "./ExportFile"
 
 import style from "./App.module.css"
 
@@ -74,11 +75,7 @@ export default function App() {
                             zip.files["build.bin"].async("arraybuffer").then(arrayBuffer => {
                                 const promises = []
 
-                                let build: Build
-                                UnpackBuild(arrayBuffer).then(_build => {
-                                    builds.push(toRowData(_build))
-                                    build = _build
-                                })
+                                promises.push(UnpackBuild(arrayBuffer))
 
                                 const atlases: { [fileName: string]: HTMLCanvasElement } = {}
                                 for (const name in zip.files) {
@@ -87,16 +84,15 @@ export default function App() {
                                         promises.push(
                                             zip.files[name].async("arraybuffer").then(ktexArrayBuffer => {
                                                 ktex.read_tex(ktexArrayBuffer)
-                                                ktex.to_image().then(cavas => {
-                                                    atlases[name] = cavas
-                                                })
+                                                ktex.to_image().then(canvas => (atlases[name] = canvas))
                                             })
                                         )
                                     }
                                 }
-                                Promise.all(promises).then(() => {
+                                Promise.all(promises).then(results => {
+                                    const build = results[0] as Build
                                     build.splitAltas(atlases).then(() => {
-                                        dispatchEvent(updateAnimationEvent)
+                                        builds.push(toRowData(build))
                                     })
                                 })
                             })
@@ -178,7 +174,9 @@ export default function App() {
                     accept=".zip, .json, .bin, .png, .tex .dyn"
                 />
                 <TextButton text={"Open"} classList={{ [style.ioButton]: true }} onClick={OnClickOpen} />
-                <Popup buttonText={"Export"} buttonClassList={{ [style.ioButton]: true }} classList={{ [style.exportPopup]: true }}></Popup>
+                <Popup buttonText={"Export"} buttonClassList={{ [style.ioButton]: true }} classList={{ [style.exportPopup]: true }}>
+                    <ExportFile />
+                </Popup>
             </div>
             <div classList={{ [style.main]: true }}>
                 <div class={style.top} ref={topPart!}>

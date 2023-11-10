@@ -5,7 +5,7 @@ import DeleteIcon from "~icons/mdi/delete-outline"
 
 import { IconButton } from "../components/IconButton"
 import { TextButton } from "../components/TextButton"
-import { hideLayers, setHideLayers, updateAnimationEvent } from "../data"
+import { hideLayers, setHideLayers, updateData } from "../data"
 
 import style from "./HideLayer.module.css"
 
@@ -20,7 +20,7 @@ export function HideLayer() {
                 pre[layer] = e.target.checked
             })
         )
-        dispatchEvent(updateAnimationEvent)
+        updateData()
     }
 
     function onChange(layer: string, e: JSX.InputChangeEvent) {
@@ -36,7 +36,7 @@ export function HideLayer() {
                 pre[layer] = undefined
             })
         )
-        dispatchEvent(updateAnimationEvent)
+        updateData()
     }
 
     function onAdd() {
@@ -45,7 +45,7 @@ export function HideLayer() {
                 pre[""] = true
             })
         )
-        dispatchEvent(updateAnimationEvent)
+        updateData()
     }
 
     function onDelete(layer: string) {
@@ -54,7 +54,7 @@ export function HideLayer() {
                 pre[layer] = undefined
             })
         )
-        dispatchEvent(updateAnimationEvent)
+        updateData()
     }
 
     return (
