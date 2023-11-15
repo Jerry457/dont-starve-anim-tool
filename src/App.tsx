@@ -2,11 +2,10 @@ import JSZip from "jszip"
 import { onMount } from "solid-js"
 import { FileDropEvent } from "file-drop-element"
 
-import BinaryDataReader from "./lib/binary-data/BinaryDataReader"
+import { BinaryDataReader } from "./lib/binary-data"
 import { Ktex } from "./lib/kfiles/ktex"
-import { UnpackAnim } from "./lib/kfiles/anim"
-import { Build, UnpackBuild } from "./lib/kfiles/build"
-import { newCanvas } from "./lib/image-canvas"
+import { decompileAnim } from "./lib/kfiles/anim"
+import { Build, decompileBuild } from "./lib/kfiles/build"
 
 import { banks, builds } from "./data"
 import ResizeBar from "./components/ResizeBar"
@@ -65,7 +64,7 @@ export default function App() {
                     JSZip.loadAsync(file).then(zip => {
                         if ("anim.bin" in zip.files) {
                             zip.files["anim.bin"].async("arraybuffer").then(arrayBuffer =>
-                                UnpackAnim(arrayBuffer).then(anim => {
+                                decompileAnim(arrayBuffer).then(anim => {
                                     banks.push(...anim.banks.map(bank => toRowData(bank)))
                                 })
                             )
@@ -75,23 +74,22 @@ export default function App() {
                             zip.files["build.bin"].async("arraybuffer").then(arrayBuffer => {
                                 const promises = []
 
-                                promises.push(UnpackBuild(arrayBuffer))
+                                promises.push(decompileBuild(arrayBuffer))
 
-                                const atlases: { [fileName: string]: HTMLCanvasElement } = {}
+                                const atlases: { [fileName: string]: Ktex } = {}
                                 for (const name in zip.files) {
                                     if (name.includes(".tex")) {
-                                        const ktex = new Ktex(name)
+                                        atlases[name] = new Ktex(name)
                                         promises.push(
                                             zip.files[name].async("arraybuffer").then(ktexArrayBuffer => {
-                                                ktex.read_tex(ktexArrayBuffer)
-                                                ktex.to_image().then(canvas => (atlases[name] = canvas))
+                                                atlases[name].readKtex(ktexArrayBuffer)
                                             })
                                         )
                                     }
                                 }
                                 Promise.all(promises).then(results => {
                                     const build = results[0] as Build
-                                    build.splitAltas(atlases).then(() => {
+                                    build.splitAtlas(atlases).then(() => {
                                         builds.push(toRowData(build))
                                     })
                                 })
@@ -105,8 +103,8 @@ export default function App() {
                     fileReader.onload = async e => {
                         const image = new Image()
                         image.onload = () => {
-                            ktex.from_image(newCanvas(image.width, image.height, image))
-                            // document.body.appendChild(ktex.to_image())
+                            // ktex.from_image(newCanvas(image.width, image.height, image))
+                            // ktex.to_image().then(canvas => document.body.appendChild(canvas))
                         }
                         image.src = e.target!.result as string
                     }
@@ -126,19 +124,19 @@ export default function App() {
                         const head = reader.readString(4)
                         switch (head) {
                             case "ANIM":
-                                UnpackAnim(reader).then(anim => {
+                                decompileAnim(reader).then(anim => {
                                     banks.push(...anim.banks.map(bank => toRowData(bank)))
                                 })
                                 break
                             case "BILD":
-                                UnpackBuild(reader).then(build => {
+                                decompileBuild(reader).then(build => {
                                     builds.push(toRowData(build))
                                 })
                                 break
                             case "KTEX":
                                 const ktex = new Ktex(fileName)
-                                ktex.read_tex(reader)
-                                ktex.to_image()
+                                ktex.readKtex(reader)
+                                ktex.toImage()
                                 break
                             default:
                                 alert("Unknown file")

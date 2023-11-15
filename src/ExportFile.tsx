@@ -1,24 +1,33 @@
-import { Accessor, For, createSignal } from "solid-js"
+import { JSX, Accessor, For, createSignal } from "solid-js"
+import JSZip from "jszip"
 
 import { TextButton } from "./components/TextButton"
 import { RowData, DataViewer } from "./components/DataViewer"
 
 import { banks, builds } from "./data"
-import { Build } from "./lib/kfiles/build"
+import { Build, compileBuild } from "./lib/kfiles/build"
+import { Anim, Bank, compileAnim } from "./lib/kfiles/anim"
 
 import style from "./ExportFile.module.css"
 
+const textEncoder = new TextEncoder()
+
 const outputTypes = ["bin", "json", "scml"]
+
 const [hasAnim, setHasAnim] = createSignal(true)
 const [hasBuild, setHasBuild] = createSignal(true)
 const [hasAtlas, setHasAtlas] = createSignal(true)
-const [mergeAtlas, setMergeAtlas] = createSignal(true)
-const selectedBuild: boolean[] = []
+const [splitAtlas, setSplitAtlas] = createSignal(false)
+
 const selectedBanks: boolean[] = []
-let mergeBuilds: boolean = false
-let reAltas: boolean = true
-let dynFormat: boolean = false
-let zip: boolean = true
+let recalculate = true
+
+let selectedBuild = 0
+let repack = false
+let dynFormat = false
+let zipFileName = ""
+
+const [useZip, setUseZip] = createSignal(true)
 const [outputType, setOutputType] = createSignal<(typeof outputTypes)[number]>("bin")
 
 function AnimViewer() {
@@ -47,7 +56,15 @@ function AnimViewer() {
             <fieldset class={style.fieldset}>
                 <legend class={style.buttonLegend}>
                     <div>Banks</div>
-                    <TextButton text="recalculate collision" checkbox={true} classList={{ [style.normalButton]: true }} check={true} />
+                    <TextButton
+                        text="recalculate collision"
+                        checkbox={true}
+                        check={recalculate}
+                        classList={{ [style.normalButton]: true }}
+                        onClick={() => {
+                            recalculate = !recalculate
+                        }}
+                    />
                 </legend>
                 <DataViewer
                     rows={banks}
@@ -66,31 +83,31 @@ function AnimViewer() {
     )
 }
 
-function AltasViewer(props: { atlasSignal: Accessor<RowData[]> }) {
+function AtlasViewer(props: { atlasSignal: Accessor<RowData[]> }) {
     return (
         <fieldset class={style.fieldset}>
             <legend classList={{ [style.buttonLegend]: true, [style.unUse]: !hasAtlas() }}>
                 <TextButton
-                    text="Altas"
+                    text="Atlas"
                     checkbox={true}
                     check={hasAtlas()}
                     classList={{ [style.normalButton]: true, [style.useControl]: true }}
                     onClick={() => setHasAtlas(pre => !pre)}
                 />
-                <div classList={{ [style.buttonLegend]: true, [style.unUse]: !mergeAtlas() }}>
+                <div classList={{ [style.buttonLegend]: true, [style.unUse]: splitAtlas() }}>
                     <TextButton
-                        text="merge"
+                        text="splitAtlas"
                         checkbox={true}
-                        check={mergeAtlas()}
+                        check={splitAtlas()}
                         classList={{ [style.normalButton]: true, [style.useControl]: true }}
-                        onClick={() => setMergeAtlas(pre => !pre)}
+                        onClick={() => setSplitAtlas(pre => !pre)}
                     />
                     <TextButton
-                        text="realtas"
+                        text="repack"
                         checkbox={true}
-                        check={reAltas}
+                        check={repack}
                         classList={{ [style.normalButton]: true }}
-                        onClick={checkBox => (reAltas = checkBox!.checked)}
+                        onClick={checkBox => (repack = checkBox!.checked)}
                     />
                     <TextButton
                         text="dyn"
@@ -110,19 +127,16 @@ function BuildViewer() {
     const [symbols, setSymbols] = createSignal<RowData[]>([])
     const [atlas, setAtlas] = createSignal<RowData[]>([])
 
-    function onChosenRow(row: RowData) {
-        const build = row.data as Build
-        setAtlas(build.getAltasSubRow())
+    function onChange(e?: JSX.SelectChangeEvent) {
+        if (e) selectedBuild = Number(e.target.value)
+        if (builds[selectedBuild]) {
+            const rowData = builds[selectedBuild]
+            const build = rowData.data as Build
+            setSymbols(rowData.sub!)
+            setAtlas(build.getAtlasSubRow())
+        }
     }
-
-    function onRowCheckChange(index: number, _: RowData, checked: boolean) {
-        selectedBuild[index] = checked
-    }
-
-    function rowChecked(row: RowData, index: number) {
-        if (selectedBuild[index] === undefined) selectedBuild[index] = true
-        return selectedBuild[index]
-    }
+    onChange()
 
     return (
         <fieldset classList={{ [style.fieldset]: true, [style.build]: true, [style.unUse]: !hasBuild() }}>
@@ -136,40 +150,111 @@ function BuildViewer() {
                 />
             </legend>
             <fieldset class={style.fieldset}>
-                <legend class={style.buttonLegend}>
-                    <div>Builds</div>
-                    <TextButton
-                        text={"merge"}
-                        checkbox={true}
-                        check={mergeBuilds}
-                        classList={{ [style.normalButton]: true, [style.useControl]: true }}
-                        onClick={checkBox => (mergeBuilds = checkBox!.checked)}
-                    />
-                </legend>
-                <DataViewer
-                    rows={builds}
-                    keys={[
-                        { key: "name", readOnly: true },
-                        { key: "scale", readOnly: true },
-                    ]}
-                    checkable={true}
-                    rowChecked={rowChecked}
-                    subSignal={setSymbols}
-                    onChosenRow={onChosenRow}
-                    onRowCheckChange={onRowCheckChange}
-                />
+                <legend>Builds</legend>
+                <select class={style.buildSelect} onChange={onChange}>
+                    <For each={builds}>
+                        {(rowData, index) => {
+                            const build = rowData.data as Build
+                            return (
+                                <option value={index()} selected={selectedBuild === index()}>
+                                    {build.name}
+                                </option>
+                            )
+                        }}
+                    </For>
+                </select>
             </fieldset>
             <fieldset class={style.fieldset}>
                 <legend>Symbol</legend>
                 <DataViewer rows={symbols()} keys={[{ key: "name", readOnly: true }]} />
             </fieldset>
-            <AltasViewer atlasSignal={atlas} />
+            <AtlasViewer atlasSignal={atlas} />
         </fieldset>
     )
 }
 
+function downloadFile(blob: Blob, fileName: string) {
+    const downloadLink = document.createElement("a")
+    downloadLink.href = URL.createObjectURL(blob)
+    downloadLink.download = fileName
+    downloadLink.click()
+    URL.revokeObjectURL(downloadLink.href)
+}
+
 export default function ExportFile() {
-    async function onDownLoad() {}
+    async function onDownLoad() {
+        if (!hasAnim() && !hasBuild()) {
+            alert("Please select Anim or Build at least one ")
+            return
+        }
+
+        let anim: Anim | undefined
+        let build: Build | undefined
+
+        const type = outputType()
+        const files: { data: ArrayBuffer | Blob; name: string; path?: string }[] = []
+        const promises = []
+
+        if (hasAnim()) {
+            const packBanks = selectedBanks
+                .filter((use, index) => {
+                    return use && banks[index]
+                })
+                .map((use, index) => banks[index].data as Bank)
+            if (packBanks.length > 0) anim = new Anim(packBanks)
+        }
+        if (hasBuild() && builds[selectedBuild]) {
+            build = builds[selectedBuild].data as Build
+        }
+
+        if (anim) {
+            if (type === "json") {
+                const animJson = JSON.stringify(anim, undefined, 4)
+                files.push({ data: textEncoder.encode(animJson).buffer, name: "anim.json" })
+            } else if (type === "bin") {
+                promises.push(compileAnim(anim).then(buffer => files.push({ data: buffer, name: "anim.bin" })))
+            }
+        }
+        if (build) {
+            if (hasAtlas()) {
+                if (splitAtlas()) {
+                    promises.push(
+                        build.getSpitAtlas((blob, symbolName, frameName) => files.push({ data: blob, name: `${frameName}.png`, path: symbolName }))
+                    )
+                } else {
+                    if (repack) build.packAtlas()
+                    for (const atlas of build.atlases) {
+                        if (atlas.ktex) files.push({ data: atlas.ktex.compile(), name: atlas.name })
+                    }
+                }
+            }
+
+            if (type === "json") {
+                const buildJson = JSON.stringify(build, undefined, 4)
+                files.push({ data: textEncoder.encode(buildJson).buffer, name: "build.json" })
+            } else if (type === "bin") {
+                promises.push(compileBuild(build).then(buffer => files.push({ data: buffer, name: "build.bin" })))
+            }
+        }
+
+        Promise.all(promises).then(() => {
+            if (useZip()) {
+                let fileName = build ? build.name : "pack"
+                if (zipFileName !== "") fileName = zipFileName
+
+                const zipFile = new JSZip()
+                for (const { name, data, path } of files) {
+                    const targetFolder = path ? zipFile.folder(path)! : zipFile
+                    targetFolder.file(name, data, { binary: true })
+                }
+                zipFile.generateAsync({ type: "blob", compression: "DEFLATE" }).then(blob => downloadFile(blob, `${fileName}.zip`))
+            } else {
+                for (const { name, data } of files) {
+                    downloadFile(data instanceof Blob ? data : new Blob([data]), name)
+                }
+            }
+        })
+    }
 
     return (
         <div class={style.ExportFile}>
@@ -194,15 +279,18 @@ export default function ExportFile() {
                 <div></div> {/* bank */}
                 <BuildViewer />
             </div>
-            <div class={style.download}>
-                <TextButton text="DownLoad" classList={{ [style.downloadButton]: true }} />
-                <div>
+            <div class={style.download} data-cantdrag={true}>
+                <TextButton text="DownLoad" classList={{ [style.downloadButton]: true }} onClick={onDownLoad} />
+                <div classList={{ [style.zipFileName]: true, [style.unUse]: !useZip() }}>
+                    <input type="text" data-cantdrag={true} placeholder="File Name" onChange={e => (zipFileName = e.target.value)} />
+                </div>
+                <div data-cantdrag={true}>
                     <TextButton
                         text="zip"
                         checkbox={true}
-                        check={zip}
+                        check={useZip()}
                         classList={{ [style.normalButton]: true }}
-                        onClick={checkBox => (zip = checkBox!.checked)}
+                        onClick={() => setUseZip(pre => !pre)}
                     />
                 </div>
             </div>

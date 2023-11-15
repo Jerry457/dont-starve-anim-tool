@@ -33,7 +33,7 @@ export default function BuildViewer() {
             <DataViewer
                 rows={builds}
                 keys={[{ key: "name" }, { key: "scale" }]}
-                titles={{ title: "Build", hasButton: true, sub_titles: ["Name", "Scale"] }}
+                titles={{ title: "Build", hasButton: true, subTitles: ["Name", "Scale"] }}
                 checkable={true}
                 rowChecked={rowChecked}
                 onRowCheckChange={onCheckChange}
@@ -53,7 +53,7 @@ export default function BuildViewer() {
             <DataViewer
                 rows={buildFrames()}
                 keys={[
-                    { key: "frame_num" },
+                    { key: "frameNum" },
                     { key: "duration" },
                     { key: "x", readOnly: true },
                     { key: "y", readOnly: true },
@@ -62,7 +62,7 @@ export default function BuildViewer() {
                 ]}
                 titles={{
                     title: "Frame",
-                    sub_titles: ["Num", "Druation", "X", "Y", "W", "H"],
+                    subTitles: ["Num", "Druation", "X", "Y", "W", "H"],
                     hasButton: true,
                 }}
                 checkable={true}

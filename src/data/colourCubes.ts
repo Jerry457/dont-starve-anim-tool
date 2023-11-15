@@ -93,7 +93,7 @@ for (const [_, fileName] of colourCubeNames) {
             fetch(module.default).then(response => {
                 response.arrayBuffer().then(arrayBuffer => {
                     colourCubes[fileName] = new Ktex(fileName)
-                    colourCubes[fileName]!.read_tex(arrayBuffer)
+                    colourCubes[fileName]!.readKtex(arrayBuffer)
                 })
             })
         )

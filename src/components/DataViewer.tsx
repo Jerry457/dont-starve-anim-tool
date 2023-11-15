@@ -2,10 +2,9 @@ import { JSX, Show, For, createSignal, Setter } from "solid-js"
 import AddIcon from "~icons/mdi/plus-box-outline"
 import DeleteIcon from "~icons/mdi/delete-outline"
 
-import { updateData } from "../data"
 import { IconButton } from "./IconButton"
 import { Bank, Animation, AnimFrame, AnimElement } from "../lib/kfiles/anim"
-import { Build, Altas, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
+import { Build, Atlas, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
 
 import style from "./DataViewer.module.css"
 
@@ -14,11 +13,11 @@ type TitleData = {
     hasButton?: boolean
 
     block?: boolean
-    sub_titles?: string[]
+    subTitles?: string[]
 }
 
 export type RowData = {
-    data: Bank | Animation | AnimFrame | AnimElement | Build | Altas | BuildSymbol | BuildFrame
+    data: Bank | Animation | AnimFrame | AnimElement | Build | Atlas | BuildSymbol | BuildFrame
     shown?: boolean
     sub?: RowData[]
 }
@@ -48,18 +47,18 @@ function DataViewerTitles(props: TitleData) {
         <thead>
             <Show when={props.title}>
                 <tr>
-                    <th colspan={(props.sub_titles ? props.sub_titles.length : 1) + Number(props.block)}>
+                    <th colspan={(props.subTitles ? props.subTitles.length : 1) + Number(props.block)}>
                         <Title title={props.title!} hasButton={props.hasButton} />
                     </th>
                 </tr>
             </Show>
             <tr>
-                <Show when={props.block && props.sub_titles}>
+                <Show when={props.block && props.subTitles}>
                     <th>
                         <input type="checkbox" style="visibility: hidden;" />
                     </th>
                 </Show>
-                <For each={props.sub_titles}>
+                <For each={props.subTitles}>
                     {title => (
                         <th>
                             <Title title={title} />
@@ -72,21 +71,19 @@ function DataViewerTitles(props: TitleData) {
 }
 
 function DataViewerCell(props: { value: string | number; setValue?: (value: string | number) => void }) {
-    const value_type = typeof props.value
+    const valueType = typeof props.value
     function onChange(e: JSX.InputChangeEvent) {
         const value = e.target.value
 
-        if (value_type == "number") {
+        if (valueType == "number") {
             const number = Number(value)
             if (isNaN(number)) {
                 alert("invalid number")
                 e.target.value = String(props.value)
-            } else {
-                props.setValue?.(number)
+                return
             }
-        } else {
-            props.setValue?.(value)
         }
+        props.setValue?.(value)
     }
 
     return (
@@ -108,7 +105,7 @@ function DataViewerRow(props: {
     onDataChange?: (index: number, row: RowData, key: string, value: string | number) => void
     onCheckChange?: (index: number, row: RowData, checked: boolean) => void
 }) {
-    const data = props.row.data as { [key: string]: string | number }
+    const data = props.row.data as any as { [key: string]: string | number }
 
     function onCheckChange(e: JSX.InputChangeEvent) {
         props.onCheckChange?.(props.index, props.row, e.target.checked)
@@ -128,11 +125,11 @@ function DataViewerRow(props: {
             </Show>
 
             <For each={props.keys}>
-                {cell_data => {
+                {cellData => {
                     return (
                         <DataViewerCell
-                            value={data[cell_data.key]}
-                            setValue={cell_data.readOnly ? undefined : value => onDataChange(value, cell_data.key)}
+                            value={data[cellData.key]}
+                            setValue={cellData.readOnly ? undefined : value => onDataChange(value, cellData.key)}
                         />
                     )
                 }}

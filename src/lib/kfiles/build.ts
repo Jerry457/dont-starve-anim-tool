@@ -1,60 +1,62 @@
-import BinaryDataReader from "../binary-data/BinaryDataReader"
+import { strHash } from "./util"
+import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
 import { newCanvas, resize, crop, paste } from "../image-canvas"
+import { getRegion } from "../image-canvas/analyze"
+import { pack } from "../image-canvas/packer"
+import { bbox } from "../image-canvas/type"
+import { clamp } from "../math"
+import { Ktex } from "./ktex"
 
 export class BuildFrame {
-    frame_num: number
+    frameNum: number
     duration: number
     x: number
     y: number
     w: number
     h: number
-    vert_idx: number
-    vert_count: number
+    xOffset: number
+    yOffset: number
+    vertIdx: number
+    vertNum: number
 
+    name: string
     canvas?: HTMLCanvasElement
 
-    constructor(
-        frame_num: number = 0,
-        duration: number = 0,
-        x: number = 0,
-        y: number = 0,
-        w: number = 1,
-        h: number = 1,
-        vert_idx: number = 0,
-        vert_count: number = 0
-    ) {
-        this.frame_num = frame_num
+    constructor(frameNum = 0, duration = 0, x = 0, y = 0, w = 1, h = 1, vertIdx = 0, vertNum = 0, name: string = "") {
+        this.frameNum = frameNum
         this.duration = duration
         this.x = x
         this.y = y
         this.w = w
         this.h = h
-        this.vert_idx = vert_idx
-        this.vert_count = vert_count
+        this.vertIdx = vertIdx
+        this.vertNum = vertNum
+        this.name = name
+
+        this.xOffset = x - Math.floor(w / 2)
+        this.yOffset = y - Math.floor(h / 2)
     }
 
-    get_pivot() {
+    getRelativePivot() {
         /**
          * Return transform-origin relative coordinates
          * The coordinate system has its origin at the bottom-left corner of the image
          * the positive x-axis extending to the right and the positive y-axis extending upwards.
          */
-        const pivot_x = 0.5 - this.x / this.w
-        const pivot_y = 0.5 + this.y / this.h
+        const pivotX = 0.5 - this.x / this.w
+        const pivotY = 0.5 + this.y / this.h
 
-        return [pivot_x, pivot_y]
+        return [pivotX, pivotY]
     }
 
-    from_pivot(pivot_x: number, pivot_y: number, w: number, h: number) {
+    setAbsolutePivot(pivotX: number, pivotY: number) {
         /**
          * Return transform-origin absolute coordinates
          * The coordinate system has its origin at the image center
          * the positive x-axis extending to the left and the positive y-axis extending upwards.
          */
-        const x = Math.floor(w / 2) - pivot_x * w
-        const y = -Math.floor(h / 2) + pivot_y * h
-
-        return [x, y]
+        this.x = Math.floor(this.w / 2) - pivotX * this.w
+        this.y = -Math.floor(this.w / 2) + pivotY * this.h
     }
 
     getSubRow = undefined
@@ -72,32 +74,7 @@ export class BuildSymbol {
     }
 
     sort() {
-        this.frames.sort((a, b) => a.frame_num - b.frame_num)
-    }
-
-    get_frame(frame_num: number, get_duration: boolean = true): BuildFrame | undefined {
-        for (const frame of this.frames) {
-            const duration = get_duration ? frame.duration - 1 : 0
-            if (frame.frame_num <= frame_num && frame_num <= frame.frame_num + duration) {
-                return frame
-            }
-        }
-    }
-
-    get_all_frame(get_duration: boolean = false) {
-        this.sort()
-
-        const frames = []
-        for (const frame of this.frames) {
-            for (let i = frame.frame_num; i < frame.frame_num + frame.duration; i++) {
-                const frame = this.get_frame(i, get_duration)
-                if (frame) {
-                    frames.push(frame)
-                }
-            }
-        }
-
-        return frames
+        this.frames.sort((a, b) => a.frameNum - b.frameNum)
     }
 
     getSubRow() {
@@ -123,13 +100,13 @@ export class Vert {
     }
 }
 
-export class Altas {
+export class Atlas {
     name: string
-    canvas?: HTMLCanvasElement
+    ktex?: Ktex
 
-    constructor(name: string, canvas?: HTMLCanvasElement) {
+    constructor(name: string, ktex?: Ktex) {
         this.name = name
-        this.canvas = canvas
+        this.ktex = ktex
     }
 }
 
@@ -141,8 +118,7 @@ export class Build {
     name: string
     symbols: BuildSymbol[]
 
-    atlases?: Altas[]
-    atlas_names: string[] = []
+    atlases: Atlas[] = []
     verts: Vert[] = []
 
     constructor(name: string = "", symbols: BuildSymbol[] = []) {
@@ -154,31 +130,109 @@ export class Build {
         return this.symbols
     }
 
-    getAltasSubRow() {
+    getAtlasSubRow() {
         return this.atlases ? this.atlases?.map(atlas => ({ data: atlas })) : []
     }
 
-    async splitAltas(atlases: { [fileName: string]: HTMLCanvasElement }) {
-        if (this.atlas_names.length === 0) {
+    packAtlas() {
+        const blocks: {
+            canvas: HTMLCanvasElement
+            frame: BuildFrame
+            regions: bbox[]
+            regionsLeft: number
+            regionsTop: number
+            insertBBox?: bbox
+        }[] = []
+        for (const symbol of this.symbols) {
+            for (const frame of symbol.frames) {
+                frame.vertIdx = 0
+                frame.vertNum = 0
+                if (!frame.canvas) continue
+
+                const [opaqueRegions, alphaRegions] = getRegion(frame.canvas)
+                const regions = [...opaqueRegions, ...alphaRegions]
+
+                if (regions.length === 0) continue
+
+                let regionsLeft = Infinity
+                let regionsRight = -Infinity
+                let regionsTop = Infinity
+                let regionsBottom = -Infinity
+                for (const region of regions) {
+                    const { x, y, w, h } = region
+                    regionsLeft = Math.min(regionsLeft, x)
+                    regionsRight = Math.max(regionsRight, x + w)
+                    regionsTop = Math.min(regionsTop, y)
+                    regionsBottom = Math.max(regionsBottom, y + h)
+                }
+                const w = Math.round(regionsRight - regionsLeft)
+                const h = Math.round(regionsBottom - regionsTop)
+
+                let canvas = crop(frame.canvas, regionsLeft, regionsTop, w, h)
+
+                blocks.push({ canvas, frame, regions, regionsLeft, regionsTop })
+            }
+        }
+        let atlas = pack(blocks)
+        const atlasIdx = 0
+        this.verts = []
+        for (const { frame, regions, regionsLeft, regionsTop, insertBBox } of blocks) {
+            frame.vertIdx = this.verts.length
+            frame.vertNum = regions.length * 6
+            for (const region of regions) {
+                const regionLeft = frame.xOffset + region.x
+                const regionRight = regionLeft + region.w
+                const regionTop = frame.yOffset + region.y
+                const regionBottom = regionTop + region.h
+
+                const regionInsertLeft = insertBBox!.x + region.x - regionsLeft
+                const regionInsertRight = regionInsertLeft + region.w
+                const regionInsertTop = insertBBox!.y + region.y - regionsTop
+                const regionInsertBottom = regionInsertTop + region.h
+
+                const uMin = clamp(regionInsertLeft / atlas.width, 0, 1)
+                const uMax = clamp(regionInsertRight / atlas.width, 0, 1)
+                const vMin = clamp(1 - regionInsertTop / atlas.height, 0, 1)
+                const vMax = clamp(1 - regionInsertBottom / atlas.height, 0, 1)
+
+                this.verts.push(new Vert(regionLeft, regionTop, 0, uMin, vMin, atlasIdx))
+                this.verts.push(new Vert(regionRight, regionTop, 0, uMax, vMin, atlasIdx))
+                this.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
+                this.verts.push(new Vert(regionRight, regionTop, 0, uMax, vMin, atlasIdx))
+                this.verts.push(new Vert(regionRight, regionBottom, 0, uMax, vMax, atlasIdx))
+                this.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
+            }
+        }
+        if (this.scale !== 1) atlas = resize(atlas, atlas.width * this.scale, atlas.height * this.scale)
+
+        const ktex = new Ktex("atlas-0.tex")
+        ktex.fromImage(atlas)
+        this.atlases = [new Atlas("atlas-0.tex", ktex)]
+    }
+
+    async splitAtlas(atlases: { [fileName: string]: Ktex }) {
+        if (this.atlases.length === 0) {
             return
         }
-        this.atlases = this.atlas_names.map(name => {
-            return new Altas(name, atlases[name])
-        })
+        this.atlases.map(atlas => (atlas.ktex = atlases[atlas.name]))
+        const canvasAtlases = []
+        for (const atlas of this.atlases) {
+            if (atlas.ktex) canvasAtlases.push(atlas.ktex!.toImage())
+            else return
+        }
 
-        let scaled_size = 0
-        let origin_size = 0
+        let scaledSize = 0
+        let originSize = 0
 
-        for (const [symbol_name, symbol] of Object.entries(this.symbols)) {
-            for (const frame of symbol.get_all_frame()) {
-                if (frame.vert_count === 0) {
-                    continue
-                } else if (frame.vert_count % 6 !== 0) {
-                    const error_message = "vert num error"
-                    alert(error_message)
-                    throw Error(error_message)
+        for (const symbol of this.symbols) {
+            for (const frame of symbol.frames) {
+                if (frame.vertNum === 0) continue
+                else if (frame.vertNum % 6 !== 0) {
+                    const errorMessage = "vert num error"
+                    alert(errorMessage)
+                    throw Error(errorMessage)
                 }
-                const frameVerts = this.verts.slice(frame.vert_idx, frame.vert_idx + frame.vert_count)
+                const frameVerts = this.verts.slice(frame.vertIdx, frame.vertIdx + frame.vertNum)
 
                 let uMin = Infinity
                 let uMax = 0
@@ -202,18 +256,15 @@ export class Build {
                     regionTop = Math.min(regionTop, frameVerts[i + 3].y)
                 }
 
-                const atlas = atlases[this.atlas_names[frameVerts[0].w]]
+                const atlas = canvasAtlases[frameVerts[0].w]
 
                 const bboxX = Math.round(uMin * atlas.width)
                 const bboxY = Math.round((1 - vMax) * atlas.height)
                 const bboxW = Math.round((uMax - uMin) * atlas.width)
                 const bboxH = Math.round((vMax - vMin) * atlas.height)
 
-                const xOffset = frame.x - Math.floor(frame.w / 2)
-                const yOffset = frame.y - Math.floor(frame.h / 2)
-
-                const regionX = Math.round(regionLeft - xOffset)
-                const regionY = Math.round(regionTop - yOffset)
+                const regionX = Math.round(regionLeft - frame.xOffset)
+                const regionY = Math.round(regionTop - frame.yOffset)
                 const regionW = Math.round(regionRight - regionLeft)
                 const regionH = Math.round(regionBottom - regionTop)
 
@@ -224,8 +275,8 @@ export class Build {
 
                 let cropped = crop(atlas, bboxX, bboxY, bboxW, bboxH)
                 if (cropped.width !== regionW || cropped.height !== regionH) {
-                    scaled_size = cropped.width * cropped.height
-                    origin_size = regionW * regionH
+                    scaledSize = cropped.width * cropped.height
+                    originSize = regionW * regionH
 
                     cropped = resize(cropped, regionW, regionH)
                 }
@@ -233,13 +284,11 @@ export class Build {
                     let _w = regionX + cropped.width
                     let _h = regionY + cropped.height
                     if (_w <= 0 || _w > frame.w || _h <= 0 || _h > frame.h) {
-                        alert(
-                            `Build: ${this.name}, Symbol: ${symbol_name}-${frame.frame_num} data error, this maybe scml file image width or height error`
-                        )
-                        // const [pivot_x, pivot_y] = frame.get_pivot() // get pivot
-                        // frame.w = _w
-                        // frame.h = _h
-                        // frame.from_pivot(pivot_x, pivot_y) // recalculate data
+                        console.log(`Build: ${this.name}, Symbol: ${frame.name} data error, this maybe scml file image width or height error`)
+                        // const [pivotX, pivotY] = frame.getRelativePivot() // get pivot
+                        // frame.w = cropped.width
+                        // frame.h = cropped.height
+                        // frame.setAbsolutePivot(pivotX, pivotY) // recalculate data
                     } else {
                         const image = newCanvas(frame.w, frame.h)
                         cropped = paste(image, cropped, regionX, regionY)
@@ -251,46 +300,70 @@ export class Build {
             }
         }
 
-        if (origin_size > 0) {
-            this.scale = Math.sqrt(scaled_size / origin_size)
+        if (originSize > 0) {
+            this.scale = Math.sqrt(scaledSize / originSize)
         }
+    }
+
+    async getSpitAtlas(callback: (blob: Blob, symbolName: string, frameName: string) => void) {
+        const promises = []
+        for (const symbol of this.symbols) {
+            for (const frame of symbol.frames) {
+                promises.push(
+                    new Promise<Blob>(resolve => {
+                        frame.canvas?.toBlob(
+                            blob => {
+                                callback(blob!, symbol.name, frame.name)
+                                resolve(blob!)
+                            },
+                            "image/png",
+                            1
+                        )
+                    })
+                )
+            }
+        }
+        return await Promise.all(promises)
     }
 }
 
-export async function UnpackBuild(data: BinaryDataReader | ArrayBuffer) {
+export async function decompileBuild(data: BinaryDataReader | ArrayBuffer) {
     const build = new Build()
 
     const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)
     // Skip 'BUID' and version info
     reader.cursor = 8
 
-    const symbol_num = reader.readUint32()
-    const build_name_len = reader.readUint32(16)
-    build.name = reader.readString(build_name_len)
+    const symbolNum = reader.readUint32()
+    const buildNameLen = reader.readInt32(16)
+    build.name = reader.readString(buildNameLen)
 
-    const atlas_num = reader.readUint32()
+    const atlasNum = reader.readUint32()
 
-    if (atlas_num > 3) {
+    if (atlasNum > 3) {
         alert(`Waring! ${build.name} atlas more than 3`)
     }
 
-    for (let atlas_idx = 0; atlas_idx < atlas_num; atlas_idx++) {
-        const atlas_name_len = reader.readUint32()
-        const atlas_name = reader.readString(atlas_name_len)
+    // read atlas info
+    for (let atlasIdx = 0; atlasIdx < atlasNum; atlasIdx++) {
+        const atlasNameLen = reader.readUint32()
+        const atlasName = reader.readString(atlasNameLen)
 
-        build.atlas_names.push(atlas_name)
+        build.atlases.push(new Atlas(atlasName))
     }
 
-    const symbol_offset = reader.cursor
-    for (let symbol_idx = 0; symbol_idx < symbol_num; symbol_idx++) {
-        const frames_cont = reader.readUint32(reader.cursor + 4) // Skip symbol_name_hash
+    // Skip symbol info
+    const symbolOffset = reader.cursor
+    for (let symbolIdx = 0; symbolIdx < symbolNum; symbolIdx++) {
+        const framesCont = reader.readUint32(reader.cursor + 4) // Skip symbolNameHash
 
         // Skip 8 uint32
-        reader.cursor += frames_cont * 4 * 8
+        reader.cursor += framesCont * 4 * 8
     }
 
-    const verts_num = reader.readUint32()
-    for (let vert_idx = 0; vert_idx < verts_num; vert_idx++) {
+    // read vert info
+    const vertsNum = reader.readUint32()
+    for (let vertIdx = 0; vertIdx < vertsNum; vertIdx++) {
         const x = reader.readFloat32()
         const y = reader.readFloat32()
         const z = reader.readFloat32()
@@ -301,36 +374,113 @@ export async function UnpackBuild(data: BinaryDataReader | ArrayBuffer) {
         build.verts.push(new Vert(x, y, z, u, v, w))
     }
 
-    const hash_cont = reader.readUint32()
-    const hash_dict = new Map<number, string>()
-    for (let hash_idx = 0; hash_idx < hash_cont; hash_idx++) {
+    const hashNum = reader.readUint32()
+    const hashMap = new Map<number, string>()
+    for (let hashIdx = 0; hashIdx < hashNum; hashIdx++) {
         const hash = reader.readUint32()
-        const str_len = reader.readUint32()
-        const str = reader.readString(str_len)
-        hash_dict.set(hash, str)
+        const strlen = reader.readInt32()
+        const str = reader.readString(strlen)
+        hashMap.set(hash, str)
     }
 
-    reader.cursor = symbol_offset
-    for (let symbol_idx = 0; symbol_idx < symbol_num; symbol_idx++) {
-        const symbol_name_hash = reader.readUint32()
-        const frames_cont = reader.readUint32()
+    reader.cursor = symbolOffset
+    for (let symbolIdx = 0; symbolIdx < symbolNum; symbolIdx++) {
+        const symbolNameHash = reader.readUint32()
+        const framesCont = reader.readUint32()
 
-        const symbol = new BuildSymbol(hash_dict.get(symbol_name_hash))
-        for (let frame_idx = 0; frame_idx < frames_cont; frame_idx++) {
-            const frame_num = reader.readUint32()
+        const symbolName = hashMap.get(symbolNameHash)
+        const symbol = new BuildSymbol(symbolName)
+        for (let frameIdx = 0; frameIdx < framesCont; frameIdx++) {
+            const frameNum = reader.readUint32()
             const duration = reader.readUint32()
             const x = reader.readFloat32()
             const y = reader.readFloat32()
             const w = reader.readFloat32()
             const h = reader.readFloat32()
-            const vert_idx = reader.readUint32()
-            const vert_count = reader.readUint32()
+            const vertIdx = reader.readUint32()
+            const vertNum = reader.readUint32()
 
-            symbol.frames.push(new BuildFrame(frame_num, duration, x, y, w, h, vert_idx, vert_count))
+            symbol.frames.push(new BuildFrame(frameNum, duration, x, y, w, h, vertIdx, vertNum, `${symbolName}-${frameNum}`))
         }
         symbol.sort()
         build.symbols.push(symbol)
     }
 
     return build
+}
+
+export async function compileBuild(build: Build) {
+    const hashs: number[] = []
+    const hashMap: Map<number, string> = new Map()
+    const writer = new BinaryDataWriter()
+
+    let frameNum = 0
+    const symbolMap: { [key: string]: BuildSymbol } = {}
+    for (const symbol of build.symbols) {
+        frameNum += symbol.frames.length
+        const hash = strHash(symbol.name)
+
+        hashs.push(strHash(symbol.name))
+        hashMap.set(hash, symbol.name)
+        symbolMap[symbol.name] = symbol
+    }
+
+    // write head
+    writer.writeString("BILD")
+    writer.writeInt32(build.version)
+
+    // write build info
+    writer.writeUint32(build.symbols.length)
+    writer.writeUint32(frameNum)
+    writer.writeInt32(build.name.length)
+    writer.writeString(build.name)
+
+    // write atlases info
+    writer.writeUint32(build.atlases.length)
+    for (const atlas of build.atlases) {
+        writer.writeInt32(atlas.name.length)
+        writer.writeString(atlas.name)
+    }
+
+    // write symbol info
+    hashs.sort((a, b) => a - b)
+    for (const hash of hashs) {
+        const str = hashMap.get(hash)!
+        const symbol = symbolMap[str]
+        writer.writeUint32(hash)
+        writer.writeUint32(symbol.frames.length)
+
+        // write frame info
+        for (const frame of symbol.frames) {
+            writer.writeUint32(frame.frameNum)
+            writer.writeUint32(frame.duration)
+            writer.writeFloat32(frame.x)
+            writer.writeFloat32(frame.y)
+            writer.writeFloat32(frame.w)
+            writer.writeFloat32(frame.h)
+            writer.writeUint32(frame.vertIdx)
+            writer.writeUint32(frame.vertNum)
+        }
+    }
+
+    // write vert info
+    writer.writeUint32(build.verts.length)
+    for (const vert of build.verts) {
+        writer.writeFloat32(vert.x)
+        writer.writeFloat32(vert.y)
+        writer.writeFloat32(vert.z)
+        writer.writeFloat32(vert.u)
+        writer.writeFloat32(vert.v)
+        writer.writeFloat32(vert.w)
+    }
+
+    // write hashMap info
+    writer.writeUint32(hashMap.size)
+    for (const [hash, str] of hashMap) {
+        writer.writeUint32(hash)
+        writer.writeInt32(str.length)
+        writer.writeString(str)
+    }
+
+    return writer.getBuffer()
 }

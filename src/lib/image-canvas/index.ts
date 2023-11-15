@@ -40,7 +40,7 @@ export function flipY(canvas: HTMLCanvasElement) {
     ctx.scale(1, -1)
     ctx.drawImage(canvas, 0, 0)
 
-    return flipped
+    return newCanvas(flipped.width, flipped.height, flipped)
 }
 
 export function resize(canvas: HTMLCanvasElement, width: number, height: number) {
@@ -134,13 +134,13 @@ export function unPreMultiplyAlpha(canvas: HTMLCanvasElement) {
 }
 
 export function applyColourCube(canvas: HTMLCanvasElement, colourCubeKtex: Ktex) {
-    if (colourCubeKtex.header.pixel_format !== PixelFormat.RGB || colourCubeKtex.mipmaps[0].data_size !== 32 * 32 * 32 * 3) {
+    if (colourCubeKtex.header.pixelFormat !== PixelFormat.RGB || colourCubeKtex.mipmaps[0].dataSize !== 32 * 32 * 32 * 3) {
         throw new TypeError("this ktex no colour cube file")
     }
 
     const imageData = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height)
     const pixelData = imageData.data
-    const colourCubeData = colourCubeKtex.mipmaps[0].block_data!
+    const colourCubeData = colourCubeKtex.mipmaps[0].blockData!
     for (let i = 0; i < pixelData.length; i += 4) {
         let r = pixelData[i]
         let g = pixelData[i + 1]

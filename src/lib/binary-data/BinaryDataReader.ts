@@ -1,7 +1,8 @@
 export default class BinaryDataReader {
     dataView: DataView
-    // Current byte offset
-    cursor: number
+    cursor: number // Current byte offset
+
+    asciiTextDecoder = new TextDecoder("ascii")
 
     constructor(public buffer: ArrayBuffer, starting_cursor?: number) {
         this.dataView = new DataView(buffer)
@@ -9,45 +10,40 @@ export default class BinaryDataReader {
     }
 
     readByte(offset?: number) {
-        if (!offset) {
-            offset = this.cursor
-        }
+        if (!offset) offset = this.cursor
+
         this.cursor = offset + 1
 
         return this.dataView.getUint8(offset)
     }
 
     readInt32(offset?: number) {
-        if (!offset) {
-            offset = this.cursor
-        }
+        if (!offset) offset = this.cursor
+
         this.cursor = offset + 4
 
         return this.dataView.getInt32(offset, true)
     }
 
     readUint32(offset?: number) {
-        if (!offset) {
-            offset = this.cursor
-        }
+        if (!offset) offset = this.cursor
+
         this.cursor = offset + 4
 
         return this.dataView.getUint32(offset, true)
     }
 
     readtHex(offset?: number) {
-        if (!offset) {
-            offset = this.cursor
-        }
+        if (!offset) offset = this.cursor
+
         this.cursor = offset + 2
 
         return this.dataView.getUint16(offset, true)
     }
 
     readFloat32(offset?: number) {
-        if (!offset) {
-            offset = this.cursor
-        }
+        if (!offset) offset = this.cursor
+
         this.cursor = offset + 4
 
         return this.dataView.getFloat32(offset, true)
@@ -56,7 +52,7 @@ export default class BinaryDataReader {
     readString(length: number): string
     readString(offset: number, length?: number): string
     readString(offset: number, length?: number) {
-        return new TextDecoder("ascii").decode(this.readBytes(offset, length))
+        return this.asciiTextDecoder.decode(this.readBytes(offset, length))
     }
 
     readBytes(length: number): Uint8Array

@@ -19,8 +19,8 @@ import { TextButton } from "./components/TextButton"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
 import { builds, playAnimation, playFrame, colourCube } from "./data"
-import { colourCubes } from "./data/colour_cubes"
-import { SelectColourCube } from "./AnimTool/colour_cube"
+import { colourCubes } from "./data/colourCubes"
+import { SelectColourCube } from "./AnimTool/SelectColourCube"
 import { isHided, HideLayer } from "./AnimTool/HideLayer"
 import { OverrideSymbol, mapSymbol } from "./AnimTool/OverrideSymbol"
 
@@ -40,7 +40,7 @@ function getBuildFrame(symbol_name: string, frame_num: number) {
             for (const frame of symbol.sub) {
                 const frameData = frame.data as BuildFrame
                 const duration = frameData.duration
-                const _frame_num = frameData.frame_num
+                const _frame_num = frameData.frameNum
                 if (_frame_num <= frame_num && frame_num < _frame_num + duration) {
                     return frame
                 }
@@ -224,7 +224,7 @@ function AnimationPlayer() {
                 continue
             }
 
-            const { symbol, frame, layer_name: layer, m_a, m_b, m_c, m_d, m_tx, m_ty } = element.data as AnimElement
+            const { symbol, frame, layerName: layer, m_a, m_b, m_c, m_d, m_tx, m_ty } = element.data as AnimElement
 
             if (isHided(layer)) {
                 continue

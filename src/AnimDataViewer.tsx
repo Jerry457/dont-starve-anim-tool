@@ -15,7 +15,7 @@ function onCheckChange(index: number, row: RowData, checked: boolean) {
 }
 
 function onRowDataChange(index: number, row: RowData, key: string, value: string | number) {
-    const data = row.data as { [key: string]: string | number }
+    const data = row.data as any as { [key: string]: string | number }
     data[key] = value
     updateData()
 }
@@ -31,7 +31,7 @@ export default function AnimDataViewer() {
             <DataViewer
                 rows={animations()}
                 keys={[{ key: "name" }, { key: "frameRate" }]}
-                titles={{ title: "Animation", sub_titles: ["Name", "Rate"], hasButton: true }}
+                titles={{ title: "Animation", subTitles: ["Name", "Rate"], hasButton: true }}
                 subSignal={setAnimFrames}
                 onRowDataChange={onRowDataChange}
                 onChosenRow={row => setPlayAnimation(row)}
@@ -41,7 +41,7 @@ export default function AnimDataViewer() {
                 keys={[{ key: "idx", readOnly: true }, { key: "x" }, { key: "y" }, { key: "w" }, { key: "h" }]}
                 titles={{
                     title: "Frame",
-                    sub_titles: ["idx", "X", "Y", "W", "H"],
+                    subTitles: ["idx", "X", "Y", "W", "H"],
                     hasButton: true,
                 }}
                 checkable={true}
@@ -54,10 +54,10 @@ export default function AnimDataViewer() {
             <DataViewer
                 rows={animElements()}
                 keys={[
-                    { key: "z_index", readOnly: true },
+                    { key: "zIndex", readOnly: true },
                     { key: "symbol" },
                     { key: "frame" },
-                    { key: "layer_name" },
+                    { key: "layerName" },
                     { key: "m_a" },
                     { key: "m_b" },
                     { key: "m_c" },
@@ -67,7 +67,7 @@ export default function AnimDataViewer() {
                 ]}
                 titles={{
                     title: "Element",
-                    sub_titles: ["z_index", "symbol", "frame", "layer_name", "m_a", "m_b", "m_c", "m_d", "m_tx", "m_ty"],
+                    subTitles: ["zIndex", "symbol", "frame", "layerName", "m_a", "m_b", "m_c", "m_d", "m_tx", "m_ty"],
                     hasButton: true,
                 }}
                 checkable={true}

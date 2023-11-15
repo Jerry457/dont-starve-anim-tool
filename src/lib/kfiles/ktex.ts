@@ -2,10 +2,10 @@ import dxt from "dxt-js"
 import { flags } from "dxt-js"
 import { newCanvas, resize, flipY, unPreMultiplyAlpha } from "../image-canvas"
 
-import BinaryDataReader from "../binary-data/BinaryDataReader"
+import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
 
 export enum Platform {
-    Default = 0, // Unknown
+    Default = 0, // unknown
     PC = 12,
     PS3 = 10,
     Xbox360 = 11,
@@ -17,79 +17,79 @@ export enum PixelFormat {
     DXT5 = 2,
     RGBA = 4,
     RGB = 5,
-    Unknown = 7,
+    UNKNOWN = 7,
 }
 
 export enum TextureType {
-    OneD = 0,
-    TwoD = 1,
-    ThreeD = 2,
-    CubeMapped = 3,
+    oneD = 0,
+    twoD = 1,
+    threeD = 2,
+    cubeMapped = 3,
 }
 
 export const Specifications = Object.freeze({
     PreCaveSpec: Object.freeze({
-        max_platform: 8, // 3
-        max_pixel_format: 8, // 3
-        max_texture_type: 8, // 3
-        max_mipmap_count: 15, // 4
-        max_flags: 1, // 1
-        max_fill: 262143, // 18
+        maxPlatform: 8, // 3
+        maxPixelFormat: 8, // 3
+        maxTextureType: 8, // 3
+        maxMipmapCount: 15, // 4
+        maxFlags: 1, // 1
+        maxFill: 262143, // 18
 
-        offset_platform: 0n,
-        offset_pixel_format: 3n,
-        offset_texture_type: 6n,
-        offset_mipmap_count: 9n,
-        offset_flags: 14n,
-        offset_fill: 15n,
+        offsetPlatform: 0n,
+        offsetPixelFormat: 3n,
+        offsetTextureType: 6n,
+        offsetMipmapCount: 9n,
+        offsetFlags: 14n,
+        offsetFill: 15n,
     }),
 
     PostCaveSpec: Object.freeze({
-        max_platform: 15, // 4
-        max_pixel_format: 31, // 5
-        max_texture_type: 15, // 4
-        max_mipmap_count: 31, // 5
-        max_flags: 3, // 2
-        max_fill: 4095, // 12
+        maxPlatform: 15, // 4
+        maxPixelFormat: 31, // 5
+        maxTextureType: 15, // 4
+        maxMipmapCount: 31, // 5
+        maxFlags: 3, // 2
+        maxFill: 4095, // 12
 
-        offset_platform: 0n,
-        offset_pixel_format: 4n,
-        offset_texture_type: 9n,
-        offset_mipmap_count: 13n,
-        offset_flags: 18n,
-        offset_fill: 20n,
+        offsetPlatform: 0n,
+        offsetPixelFormat: 4n,
+        offsetTextureType: 9n,
+        offsetMipmapCount: 13n,
+        offsetFlags: 18n,
+        offsetFill: 20n,
     }),
 })
 
 class KtexHeader {
-    MAGIC_NUM = "KTEX"
+    MAGIC = "KTEX"
 
     specification: typeof Specifications.PreCaveSpec | typeof Specifications.PostCaveSpec = Specifications.PostCaveSpec
     platform: Platform = Platform.Default
-    pixel_format: PixelFormat = PixelFormat.DXT5
-    texture_type: TextureType = TextureType.TwoD
-    mipmap_count: number = 0
-    flags: number = this.specification.max_flags
-    fill: number = this.specification.max_fill
+    pixelFormat: PixelFormat = PixelFormat.DXT5
+    textureType: TextureType = TextureType.twoD
+    mipmapCount: number = 0
+    flags: number = this.specification.maxFlags
+    fill: number = this.specification.maxFill
 
-    set_specification(
+    setSpecification(
         specification: typeof Specifications.PreCaveSpec | typeof Specifications.PostCaveSpec,
         platform: Platform,
-        pixel_format: PixelFormat,
-        texture_type: TextureType,
+        pixelFormat: PixelFormat,
+        textureType: TextureType,
         flags: number,
         fill: number
     ) {
         this.specification = specification
 
-        this.platform = platform & specification.max_platform
-        this.pixel_format = pixel_format & specification.max_pixel_format
-        this.texture_type = texture_type & specification.max_texture_type
-        this.flags = flags & specification.max_flags
-        this.fill = fill & specification.max_fill
+        this.platform = platform & specification.maxPlatform
+        this.pixelFormat = pixelFormat & specification.maxPixelFormat
+        this.textureType = textureType & specification.maxTextureType
+        this.flags = flags & specification.maxFlags
+        this.fill = fill & specification.maxFill
     }
 
-    set_specification_data(data: number) {
+    setSpecificationData(data: number) {
         /*
             This test has a false positive (for pre-caves update) if the input TEX is of the post-caves update variety,
             has both flags set to high, and has at least 30 mipmaps. This is considered unlikely enough to be reasonable
@@ -97,33 +97,33 @@ class KtexHeader {
             by oblivioncth
         */
         // fuck klei
-        const big_data = BigInt(data)
-        if (((big_data >> 14n) & 0x3ffffn) == 0x3ffffn) {
+        const bigData = BigInt(data)
+        if (((bigData >> 14n) & 0x3ffffn) == 0x3ffffn) {
             this.specification = Specifications.PreCaveSpec
         } else {
             this.specification = Specifications.PostCaveSpec
         }
         const specification = this.specification
 
-        this.platform = Number(big_data >> specification.offset_platform) & specification.max_platform
-        this.pixel_format = Number(big_data >> specification.offset_pixel_format) & specification.max_pixel_format
-        this.texture_type = Number(big_data >> specification.offset_texture_type) & specification.max_texture_type
-        this.mipmap_count = Number(big_data >> specification.offset_mipmap_count) & specification.max_mipmap_count
-        this.flags = Number(big_data >> specification.offset_flags) & specification.max_flags
-        this.fill = Number(big_data >> specification.offset_fill) & specification.max_fill
+        this.platform = Number(bigData >> specification.offsetPlatform) & specification.maxPlatform
+        this.pixelFormat = Number(bigData >> specification.offsetPixelFormat) & specification.maxPixelFormat
+        this.textureType = Number(bigData >> specification.offsetTextureType) & specification.maxTextureType
+        this.mipmapCount = Number(bigData >> specification.offsetMipmapCount) & specification.maxMipmapCount
+        this.flags = Number(bigData >> specification.offsetFlags) & specification.maxFlags
+        this.fill = Number(bigData >> specification.offsetFill) & specification.maxFill
     }
 
-    get_data() {
+    getSpecificationData() {
         const specification = this.specification
         const data = Number(
-            (BigInt(this.platform) << specification.offset_platform) |
-                (BigInt(this.pixel_format) << specification.offset_pixel_format) |
-                (BigInt(this.texture_type) << specification.offset_texture_type) |
-                (BigInt(this.mipmap_count) << specification.offset_mipmap_count) |
-                (BigInt(this.flags) << specification.offset_flags) |
-                (BigInt(this.fill) << specification.offset_fill)
+            (BigInt(this.platform) << specification.offsetPlatform) |
+                (BigInt(this.pixelFormat) << specification.offsetPixelFormat) |
+                (BigInt(this.textureType) << specification.offsetTextureType) |
+                (BigInt(this.mipmapCount) << specification.offsetMipmapCount) |
+                (BigInt(this.flags) << specification.offsetFlags) |
+                (BigInt(this.fill) << specification.offsetFill)
         )
-        // return struct.pack("<ccccI", ...this.MAGIC_NUM.split(""), data)
+        return data
     }
 }
 
@@ -131,9 +131,9 @@ class KtexMipmap {
     width: number
     height: number
     data?: Uint8Array
-    block_data?: Uint8Array
+    blockData?: Uint8Array
     pitch: number
-    data_size: number = 0
+    dataSize: number = 0
 
     constructor(width: number, height: number, data?: Uint8Array) {
         this.width = width
@@ -144,37 +144,37 @@ class KtexMipmap {
         this.data = data
     }
 
-    compress(pixel_format: PixelFormat) {
-        switch (pixel_format) {
+    compress(pixelFormat: PixelFormat) {
+        switch (pixelFormat) {
             case PixelFormat.DXT1:
             case PixelFormat.DXT3:
             case PixelFormat.DXT5:
-                this.block_data = dxt.compress(this.data!, this.width, this.height, flags[PixelFormat[pixel_format] as keyof flags])
+                this.blockData = dxt.compress(this.data!, this.width, this.height, flags[PixelFormat[pixelFormat] as keyof flags])
                 break
             default:
-                this.block_data = this.data!
+                this.blockData = this.data!
         }
-        this.data_size = this.block_data.length
+        this.dataSize = this.blockData.length
     }
 
-    decompress(pixel_format: PixelFormat) {
-        switch (pixel_format) {
+    decompress(pixelFormat: PixelFormat) {
+        switch (pixelFormat) {
             case PixelFormat.DXT1:
             case PixelFormat.DXT3:
             case PixelFormat.DXT5:
-                this.data = dxt.decompress(this.block_data!, this.width, this.height, flags[PixelFormat[pixel_format] as keyof flags])
+                this.data = dxt.decompress(this.blockData!, this.width, this.height, flags[PixelFormat[pixelFormat] as keyof flags])
                 break
             default:
-                this.data = this.block_data!
+                this.data = this.blockData!
         }
     }
 
-    get_meta_data() {
-        // return struct.pack("<HHHI", this.width, this.height, this.pitch, this.data_size)
+    getMetaData() {
+        return [this.width, this.height, this.pitch, this.dataSize]
     }
 
-    get_block_data() {
-        return this.block_data!
+    getBlockData() {
+        return this.blockData!
     }
 }
 
@@ -191,23 +191,23 @@ export class Ktex {
         this.name = name
     }
 
-    read_tex(data: BinaryDataReader | ArrayBuffer) {
+    readKtex(data: BinaryDataReader | ArrayBuffer) {
         const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)
-        this.header.set_specification_data(reader.readUint32(4))
+        this.header.setSpecificationData(reader.readUint32(4))
 
-        for (let i = 0; i < this.header.mipmap_count; i++) {
+        for (let i = 0; i < this.header.mipmapCount; i++) {
             const width = reader.readtHex()
             const height = reader.readtHex()
             const pitch = reader.readtHex()
-            const data_size = reader.readUint32()
+            const dataSize = reader.readUint32()
 
             const mipmap = new KtexMipmap(width, height)
-            mipmap.data_size = data_size
+            mipmap.dataSize = dataSize
             this.mipmaps.push(mipmap)
         }
 
         for (const mipmap of this.mipmaps) {
-            mipmap.block_data = reader.readBytes(mipmap.data_size)
+            mipmap.blockData = reader.readBytes(mipmap.dataSize)
         }
 
         if (reader.buffer.byteLength - reader.cursor === 1) {
@@ -215,7 +215,7 @@ export class Ktex {
         }
     }
 
-    from_image(canvas: HTMLCanvasElement, preMultiplyAlpha: boolean = true) {
+    fromImage(canvas: HTMLCanvasElement, preMultiplyAlpha: boolean = true) {
         this.preMultiplyAlpha = preMultiplyAlpha
 
         canvas = unPreMultiplyAlpha(canvas)
@@ -223,14 +223,14 @@ export class Ktex {
 
         let width = canvas.width
         let height = canvas.height
-        while ((width > 1 || height > 1) && this.mipmaps.length <= this.header.specification.max_mipmap_count) {
+        while ((width > 1 || height > 1) && this.mipmaps.length <= this.header.specification.maxMipmapCount) {
             const resized = resize(canvas, width, height)
             const mipmap = new KtexMipmap(
                 width,
                 height,
                 new Uint8Array(resized.getContext("2d")!.getImageData(0, 0, resized.width, resized.height).data)
             )
-            mipmap.compress(this.header.pixel_format)
+            mipmap.compress(this.header.pixelFormat)
             this.mipmaps.push(mipmap)
 
             width = width > 1 ? Math.floor(width / 2) : width
@@ -238,15 +238,15 @@ export class Ktex {
 
             break
         }
-        this.header.mipmap_count = this.mipmaps.length
+        this.header.mipmapCount = this.mipmaps.length
     }
 
-    async to_image(preMultiplyAlpha: boolean = true) {
+    toImage(preMultiplyAlpha: boolean = true) {
         const mipmap = this.mipmaps[0]
-        mipmap.decompress(this.header.pixel_format)
+        mipmap.decompress(this.header.pixelFormat)
         const mipmapData = mipmap.data!
 
-        const hasAlpha = this.header.pixel_format !== PixelFormat.RGB
+        const hasAlpha = this.header.pixelFormat !== PixelFormat.RGB
         this.preMultiplyAlpha = preMultiplyAlpha && hasAlpha
 
         let canvas = newCanvas(mipmap.width, mipmap.height)
@@ -280,22 +280,30 @@ export class Ktex {
         return canvas
     }
 
-    // get_file(name?: string) {
-    //     let content = this.header.get_data()
+    compile() {
+        const writer = new BinaryDataWriter()
 
-    //     for (const mipmap of this.mipmaps) {
-    //         content = Buffer.concat([content, mipmap.get_meta_data()])
-    //     }
-    //     for (const mipmap of this.mipmaps) {
-    //         content = Buffer.concat([content, mipmap.get_block_data()])
-    //     }
-    //     content = Buffer.concat([content, new Uint8Array([this.preMultiplyAlpha ? 1 : 0])])
+        // write header
+        writer.writeString(this.header.MAGIC)
+        writer.writeUint32(this.header.getSpecificationData())
 
-    //     const blob = new Blob([content])
-    //     const downloadLink = document.createElement("a")
-    //     downloadLink.href = URL.createObjectURL(blob)
-    //     downloadLink.download = name || `${this.name}.tex`
-    //     downloadLink.click()
-    //     URL.revokeObjectURL(downloadLink.href)
-    // }
+        // write mipmap metaData
+        for (const mipmap of this.mipmaps) {
+            const [width, height, pitch, dataSize] = mipmap.getMetaData()
+            writer.writeHex(width)
+            writer.writeHex(height)
+            writer.writeHex(pitch)
+            writer.writeUint32(dataSize)
+        }
+
+        // write mipmap blockData
+        for (const mipmap of this.mipmaps) {
+            writer.writeBytes(mipmap.getBlockData())
+        }
+
+        // write preMultiplyAlpha info
+        writer.writeBytes(new Uint8Array([this.preMultiplyAlpha ? 1 : 0]))
+
+        return writer.getBuffer()
+    }
 }

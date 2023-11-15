@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js"
 import { createStore, createMutable } from "solid-js/store"
-import { SymbolMaps } from "./symbol_maps"
+import { SymbolMaps } from "./symbolMaps"
 import { RowData } from "../components/DataViewer"
 
 export function updateData() {

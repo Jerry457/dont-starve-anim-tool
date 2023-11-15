@@ -1,35 +1,40 @@
-import BinaryDataReader from "../binary-data/BinaryDataReader"
+import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
+import { strHash } from "./util"
 
-const FACING_RIGHT = 1 << 0
-const FACING_UP = 1 << 1
-const FACING_LEFT = 1 << 2
-const FACING_DOWN = 1 << 3
-const FACING_UPRIGHT = 1 << 4
-const FACING_UPLEFT = 1 << 5
-const FACING_DOWNRIGHT = 1 << 6
-const FACING_DOWNLEFT = 1 << 7
+const exportDepth = 10
 
-const faceing_dir = {
-    [FACING_UP]: "_up",
-    [FACING_DOWN]: "_down",
-    [FACING_LEFT | FACING_RIGHT]: "_side",
-    [FACING_LEFT]: "_left",
-    [FACING_RIGHT]: "_right",
-    [FACING_UPLEFT | FACING_UPRIGHT]: "_upside",
-    [FACING_DOWNLEFT | FACING_DOWNRIGHT]: "_downside",
-    [FACING_UPLEFT]: "_upleft",
-    [FACING_UPRIGHT]: "_upright",
-    [FACING_DOWNLEFT]: "_downleft",
-    [FACING_DOWNRIGHT]: "_downright",
-    [FACING_UPLEFT | FACING_UPRIGHT | FACING_DOWNLEFT | FACING_DOWNRIGHT]: "_45s",
-    [FACING_UP | FACING_DOWN | FACING_LEFT | FACING_RIGHT]: "_90s",
-}
+const facingRight = 1 << 0
+const facingUp = 1 << 1
+const facingLeft = 1 << 2
+const facingDown = 1 << 3
+const facingUpRight = 1 << 4
+const facingUpLeft = 1 << 5
+const facingDownRight = 1 << 6
+const facingDownLeft = 1 << 7
+
+const defaultFacingByte = facingRight | facingLeft | facingUp | facingDown | facingUpLeft | facingUpRight | facingDownLeft | facingDownRight
+
+const faceingDirectionMap: ReadonlyMap<number, string> = new Map([
+    [facingUp, "_up"],
+    [facingDown, "_down"],
+    [facingLeft | facingRight, "_side"],
+    [facingLeft, "_left"],
+    [facingRight, "_right"],
+    [facingUpLeft | facingUpRight, "_upside"],
+    [facingDownLeft | facingDownRight, "_downside"],
+    [facingUpLeft, "_upleft"],
+    [facingUpRight, "_upright"],
+    [facingDownLeft, "_downleft"],
+    [facingDownRight, "_downright"],
+    [facingUpLeft | facingUpRight | facingDownLeft | facingDownRight, "_45s"],
+    [facingUp | facingDown | facingLeft | facingRight, "_90s"],
+])
 
 export class AnimElement {
-    z_index: number
+    zIndex: number
     symbol: string
     frame: number
-    layer_name: string
+    layerName: string
     m_a: number
     m_b: number
     m_c: number
@@ -38,10 +43,10 @@ export class AnimElement {
     m_ty: number
 
     constructor(
-        z_index: number,
+        zIndex: number,
         symbol: string = "",
         frame: number = 0,
-        layer_name: string = "",
+        layerName: string = "",
         m_a: number = 1,
         m_b: number = 0,
         m_c: number = 0,
@@ -51,14 +56,14 @@ export class AnimElement {
     ) {
         this.symbol = symbol.toLowerCase()
         this.frame = frame
-        this.layer_name = layer_name.toLowerCase()
+        this.layerName = layerName.toLowerCase()
         this.m_a = m_a
         this.m_b = m_b
         this.m_c = m_c
         this.m_d = m_d
         this.m_tx = m_tx
         this.m_ty = m_ty
-        this.z_index = z_index
+        this.zIndex = zIndex
     }
 
     getSubRow = undefined
@@ -71,18 +76,20 @@ export class AnimFrame {
     h: number
     idx: number
     elements: AnimElement[]
+    events: string[]
 
-    constructor(idx: number, x: number = 0, y: number = 0, w: number = 9999, h: number = 9999, elements: AnimElement[] = []) {
+    constructor(idx: number, x: number = 0, y: number = 0, w: number = 9999, h: number = 9999, elements: AnimElement[] = [], events: string[] = []) {
         this.idx = idx
         this.x = x
         this.y = y
         this.w = w
         this.h = h
         this.elements = elements
+        this.events = events
     }
 
     sort() {
-        this.elements.sort((a, b) => a.z_index - b.z_index)
+        this.elements.sort((a, b) => a.zIndex - b.zIndex)
     }
 
     getSubRow() {
@@ -95,9 +102,9 @@ export class Animation {
     frameRate: number
     frames: AnimFrame[]
 
-    constructor(name: string = "", frame_rate: number = 30, frames: AnimFrame[] = []) {
+    constructor(name: string = "", frameRate: number = 30, frames: AnimFrame[] = []) {
         this.name = name
-        this.frameRate = frame_rate
+        this.frameRate = frameRate
         this.frames = frames
     }
 
@@ -111,8 +118,6 @@ export class Animation {
 }
 
 export class Bank {
-    [key: string]: any
-
     name: string
     animations: Animation[]
 
@@ -144,70 +149,77 @@ export class Anim {
     }
 }
 
-export async function UnpackAnim(data: BinaryDataReader | ArrayBuffer) {
+export async function decompileAnim(data: BinaryDataReader | ArrayBuffer) {
     const anim = new Anim()
 
     const reader = data instanceof BinaryDataReader ? data : new BinaryDataReader(data)
     reader.cursor = 20
 
-    const animation_num = reader.readUint32()
+    const animationNum = reader.readUint32()
 
-    // unpack hash dict first
-    for (let i = 0; i < animation_num; i++) {
-        const animation_name_len = reader.readUint32()
-        const frame_num = reader.readUint32(reader.cursor + 9 + animation_name_len)
-        for (let idx = 0; idx < frame_num; idx++) {
-            const event_num = reader.readUint32(reader.cursor + 16) // is 0, no use
-            const element_num = reader.readUint32(reader.cursor + event_num * 4)
-            reader.cursor += 40 * element_num
+    // skip animation, read hash dict first
+    for (let i = 0; i < animationNum; i++) {
+        const animationNameLen = reader.readUint32()
+        const frameNum = reader.readUint32(reader.cursor + 9 + animationNameLen)
+        for (let idx = 0; idx < frameNum; idx++) {
+            const eventNum = reader.readUint32(reader.cursor + 16) // is 0, no use
+            const elementNum = reader.readUint32(reader.cursor + eventNum * 4)
+            reader.cursor += 40 * elementNum
         }
     }
-    const hash_dict_len = reader.readUint32()
-    const hash_dict = new Map<number, string>()
-    for (let i = 0; i < hash_dict_len; i++) {
+
+    const hashNum = reader.readUint32()
+    const hashMap = new Map<number, string>()
+    for (let i = 0; i < hashNum; i++) {
         const hash = reader.readUint32()
-        const str_len = reader.readInt32()
-        const str = reader.readString(str_len)
-        hash_dict.set(hash, str)
+        const strLen = reader.readInt32()
+        const str = reader.readString(strLen)
+        hashMap.set(hash, str)
     }
-    //
 
+    // read animation
     reader.cursor = 24
-    for (let i = 0; i < animation_num; i++) {
-        const animation_name_len = reader.readInt32()
-        let animation_name = reader.readString(animation_name_len)
-        const facing_byte = reader.readByte()
-        const bank_name_hash = reader.readUint32()
-        const bank_name = hash_dict.get(bank_name_hash)!
-        const frame_rate = reader.readFloat32()
-        const frame_num = reader.readInt32()
+    for (let i = 0; i < animationNum; i++) {
+        const animationNameLen = reader.readInt32()
+        let animationName = reader.readString(animationNameLen)
+        const facingByte = reader.readByte()
+        const bankNameHash = reader.readUint32()
+        const bankName = hashMap.get(bankNameHash)!
+        const frameRate = reader.readFloat32()
+        const frameNum = reader.readInt32()
 
-        let bank = anim.getBank(bank_name)
+        let bank = anim.getBank(bankName)
         if (!bank) {
-            bank = new Bank(bank_name)
+            bank = new Bank(bankName)
             anim.banks.push(bank)
         }
-        animation_name += faceing_dir[facing_byte] || ""
-        const animation = new Animation(animation_name, frame_rate)
+        animationName += faceingDirectionMap.get(facingByte) || ""
+        const animation = new Animation(animationName, frameRate)
         bank.animations.push(animation)
 
-        for (let idx = 0; idx < frame_num; idx++) {
+        for (let idx = 0; idx < frameNum; idx++) {
             const x = reader.readFloat32()
             const y = reader.readFloat32()
             const w = reader.readFloat32()
             const h = reader.readFloat32()
 
-            const event_num = reader.readUint32() // is 0, no use
-            const element_num = reader.readUint32(reader.cursor + event_num * 4)
-            const anim_frame = new AnimFrame(idx, x, y, w, h)
-            animation.frames.push(anim_frame)
+            const animFrame = new AnimFrame(idx, x, y, w, h)
+            animation.frames.push(animFrame)
 
-            for (let z_index = 0; z_index < element_num; z_index++) {
-                const symbol_name_hash = reader.readUint32()
-                const symbol = hash_dict.get(symbol_name_hash)!
+            const eventNum = reader.readUint32()
+            for (let eventindex = 0; eventindex < eventNum; eventindex++) {
+                const eventNameHash = reader.readUint32()
+                const eventName = hashMap.get(eventNameHash)!
+                animFrame.events.push(eventName)
+            }
+
+            const elementNum = reader.readUint32(reader.cursor)
+            for (let zIndex = 0; zIndex < elementNum; zIndex++) {
+                const symbolNameHash = reader.readUint32()
+                const symbol = hashMap.get(symbolNameHash)!
                 const frame = reader.readUint32()
-                const layer_name_hash = reader.readUint32()
-                const layer_name = hash_dict.get(layer_name_hash)!
+                const layerNameHash = reader.readUint32()
+                const layerName = hashMap.get(layerNameHash)!
 
                 const m_a = reader.readFloat32()
                 const m_b = reader.readFloat32()
@@ -217,13 +229,118 @@ export async function UnpackAnim(data: BinaryDataReader | ArrayBuffer) {
                 const m_ty = reader.readFloat32()
                 const z = reader.readFloat32()
 
-                const element = new AnimElement(z_index, symbol, frame, layer_name, m_a, m_b, m_c, m_d, m_tx, m_ty)
-                anim_frame.elements.push(element)
+                const element = new AnimElement(zIndex, symbol, frame, layerName, m_a, m_b, m_c, m_d, m_tx, m_ty)
+                animFrame.elements.push(element)
             }
-            anim_frame.sort()
+            animFrame.sort()
         }
         animation.sort()
     }
 
     return anim
+}
+
+export async function compileAnim(anim: Anim) {
+    const hashMap: Map<number, string> = new Map()
+    const writer = new BinaryDataWriter()
+
+    let animationNum = 0
+    let eventNum = 0
+    let frameNum = 0
+    let elementNum = 0
+    for (const bank of anim.banks) {
+        animationNum += bank.animations.length
+        for (const animation of bank.animations) {
+            frameNum += animation.frames.length
+            for (const frame of animation.frames) {
+                elementNum += frame.elements.length
+                eventNum += frame.events.length
+            }
+        }
+    }
+
+    // write head
+    writer.writeString("ANIM")
+    writer.writeInt32(anim.version)
+    writer.writeUint32(elementNum)
+    writer.writeUint32(frameNum)
+    writer.writeUint32(eventNum)
+    writer.writeUint32(animationNum)
+
+    // write animations info
+    for (const bank of anim.banks) {
+        const bankNameHash = strHash(bank.name)
+        hashMap.set(bankNameHash, bank.name)
+
+        for (const animation of bank.animations) {
+            let facingByte = defaultFacingByte
+            let animationName = animation.name
+
+            for (const [byte, direction] of faceingDirectionMap.entries()) {
+                const result = new RegExp(`^(.*)${direction}$`).exec(animation.name)
+                if (result) {
+                    animationName = result[1]
+                    facingByte = byte
+                    break
+                }
+            }
+
+            // write animation info
+            writer.writeInt32(animationName.length)
+            writer.writeString(animationName)
+            writer.writeByte(facingByte)
+            writer.writeUint32(bankNameHash)
+            writer.writeFloat32(animation.frameRate)
+            writer.writeUint32(animation.frames.length)
+
+            // write frames info
+            for (const frame of animation.frames) {
+                // write frame info
+                writer.writeFloat32(frame.x)
+                writer.writeFloat32(frame.y)
+                writer.writeFloat32(frame.w)
+                writer.writeFloat32(frame.h)
+                writer.writeUint32(frame.events.length)
+
+                // write events info
+                for (const eventName of frame.events) {
+                    const eventNameHash = strHash(eventName)
+                    hashMap.set(eventNameHash, eventName)
+                }
+
+                frame.sort()
+
+                // write elements info
+                writer.writeUint32(frame.elements.length)
+                for (const element of frame.elements) {
+                    const symbolHash = strHash(element.symbol)
+                    const layerNameHash = strHash(element.layerName)
+                    hashMap.set(symbolHash, element.symbol)
+                    hashMap.set(layerNameHash, element.layerName)
+
+                    // write element info
+                    writer.writeUint32(symbolHash)
+                    writer.writeUint32(element.frame)
+                    writer.writeUint32(layerNameHash)
+                    writer.writeFloat32(element.m_a)
+                    writer.writeFloat32(element.m_b)
+                    writer.writeFloat32(element.m_c)
+                    writer.writeFloat32(element.m_d)
+                    writer.writeFloat32(element.m_tx)
+                    writer.writeFloat32(element.m_ty)
+                    writer.writeFloat32((element.zIndex / frame.elements.length) * exportDepth - exportDepth * 10)
+                }
+            }
+        }
+    }
+
+    // write hashMap info
+    writer.writeUint32(hashMap.size)
+    for (const [hash, str] of hashMap) {
+        writer.writeUint32(hash)
+        writer.writeInt32(str.length)
+        writer.writeString(str)
+    }
+
+    return writer.getBuffer()
 }

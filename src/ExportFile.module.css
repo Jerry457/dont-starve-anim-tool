@@ -43,10 +43,10 @@
 
 .build {
     display: grid;
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: max-content 1fr 1fr;
 }
 
-.BuildSelect {
+.buildSelect {
     --button-normal-color: hsl(204, 85%, 40%);
     --button-hover-color: rgba(0, 0, 0, 0.1);
     --button-active-color: hsl(204, 85%, 30%);
@@ -67,7 +67,7 @@
     user-select: none;
 }
 
-.BuildSelect:active {
+.buildSelect:active {
     color: var(--button-active-color);
 }
 
@@ -89,6 +89,20 @@
 
 .chosenButton {
     justify-content: left;
+}
+.zipFileName > input {
+    outline: 0;
+    border: 1px solid #bbb;
+    padding: 0.4rem;
+    width: 10rem;
+}
+
+.zipFileName > input:placeholder-shown {
+    font-size: 13px;
+}
+
+.zipFileName > input:focus {
+    border: 1px solid hsl(204, 80%, 55%);
 }
 
 .downloadButton {

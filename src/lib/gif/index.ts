@@ -17,7 +17,7 @@ export async function encodeDownload(
         if (!renderedFrame) renderedFrame = newCanvas(width, height)
         frames.push({ imageData: renderedFrame, delay: frameDuration })
     }
-    encode({ workerUrl: workerUrl, width, height, frames }).then(output => {
+    encode({ workerUrl, width, height, frames }).then(output => {
         const blob = new Blob([output], { type: "image/gif" })
         const link = document.createElement("a")
         link.download = `${name}.gif`
