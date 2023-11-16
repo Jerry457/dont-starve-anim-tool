@@ -18,7 +18,7 @@ import { IconButton } from "./components/IconButton"
 import { TextButton } from "./components/TextButton"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
-import { builds, playAnimation, playFrame, colourCube } from "./data"
+import { builds, playAnimation, colourCube, playFrame } from "./data"
 import { colourCubes } from "./data/colourCubes"
 import { SelectColourCube } from "./AnimTool/SelectColourCube"
 import { isHided, HideLayer } from "./AnimTool/HideLayer"
@@ -290,9 +290,7 @@ function AnimationPlayer() {
     })
 
     createEffect(() => {
-        if (pause()) {
-            setFrameIndex(playFrame())
-        }
+        setFrameIndex(playFrame())
     })
 
     createEffect(async () => {

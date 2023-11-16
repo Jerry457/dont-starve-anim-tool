@@ -1,4 +1,4 @@
-import { JSX, Accessor, For, createSignal } from "solid-js"
+import { JSX, Accessor, For, createSignal, createEffect } from "solid-js"
 import JSZip from "jszip"
 
 import { TextButton } from "./components/TextButton"
@@ -137,6 +137,8 @@ function BuildViewer() {
         }
     }
     onChange()
+    addEventListener("updateData", () => onChange())
+    createEffect(() => onChange())
 
     return (
         <fieldset classList={{ [style.fieldset]: true, [style.build]: true, [style.unUse]: !hasBuild() }}>
