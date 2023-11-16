@@ -1,3 +1,10 @@
+.githubButton {
+    position: absolute;
+    right: 0;
+    --button-normal-color: black;
+    font-size: 2rem;
+}
+
 .App {
     height: 100%;
     display: grid;

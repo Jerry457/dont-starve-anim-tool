@@ -3,6 +3,7 @@ import { produce } from "solid-js/store"
 
 import TriangleIcon from "~icons/mdi/triangle"
 import DeleteIcon from "~icons/mdi/delete-outline"
+import GitHub from "~icons/mdi/github"
 
 import { IconButton } from "../components/IconButton"
 import { TextButton } from "../components/TextButton"
@@ -111,10 +112,16 @@ export function OverrideSymbol() {
         )
     }
 
+    function onClickGitHub() {
+        window.open("https://github.com/Jerry457/dont-starve-anim-tool/blob/main/src/data/symbolMaps.ts")
+    }
+
     return (
         <div class={style.OverrideSymbolPopup}>
+            <div>
+                <IconButton icon={GitHub} classList={{ [style.githubButton]: true }} onClick={onClickGitHub} />
+            </div>
             <h2> Override Symbol </h2>
-            <a href="https://github.com/Jerry457/dont-starve-anim-tool/blob/main/src/data/symbol_maps.ts">src</a>
             <div class={style.list}>
                 <For each={Object.entries(symbolMaps)}>
                     {([symbol, data]) => {

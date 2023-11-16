@@ -1,3 +1,11 @@
+.githubButton {
+    position: absolute;
+    left: 0px;
+
+    --button-normal-color: black;
+    font-size: 2rem;
+}
+
 .OverrideSymbolPopup {
     display: grid;
     grid-template-rows: max-content max-content auto max-content;

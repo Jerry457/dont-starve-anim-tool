@@ -148,14 +148,10 @@ export default function App() {
 
     async function handleFiles(e: FileDropEvent | (Event & { currentTarget: HTMLInputElement; target: HTMLInputElement })) {
         let files: FileList | File[] | null = null
-        if (e instanceof FileDropEvent) {
-            files = e.files
-        } else if (e instanceof Event) {
-            files = e.target.files
-        }
-        if (!files) {
-            return
-        }
+        if (e instanceof FileDropEvent) files = e.files
+        else if (e instanceof Event) files = e.target.files
+
+        if (!files) return
 
         for (const file of files) {
             const [fileName, fileType] = file.name.split(".")
@@ -179,6 +175,10 @@ export default function App() {
         }
     }
 
+    function onClickGitHub() {
+        window.open("https://github.com/Jerry457/dont-starve-anim-tool")
+    }
+
     return (
         <file-drop class={style.App} multiple={true} onfiledrop={handleFiles}>
             <div class={style.ioBar}>
@@ -187,7 +187,7 @@ export default function App() {
                 <Popup buttonText={"Export"} buttonClassList={{ [style.ioButton]: true }} classList={{ [style.exportPopup]: true }}>
                     <ExportFile />
                 </Popup>
-                <IconButton icon={GitHub} />
+                <IconButton icon={GitHub} classList={{ [style.githubButton]: true }} onClick={onClickGitHub} />
             </div>
             <div classList={{ [style.main]: true }}>
                 <div class={style.top} ref={topPart!}>
