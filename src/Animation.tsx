@@ -16,6 +16,7 @@ import DownloadIcon from "~icons/mdi/download"
 import { Popup } from "./components/Popup"
 import { IconButton } from "./components/IconButton"
 import { TextButton } from "./components/TextButton"
+import ProgressBar from "./components/ProgressBar"
 import ZoomDragDiv from "./components/ZoomDragDiv"
 
 import { builds, playAnimation, colourCube, playFrame } from "./data"
@@ -55,7 +56,6 @@ function AnimationPlayer() {
     let frameCollisionBoxCanvas: HTMLCanvasElement
     let animCanvasContext: CanvasRenderingContext2D
     let animCollisionBoxContext: CanvasRenderingContext2D
-    let progress: HTMLDivElement
 
     let renderedIndex = 0
     let frameRate = 30
@@ -71,12 +71,7 @@ function AnimationPlayer() {
 
     const [pause, setPause] = createSignal(true)
 
-    function onClickprogress(e: MouseEvent) {
-        const progressBoundingClientRect = progress.getBoundingClientRect()
-
-        const offsetX = e.clientX - progressBoundingClientRect.left
-        const percent = offsetX / progressBoundingClientRect.width
-
+    function onClickprogress(percent: number) {
         setFrameIndex(clamp(Math.round(percent * (frameNum() - 1)), 0, frameNum() - 1))
     }
 
@@ -364,9 +359,7 @@ function AnimationPlayer() {
                 </Show>
                 <IconButton icon={Next} classList={{ [style.controlButton]: true }} onClick={nextFrame} />
                 <div>{`${frameIndex()}/${frameNum() - 1}`}</div>
-                <div class={style.progress} onClick={onClickprogress} ref={progress!}>
-                    <div class={style.progressValue} style={`width: ${frameNum() === 0 ? 1 : ((frameIndex() + 1) / frameNum()) * 100}%`}></div>
-                </div>
+                <ProgressBar onClickprogress={onClickprogress} progressValue={frameNum() === 0 ? 1 : (frameIndex() + 1) / frameNum()} />
             </div>
         </>
     )

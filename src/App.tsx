@@ -163,14 +163,7 @@ export default function App() {
     return (
         <file-drop class={style.App} multiple={true} onfiledrop={handleFiles}>
             <div class={style.ioBar}>
-                <input
-                    type="file"
-                    multiple={true}
-                    class={style.inputFile}
-                    onChange={handleFiles}
-                    ref={inputFile!}
-                    accept=".zip, .json, .bin, .png, .tex .dyn"
-                />
+                <input type="file" multiple={true} class={style.inputFile} onChange={handleFiles} ref={inputFile!} accept=".zip, .json, .bin, .dyn" />
                 <TextButton text={"Open"} classList={{ [style.ioButton]: true }} onClick={OnClickOpen} />
                 <Popup buttonText={"Export"} buttonClassList={{ [style.ioButton]: true }} classList={{ [style.exportPopup]: true }}>
                     <ExportFile />

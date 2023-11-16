@@ -185,10 +185,7 @@ function downloadFile(blob: Blob, fileName: string) {
 
 export default function ExportFile() {
     async function onDownLoad() {
-        if (!hasAnim() && !hasBuild()) {
-            alert("Please select Anim or Build at least one ")
-            return
-        }
+        if (!hasAnim() && !hasBuild()) return
 
         let anim: Anim | undefined
         let build: Build | undefined
@@ -208,6 +205,8 @@ export default function ExportFile() {
         if (hasBuild() && builds[selectedBuild]) {
             build = builds[selectedBuild].data as Build
         }
+
+        if (!anim && !build) return
 
         if (anim) {
             if (type === "json") {

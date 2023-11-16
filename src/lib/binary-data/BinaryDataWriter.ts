@@ -1,55 +1,62 @@
 export default class BinaryDataWriter {
-    uint8Array: Uint8Array
-    dataView: DataView
-    private _cursor: number // Current byte offset
+    uint8Arrays: Uint8Array[]
+    length: number
 
     textEncoder = new TextEncoder()
 
-    private _expandArrayBuffer(length: number) {
-        const uint8Array = new Uint8Array(this.uint8Array.length + length)
-        uint8Array.set(this.uint8Array, 0)
-        this.uint8Array = uint8Array
-        this.dataView = new DataView(this.uint8Array.buffer)
-    }
-
     constructor() {
-        this.uint8Array = new Uint8Array(0)
-        this.dataView = new DataView(this.uint8Array.buffer)
-        this._cursor = 0
+        this.uint8Arrays = []
+        this.length = 0
     }
 
     getBuffer() {
-        return this.uint8Array.buffer
+        const mergeUint8Array = new Uint8Array(this.length)
+        let offset = 0
+        for (const uint8Array of this.uint8Arrays) {
+            mergeUint8Array.set(uint8Array, offset)
+            offset += uint8Array.length
+        }
+
+        return mergeUint8Array.buffer
     }
 
     writeByte(value: number) {
-        this._expandArrayBuffer(1)
-        this.dataView.setUint8(this._cursor, value)
-        this._cursor += 1
+        const uint8Array = new Uint8Array(1)
+        uint8Array[0] = value
+        this.uint8Arrays.push(uint8Array)
+        this.length += 1
     }
 
     writeInt32(value: number) {
-        this._expandArrayBuffer(4)
-        this.dataView.setInt32(this._cursor, value, true)
-        this._cursor += 4
+        const uint8Array = new Uint8Array(4)
+        const dataView = new DataView(uint8Array.buffer)
+        dataView.setInt32(0, value, true)
+        this.uint8Arrays.push(uint8Array)
+        this.length += 4
     }
 
     writeUint32(value: number) {
-        this._expandArrayBuffer(4)
-        this.dataView.setUint32(this._cursor, value, true)
-        this._cursor += 4
+        const uint8Array = new Uint8Array(4)
+        const dataView = new DataView(uint8Array.buffer)
+        dataView.setUint32(0, value, true)
+        this.uint8Arrays.push(uint8Array)
+        this.length += 4
     }
 
     writeHex(value: number) {
-        this._expandArrayBuffer(2)
-        this.dataView.setUint16(this._cursor, value, true)
-        this._cursor += 2
+        const uint8Array = new Uint8Array(2)
+        const dataView = new DataView(uint8Array.buffer)
+        dataView.setUint16(0, value, true)
+        this.uint8Arrays.push(uint8Array)
+        this.length += 2
     }
 
     writeFloat32(value: number) {
-        this._expandArrayBuffer(4)
-        this.dataView.setFloat32(this._cursor, value, true)
-        this._cursor += 4
+        const uint8Array = new Uint8Array(4)
+        const dataView = new DataView(uint8Array.buffer)
+        dataView.setFloat32(0, value, true)
+        this.uint8Arrays.push(uint8Array)
+        this.length += 4
     }
 
     writeString(value: string) {
@@ -57,8 +64,7 @@ export default class BinaryDataWriter {
     }
 
     writeBytes(value: Uint8Array) {
-        this._expandArrayBuffer(value.length)
-        this.uint8Array.set(value, this._cursor)
-        this._cursor += value.length
+        this.uint8Arrays.push(value)
+        this.length += value.length
     }
 }

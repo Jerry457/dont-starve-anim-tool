@@ -5,10 +5,6 @@ import { RowData, DataViewer } from "./components/DataViewer"
 
 import style from "./BuildViewer.module.css"
 
-function buildUpdate() {
-    dispatchEvent(new CustomEvent("updateBuild"))
-}
-
 function rowChecked(row: RowData, index: number) {
     return row.shown
 }
@@ -19,7 +15,7 @@ function onCheckChange(index: number, row: RowData, checked: boolean) {
 }
 
 function onRowDataChange(index: number, row: RowData, key: string, value: string | number) {
-    const data = row.data as { [key: string]: string | number }
+    const data = row.data as any as { [key: string]: string | number }
     data[key] = value
     updateData()
 }
