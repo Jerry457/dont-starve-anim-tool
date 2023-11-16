@@ -3,6 +3,9 @@ import { createStore, createMutable } from "solid-js/store"
 import { SymbolMaps } from "./symbolMaps"
 import { RowData } from "../components/DataViewer"
 
+import { Ktex } from "../lib/kfiles/ktex"
+import { Build } from "../lib/kfiles/build"
+
 export function updateData() {
     dispatchEvent(new CustomEvent("updateData"))
 }
@@ -35,3 +38,39 @@ export const [symbolMaps, setSymbolMaps] = createStore(
         {}
     )
 )
+
+type buildAtlas = {
+    buildName: string
+    atlases: { [atlasName: string]: Ktex }
+}
+
+const buildAtlases: buildAtlas[] = []
+
+function linkBuildAtlases(buildAtlas: buildAtlas, build: Build) {
+    const { buildName, atlases } = buildAtlas
+    if (build.name === buildName) {
+        build.splitAtlas(atlases)
+        updateData()
+
+        return true
+    }
+
+    return false
+}
+
+export function findRelevantAtlases(build: Build) {
+    for (const [idx, buildAtlas] of buildAtlases.entries()) {
+        if (linkBuildAtlases(buildAtlas, build)) {
+            buildAtlases.splice(idx, 1)
+            return
+        }
+    }
+}
+
+export function addbuildAtlas(buildAtlas: buildAtlas) {
+    for (const rowData of builds) {
+        const build = rowData.data as Build
+        if (linkBuildAtlases(buildAtlas, build)) return
+    }
+    buildAtlases.push(buildAtlas)
+}

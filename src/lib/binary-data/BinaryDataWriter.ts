@@ -17,7 +17,7 @@ export default class BinaryDataWriter {
             offset += uint8Array.length
         }
 
-        return mergeUint8Array.buffer
+        return mergeUint8Array
     }
 
     writeByte(value: number) {

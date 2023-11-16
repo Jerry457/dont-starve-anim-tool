@@ -7,6 +7,7 @@ import { RowData, DataViewer } from "./components/DataViewer"
 import { banks, builds } from "./data"
 import { Build, compileBuild } from "./lib/kfiles/build"
 import { Anim, Bank, compileAnim } from "./lib/kfiles/anim"
+import { convertDyn } from "./lib/kfiles/dyn"
 
 import style from "./ExportFile.module.css"
 
@@ -191,15 +192,11 @@ export default function ExportFile() {
         let build: Build | undefined
 
         const type = outputType()
-        const files: { data: ArrayBuffer | Blob; name: string; path?: string }[] = []
+        const files: { data: Uint8Array | Blob; name: string; path?: string }[] = []
         const promises = []
 
         if (hasAnim()) {
-            const packBanks = selectedBanks
-                .filter((use, index) => {
-                    return use && banks[index]
-                })
-                .map((use, index) => banks[index].data as Bank)
+            const packBanks = selectedBanks.filter((use, index) => use && banks[index]).map((use, index) => banks[index].data as Bank)
             if (packBanks.length > 0) anim = new Anim(packBanks)
         }
         if (hasBuild() && builds[selectedBuild]) {
@@ -211,7 +208,7 @@ export default function ExportFile() {
         if (anim) {
             if (type === "json") {
                 const animJson = JSON.stringify(anim, undefined, 4)
-                files.push({ data: textEncoder.encode(animJson).buffer, name: "anim.json" })
+                files.push({ data: textEncoder.encode(animJson), name: "anim.json" })
             } else if (type === "bin") {
                 promises.push(compileAnim(anim).then(buffer => files.push({ data: buffer, name: "anim.bin" })))
             }
@@ -224,15 +221,31 @@ export default function ExportFile() {
                     )
                 } else {
                     if (repack) build.packAtlas()
-                    for (const atlas of build.atlases) {
-                        if (atlas.ktex) files.push({ data: atlas.ktex.compile(), name: atlas.name })
+
+                    if (dynFormat) {
+                        const zipFile = new JSZip()
+                        for (const atlas of build.atlases) {
+                            if (atlas.ktex) zipFile.file(atlas.name, atlas.ktex.compile(), { binary: true })
+                        }
+                        zipFile
+                            .generateInternalStream({ type: "arraybuffer" })
+                            .accumulate()
+                            .then(arrayBuffer => {
+                                convertDyn(arrayBuffer, true).then(uint8Array => downloadFile(new Blob([uint8Array]), `${build!.name}.dyn`))
+                            })
+                    } else {
+                        for (const atlas of build.atlases) {
+                            if (atlas.ktex) {
+                                files.push({ data: atlas.ktex.compile(), name: atlas.name })
+                            }
+                        }
                     }
                 }
             }
 
             if (type === "json") {
                 const buildJson = JSON.stringify(build, undefined, 4)
-                files.push({ data: textEncoder.encode(buildJson).buffer, name: "build.json" })
+                files.push({ data: textEncoder.encode(buildJson), name: "build.json" })
             } else if (type === "bin") {
                 promises.push(compileBuild(build).then(buffer => files.push({ data: buffer, name: "build.bin" })))
             }

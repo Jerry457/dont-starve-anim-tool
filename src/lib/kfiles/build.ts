@@ -134,6 +134,13 @@ export class Build {
         return this.atlases ? this.atlases?.map(atlas => ({ data: atlas })) : []
     }
 
+    hasAtlas() {
+        for (const atlas of this.atlases) {
+            if (!atlas.ktex) return false
+        }
+        return true
+    }
+
     packAtlas() {
         const blocks: {
             canvas: HTMLCanvasElement
@@ -210,7 +217,7 @@ export class Build {
         this.atlases = [new Atlas("atlas-0.tex", ktex)]
     }
 
-    async splitAtlas(atlases: { [fileName: string]: Ktex }) {
+    async splitAtlas(atlases: { [atlasName: string]: Ktex }) {
         if (this.atlases.length === 0) {
             return
         }

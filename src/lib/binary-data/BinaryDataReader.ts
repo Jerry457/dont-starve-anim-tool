@@ -57,7 +57,12 @@ export default class BinaryDataReader {
 
     readBytes(length: number): Uint8Array
     readBytes(offset: number, length?: number): Uint8Array
+    readBytes(offset?: number, length?: number): Uint8Array
     readBytes(offset: number, length?: number) {
+        if (!offset && !length) {
+            length = this.buffer.byteLength - this.cursor
+            offset = this.cursor
+        }
         if (!length) {
             length = offset
             offset = this.cursor
