@@ -29,9 +29,7 @@ import style from "./Animation.module.css"
 
 function getBuildFrame(symbol_name: string, frame_num: number) {
     for (const build of builds) {
-        if (!build.sub || !build.shown) {
-            continue
-        }
+        if (!build.sub || !build.shown) continue
 
         for (const symbol of build.sub!) {
             if (!symbol.sub || !symbol.shown || (symbol.data as BuildSymbol).name !== symbol_name) {
@@ -120,27 +118,21 @@ function AnimationPlayer() {
                 const overSymbol = mapSymbol(symbol) || symbol
                 const buildFrame = getBuildFrame(overSymbol, frame)
 
-                if (!buildFrame) {
-                    continue
-                }
+                if (!buildFrame) continue
 
-                const { x: buildX, y: buildY, canvas } = buildFrame.data as BuildFrame
+                const { x, y, canvas } = buildFrame.data as BuildFrame
 
-                if (!canvas) {
-                    continue
-                }
+                if (!canvas) continue
 
                 const borderX = [0, canvas.width * m_a, canvas.height * m_c, canvas.width * m_a + canvas.height * m_c]
                 const borderY = [0, canvas.width * m_b, canvas.height * m_d, canvas.width * m_b + canvas.height * m_d]
                 const transformedWidth = Math.round(Math.max(...borderX) - Math.min(...borderX))
                 const transformedHeight = Math.round(Math.max(...borderY) - Math.min(...borderY))
 
-                if (transformedWidth <= 0 || transformedHeight <= 0) {
-                    continue
-                }
+                if (transformedWidth <= 0 || transformedHeight <= 0) continue
 
-                const offsetX = m_tx + buildX * m_a + buildY * m_c
-                const offsetY = m_ty + buildX * m_b + buildY * m_d
+                const offsetX = m_tx + x * m_a + y * m_c
+                const offsetY = m_ty + x * m_b + y * m_d
 
                 const elementTop = offsetY - transformedHeight / 2
                 const elementBottom = offsetY + transformedHeight / 2
@@ -215,37 +207,28 @@ function AnimationPlayer() {
         for (let i = animFrame.sub!.length - 1; i >= 0; i--) {
             const element = animFrame.sub![i]
 
-            if (!element.shown) {
-                continue
-            }
+            if (!element.shown) continue
 
             const { symbol, frame, layerName: layer, m_a, m_b, m_c, m_d, m_tx, m_ty } = element.data as AnimElement
 
-            if (isHided(layer)) {
-                continue
-            }
+            if (isHided(layer)) continue
 
             const overSymbol = mapSymbol(symbol) || symbol
             const buildFamre = getBuildFrame(overSymbol, frame)
 
-            if (!buildFamre || !buildFamre.shown) {
-                continue
-            }
+            if (!buildFamre || !buildFamre.shown) continue
 
             let { x, y, w, h, canvas } = buildFamre.data as BuildFrame
 
-            if (!canvas) {
-                continue
-            }
+            if (!canvas) continue
+
             const colourCubeKtex = colourCubes[colourCube()]
             if (colourCubeKtex) {
                 canvas = applyColourCube(canvas, colourCubeKtex)
             }
 
             const transfromed = transform(canvas, m_a, m_b, m_c, m_d, 0, 0)
-            if (!transfromed || transfromed.width <= 0 || transfromed.height <= 0) {
-                continue
-            }
+            if (!transfromed || transfromed.width <= 0 || transfromed.height <= 0) continue
 
             const offestX = m_tx + x * m_a + y * m_c
             const offestY = m_ty + x * m_b + y * m_d
@@ -291,9 +274,7 @@ function AnimationPlayer() {
     createEffect(async () => {
         const animation = playAnimation()
 
-        if (!animCanvas || !animation || !animation.sub) {
-            return
-        }
+        if (!animCanvas || !animation || !animation.sub) return
 
         const data = animation.data as Animation
 
@@ -332,9 +313,7 @@ function AnimationPlayer() {
             renderedIndex = getNextFrameIndex(renderedIndex)
             renderFrame(renderedIndex)
 
-            if (!pause()) {
-                nextFrame()
-            }
+            if (!pause()) nextFrame()
 
             startTime = timeStamp
         }

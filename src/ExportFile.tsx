@@ -13,7 +13,7 @@ import style from "./ExportFile.module.css"
 
 const textEncoder = new TextEncoder()
 
-const outputTypes = ["bin", "json", "scml"]
+const outputTypes = ["bin", "json"] // , "scml"
 
 const [hasAnim, setHasAnim] = createSignal(true)
 const [hasBuild, setHasBuild] = createSignal(true)
@@ -21,7 +21,7 @@ const [hasAtlas, setHasAtlas] = createSignal(true)
 const [splitAtlas, setSplitAtlas] = createSignal(false)
 
 const selectedBanks: boolean[] = []
-let recalculate = true
+let recalculate = false
 
 let selectedBuild = 0
 let repack = false
@@ -61,7 +61,7 @@ function AnimViewer() {
                         text="recalculate collision"
                         checkbox={true}
                         check={recalculate}
-                        classList={{ [style.normalButton]: true }}
+                        classList={{ [style.normalButton]: true, [style.unUse]: !hasBuild() }}
                         onClick={() => {
                             recalculate = !recalculate
                         }}
@@ -195,12 +195,13 @@ export default function ExportFile() {
         const files: { data: Uint8Array | Blob; name: string; path?: string }[] = []
         const promises = []
 
+        if (hasBuild() && builds[selectedBuild]) {
+            build = builds[selectedBuild].data as Build
+        }
         if (hasAnim()) {
             const packBanks = selectedBanks.filter((use, index) => use && banks[index]).map((use, index) => banks[index].data as Bank)
             if (packBanks.length > 0) anim = new Anim(packBanks)
-        }
-        if (hasBuild() && builds[selectedBuild]) {
-            build = builds[selectedBuild].data as Build
+            if (recalculate && build) anim?.calculateCollisionBox(build)
         }
 
         if (!anim && !build) return

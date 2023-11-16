@@ -1,4 +1,5 @@
 import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
+import { Build } from "./build"
 import { strHash } from "./util"
 
 const exportDepth = 10
@@ -144,6 +145,55 @@ export class Anim {
         for (const bank of this.banks) {
             if (bank.name === name) {
                 return bank
+            }
+        }
+    }
+
+    calculateCollisionBox(build: Build) {
+        for (const bank of this.banks) {
+            for (const animation of bank.animations) {
+                for (const frame of animation.frames) {
+                    let frameTop = Infinity
+                    let frameLeft = Infinity
+                    let frameBottom = -Infinity
+                    let frameRight = -Infinity
+
+                    for (const element of frame.elements) {
+                        const buildFrame = build.getSymbol(element.symbol)?.getFrame(element.frame)
+                        if (!buildFrame) continue
+
+                        const { m_a, m_b, m_c, m_d, m_tx, m_ty } = element
+                        const { x, y, w, h } = buildFrame
+
+                        const borderX = [0, w * m_a, h * m_c, w * m_a + h * m_c]
+                        const borderY = [0, w * m_b, h * m_d, w * m_b + h * m_d]
+                        const transformedWidth = Math.round(Math.max(...borderX) - Math.min(...borderX))
+                        const transformedHeight = Math.round(Math.max(...borderY) - Math.min(...borderY))
+
+                        if (transformedWidth <= 0 || transformedHeight <= 0) continue
+
+                        const offsetX = m_tx + x * m_a + y * m_c
+                        const offsetY = m_ty + x * m_b + y * m_d
+
+                        const elementTop = offsetY - transformedHeight / 2
+                        const elementBottom = offsetY + transformedHeight / 2
+                        const elementLeft = offsetX - transformedWidth / 2
+                        const elementRight = offsetX + transformedWidth / 2
+                        frameTop = Math.min(frameTop, elementTop)
+                        frameBottom = Math.max(frameBottom, elementBottom)
+                        frameLeft = Math.min(frameLeft, elementLeft)
+                        frameRight = Math.max(frameRight, elementRight)
+                    }
+
+                    const frameWidth = Math.round(frameRight - frameLeft)
+                    const frameHeight = Math.round(frameBottom - frameTop)
+                    if (frameWidth > 0 && frameHeight > 0) {
+                        frame.w = frameWidth
+                        frame.h = frameHeight
+                        frame.x = (frameRight + frameLeft) / 2
+                        frame.y = (frameTop + frameBottom) / 2
+                    }
+                }
             }
         }
     }

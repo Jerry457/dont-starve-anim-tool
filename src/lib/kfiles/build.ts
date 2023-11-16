@@ -80,6 +80,15 @@ export class BuildSymbol {
     getSubRow() {
         return this.frames
     }
+
+    getFrame(frameNum: number, getDuration: boolean = true) {
+        for (const frame of this.frames) {
+            const duration = getDuration ? frame.duration - 1 : 0
+            if (frame.frameNum <= frameNum && frameNum <= frame.frameNum + duration) {
+                return frame
+            }
+        }
+    }
 }
 
 export class Vert {
@@ -128,6 +137,12 @@ export class Build {
 
     getSubRow() {
         return this.symbols
+    }
+
+    getSymbol(name: string) {
+        for (const symbol of this.symbols) {
+            if (symbol.name === name) return symbol
+        }
     }
 
     getAtlasSubRow() {
