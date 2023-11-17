@@ -22,8 +22,6 @@
     "dxt-js": "^0.0.3",
     "file-drop-element": "^1.0.1",
     "jszip": "^3.10.1",
-    "lib-upng": "^3.0.0",
-    "modern-gif": "^1.1.10",
-    "path-browserify": "^1.0.1"
+    "modern-gif": "^1.1.10"
   }
 }
