@@ -4,8 +4,8 @@ import { FileDropEvent } from "file-drop-element"
 
 import { BinaryDataReader } from "./lib/binary-data"
 import { Ktex } from "./lib/kfiles/ktex"
-import { decompileAnim } from "./lib/kfiles/anim"
-import { Build, decompileBuild } from "./lib/kfiles/build"
+import { decompileAnim, Anim } from "./lib/kfiles/anim"
+import { decompileBuild, Build } from "./lib/kfiles/build"
 import { convertDyn } from "./lib/kfiles/dyn"
 
 import { banks, builds, addbuildAtlas, findRelevantAtlases } from "./data"
@@ -28,13 +28,17 @@ import style from "./App.module.css"
 function handleJson(file: File, fileName: string) {
     file.text().then(text => {
         const result = JSON.parse(text)
-        switch (result.type) {
-            case "Anim":
-                break
-            case "Build":
-                break
-            default:
-                throw Error("Unknown file")
+        if (result.type === "Anim") {
+            const anim = new Anim()
+            anim.parseJson(result)
+            banks.push(...anim.banks.map(bank => toRowData(bank)))
+        } else if (result.type === "Build") {
+            const build = new Build()
+            build.parseJson(result)
+            findRelevantAtlases(build)
+            builds.push(toRowData(build))
+        } else {
+            alert("Unknown file")
         }
     })
 }

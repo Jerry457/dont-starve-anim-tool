@@ -135,6 +135,23 @@ export class Build {
         this.symbols = symbols
     }
 
+    parseJson(source: any) {
+        Object.assign(this, source)
+        this.symbols = this.symbols.map(symbolJson => {
+            const symbol = new BuildSymbol()
+            Object.assign(symbol, symbolJson)
+
+            symbol.frames = symbol.frames.map(frameJson => {
+                const frame = new BuildFrame()
+                Object.assign(frame, frameJson)
+
+                return frame
+            })
+
+            return symbol
+        })
+    }
+
     getSubRow() {
         return this.symbols
     }

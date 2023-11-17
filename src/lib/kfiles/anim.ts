@@ -44,7 +44,7 @@ export class AnimElement {
     m_ty: number
 
     constructor(
-        zIndex: number,
+        zIndex: number = 0,
         symbol: string = "",
         frame: number = 0,
         layerName: string = "",
@@ -79,7 +79,15 @@ export class AnimFrame {
     elements: AnimElement[]
     events: string[]
 
-    constructor(idx: number, x: number = 0, y: number = 0, w: number = 9999, h: number = 9999, elements: AnimElement[] = [], events: string[] = []) {
+    constructor(
+        idx: number = 0,
+        x: number = 0,
+        y: number = 0,
+        w: number = 9999,
+        h: number = 9999,
+        elements: AnimElement[] = [],
+        events: string[] = []
+    ) {
         this.idx = idx
         this.x = x
         this.y = y
@@ -196,6 +204,36 @@ export class Anim {
                 }
             }
         }
+    }
+
+    parseJson(source: any) {
+        Object.assign(this, source)
+        this.banks = this.banks.map(bankJson => {
+            const bank = new Bank()
+            Object.assign(bank, bankJson)
+
+            bank.animations = bank.animations.map(animationJson => {
+                const animation = new Animation()
+                Object.assign(animation, animationJson)
+
+                animation.frames = animation.frames.map(frameJson => {
+                    const frame = new AnimFrame()
+                    Object.assign(frame, frameJson)
+
+                    frame.elements = frame.elements.map(elementJson => {
+                        const element = new AnimElement()
+                        Object.assign(element, elementJson)
+                        return element
+                    })
+
+                    return frame
+                })
+
+                return animation
+            })
+
+            return bank
+        })
     }
 }
 

@@ -245,7 +245,13 @@ export default function ExportFile() {
             }
 
             if (type === "json") {
-                const buildJson = JSON.stringify(build, undefined, 4)
+                const buildJson = JSON.stringify(
+                    build,
+                    (key, value) => {
+                        return key !== "canvas" && key !== "ktex" ? value : undefined
+                    },
+                    4
+                )
                 files.push({ data: textEncoder.encode(buildJson), name: "build.json" })
             } else if (type === "bin") {
                 promises.push(compileBuild(build).then(buffer => files.push({ data: buffer, name: "build.bin" })))
