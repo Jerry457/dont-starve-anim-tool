@@ -81,7 +81,13 @@ export class BuildSymbol {
         return this.frames
     }
 
-    getFrame(frameNum: number, getDuration: boolean = true) {
+    getFrameByName(name: string) {
+        for (const frame of this.frames) {
+            if (frame.name === name) return frame
+        }
+    }
+
+    getFrame(frameNum: number, getDuration: boolean = true): BuildFrame | undefined {
         for (const frame of this.frames) {
             const duration = getDuration ? frame.duration - 1 : 0
             if (frame.frameNum <= frameNum && frameNum <= frame.frameNum + duration) {
@@ -344,7 +350,7 @@ export class Build {
         }
     }
 
-    async getSpitAtlas(callback: (blob: Blob, symbolName: string, frameName: string) => void) {
+    async getSplitAtlas(callback: (blob: Blob, symbolName: string, frameName: string) => void) {
         const promises = []
         for (const symbol of this.symbols) {
             for (const frame of symbol.frames) {

@@ -7,6 +7,7 @@ import { Ktex } from "./lib/kfiles/ktex"
 import { decompileAnim, Anim } from "./lib/kfiles/anim"
 import { decompileBuild, Build } from "./lib/kfiles/build"
 import { convertDyn } from "./lib/kfiles/dyn"
+import { loadImage, newCanvas } from "./lib/image-canvas"
 
 import { banks, builds, addbuildAtlas, findRelevantAtlases } from "./data"
 
@@ -25,79 +26,101 @@ import ExportFile from "./ExportFile"
 
 import style from "./App.module.css"
 
-function handleJson(file: File, fileName: string) {
-    file.text().then(text => {
-        const result = JSON.parse(text)
-        if (result.type === "Anim") {
-            const anim = new Anim()
-            anim.parseJson(result)
-            banks.push(...anim.banks.map(bank => toRowData(bank)))
-        } else if (result.type === "Build") {
-            const build = new Build()
-            build.parseJson(result)
-            findRelevantAtlases(build)
-            builds.push(toRowData(build))
-        } else {
-            alert("Unknown file")
+function handBuild(
+    build: Build,
+    atlases?: { [atlasName: string]: Ktex },
+    framesData?: { symbolName: string; frameName: string; canvas: HTMLCanvasElement }[]
+) {
+    if (atlases) build.splitAtlas(atlases)
+    if (!build.hasAtlas()) findRelevantAtlases(build)
+    if (framesData) {
+        for (const { symbolName, frameName, canvas } of framesData) {
+            const frame = build.getSymbol(symbolName)?.getFrameByName(frameName)
+            if (frame && !frame.canvas) frame.canvas = canvas
         }
-    })
+    }
+    builds.push(toRowData(build))
 }
 
-function handleBin(file: File, fileName: string) {
-    file.arrayBuffer().then(arrayBuffer => {
-        const reader = new BinaryDataReader(arrayBuffer)
-        const head = reader.readString(4)
-
-        if (head === "ANIM") {
-            decompileAnim(reader).then(anim => {
-                banks.push(...anim.banks.map(bank => toRowData(bank)))
-            })
-        } else if (head === "BILD") {
-            decompileBuild(reader).then(build => {
-                findRelevantAtlases(build)
-                builds.push(toRowData(build))
-            })
-        } else alert("Unknown file")
-    })
+function handAnim(anim: Anim) {
+    banks.push(...anim.banks.map(bank => toRowData(bank)))
 }
 
-function handleZip(file: File, fileName: string) {
+function handleString(
+    text: string,
+    atlases?: { [atlasName: string]: Ktex },
+    framesData?: { symbolName: string; frameName: string; canvas: HTMLCanvasElement }[]
+) {
+    const result = JSON.parse(text)
+    if (result.type === "Anim") {
+        const anim = new Anim()
+        anim.parseJson(result)
+        handAnim(anim)
+    } else if (result.type === "Build") {
+        const build = new Build()
+        build.parseJson(result)
+        handBuild(build, atlases, framesData)
+    } else {
+        alert("Unknown file")
+    }
+}
+
+function handleBin(
+    arrayBuffer: ArrayBuffer,
+    atlases?: { [atlasName: string]: Ktex },
+    frames?: { symbolName: string; frameName: string; canvas: HTMLCanvasElement }[]
+) {
+    const reader = new BinaryDataReader(arrayBuffer)
+    const head = reader.readString(4)
+
+    if (head === "ANIM") decompileAnim(reader).then(anim => handAnim(anim))
+    else if (head === "BILD") decompileBuild(reader).then(build => handBuild(build, atlases, frames))
+    else alert("Unknown file")
+}
+
+async function handleZip(file: File, fileName: string) {
     JSZip.loadAsync(file).then(zip => {
         if ("anim.bin" in zip.files) {
-            zip.files["anim.bin"].async("arraybuffer").then(arrayBuffer =>
-                decompileAnim(arrayBuffer).then(anim => {
-                    banks.push(...anim.banks.map(bank => toRowData(bank)))
-                })
-            )
+            zip.files["anim.bin"].async("arraybuffer").then(arrayBuffer => handleBin(arrayBuffer))
+        } else if ("anim.json" in zip.files) {
+            zip.files["anim.json"].async("text").then(text => handleString(text))
         }
 
-        if ("build.bin" in zip.files) {
-            zip.files["build.bin"].async("arraybuffer").then(arrayBuffer => {
-                const promises = []
-
-                promises.push(decompileBuild(arrayBuffer))
-
-                const atlases: { [atlasName: string]: Ktex } = {}
-                for (const name in zip.files) {
-                    if (name.includes(".tex")) {
-                        atlases[name] = new Ktex(name)
-                        promises.push(
-                            zip.files[name].async("arraybuffer").then(ktexArrayBuffer => {
-                                atlases[name].readKtex(ktexArrayBuffer)
-                            })
-                        )
-                    }
-                }
-                Promise.all(promises).then(results => {
-                    const build = results[0] as Build
-                    build.splitAtlas(atlases).then(() => {
-                        builds.push(toRowData(build))
+        const promises = []
+        const atlases: { [atlasName: string]: Ktex } = {}
+        const framesData: { symbolName: string; frameName: string; canvas: HTMLCanvasElement }[] = []
+        for (const name in zip.files) {
+            if (name.endsWith(".tex")) {
+                atlases[name] = new Ktex(name)
+                promises.push(
+                    zip.files[name].async("arraybuffer").then(ktexArrayBuffer => {
+                        atlases[name].readKtex(ktexArrayBuffer)
                     })
-
-                    if (!build.hasAtlas()) findRelevantAtlases(build)
-                })
-            })
+                )
+            }
         }
+        for (const name in zip.files) {
+            let [symbolName, frameName] = name.split("/")
+            if (name.endsWith(".png") && frameName) {
+                frameName = frameName.split(".")[0]
+                promises.push(
+                    zip.files[name].async("blob").then(async blob => {
+                        const url = URL.createObjectURL(blob)
+                        const img = await loadImage(url)
+                        const canvas = newCanvas(img.width, img.height, img)
+                        framesData.push({ symbolName, frameName, canvas })
+                    })
+                )
+            }
+        }
+
+        Promise.all(promises).then(() => {
+            if ("build.bin" in zip.files) {
+                zip.files["build.bin"].async("arraybuffer").then(arrayBuffer => handleBin(arrayBuffer, atlases, framesData))
+            } else if ("build.json" in zip.files) {
+                zip.files["build.json"].async("text").then(text => handleString(text, atlases, framesData))
+            }
+        })
     })
 }
 
@@ -162,8 +185,8 @@ export default function App() {
 
             if (fileType === "zip") handleZip(file, fileName)
             else if (fileType === "dyn") handleDyn(file, fileName)
-            else if (fileType === "bin") handleBin(file, fileName)
-            else if (fileType === "json") handleJson(file, fileName)
+            else if (fileType === "bin") file.arrayBuffer().then(arrayBuffer => handleBin(arrayBuffer))
+            else if (fileType === "json") file.text().then(text => handleString(text))
             // else if (fileType === "png") {
             //     const ktex = new Ktex(fileName)
             //     const fileReader = new FileReader()
