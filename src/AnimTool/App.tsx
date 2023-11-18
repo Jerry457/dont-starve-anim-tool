@@ -2,22 +2,21 @@ import JSZip from "jszip"
 import { onMount } from "solid-js"
 import { FileDropEvent } from "file-drop-element"
 
-import { BinaryDataReader } from "./lib/binary-data"
-import { Ktex } from "./lib/kfiles/ktex"
-import { decompileAnim, Anim } from "./lib/kfiles/anim"
-import { decompileBuild, Build } from "./lib/kfiles/build"
-import { convertDyn } from "./lib/kfiles/dyn"
-import { loadImage, newCanvas } from "./lib/image-canvas"
+import { BinaryDataReader } from "../lib/binary-data"
+import { Ktex } from "../lib/kfiles/ktex"
+import { decompileAnim, Anim } from "../lib/kfiles/anim"
+import { decompileBuild, Build } from "../lib/kfiles/build"
+import { convertDyn } from "../lib/kfiles/dyn"
+import { loadImage, newCanvas } from "../lib/image-canvas"
 
 import { banks, builds, addbuildAtlas, findRelevantAtlases } from "./data"
 
-import GitHub from "~icons/mdi/github"
+import { toRowData } from "../components/DataViewer"
 
-import { toRowData } from "./components/DataViewer"
-import { IconButton } from "./components/IconButton"
-import { TextButton } from "./components/TextButton"
-import { Popup } from "./components/Popup"
-import ResizeBar from "./components/ResizeBar"
+import { TextButton } from "../components/TextButton"
+import { Popup } from "../components/Popup"
+import ResizeBar from "../components/ResizeBar"
+import Navigation from "../components/Navigation"
 
 import AnimDataViewer from "./AnimDataViewer"
 import BuildViewer from "./BuildViewer"
@@ -202,19 +201,15 @@ export default function App() {
         }
     }
 
-    function onClickGitHub() {
-        window.open("https://github.com/Jerry457/dont-starve-anim-tool")
-    }
-
     return (
         <file-drop class={style.App} multiple={true} onfiledrop={handleFiles}>
+            <Navigation current="AnimTool" />
             <div class={style.ioBar}>
                 <input type="file" multiple={true} class={style.inputFile} onChange={handleFiles} ref={inputFile!} accept=".zip, .json, .bin, .dyn" />
                 <TextButton text={"Open"} classList={{ [style.ioButton]: true }} onClick={OnClickOpen} />
                 <Popup buttonText={"Export"} buttonClassList={{ [style.ioButton]: true }} classList={{ [style.exportPopup]: true }}>
                     <ExportFile />
                 </Popup>
-                <IconButton icon={GitHub} classList={{ [style.githubButton]: true }} onClick={onClickGitHub} />
             </div>
             <div classList={{ [style.main]: true }}>
                 <div class={style.top} ref={topPart!}>

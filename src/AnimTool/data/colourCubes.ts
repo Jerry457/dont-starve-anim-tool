@@ -1,4 +1,4 @@
-import { Ktex } from "../lib/kfiles/ktex"
+import { Ktex } from "../../lib/kfiles/ktex"
 import { updateData } from "./index"
 
 const language = navigator.language

@@ -7,7 +7,7 @@ import GitHub from "~icons/mdi/github"
 
 import { IconButton } from "../components/IconButton"
 import { TextButton } from "../components/TextButton"
-import { symbolMaps, setSymbolMaps } from "../data"
+import { symbolMaps, setSymbolMaps } from "./data"
 
 import style from "./OverrideSymbol.module.css"
 

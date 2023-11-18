@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js"
 
 import { builds, updateData } from "./data"
-import { RowData, DataViewer } from "./components/DataViewer"
+import { RowData, DataViewer } from "../components/DataViewer"
 
 import style from "./BuildViewer.module.css"
 

@@ -1,7 +1,7 @@
 import { JSX, For } from "solid-js"
 
-import { setColourCube, updateData } from "../data"
-import { colourCubeNames } from "../data/colourCubes"
+import { setColourCube, updateData } from "./data"
+import { colourCubeNames } from "./data/colourCubes"
 
 import style from "./SelectColourCube.module.css"
 

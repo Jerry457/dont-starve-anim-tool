@@ -1,10 +1,10 @@
 import { createSignal } from "solid-js"
 import { createStore, createMutable } from "solid-js/store"
 import { SymbolMaps } from "./symbolMaps"
-import { RowData } from "../components/DataViewer"
+import { RowData } from "../../components/DataViewer"
 
-import { Ktex } from "../lib/kfiles/ktex"
-import { Build } from "../lib/kfiles/build"
+import { Ktex } from "../../lib/kfiles/ktex"
+import { Build } from "../../lib/kfiles/build"
 
 export function updateData() {
     dispatchEvent(new CustomEvent("updateData"))

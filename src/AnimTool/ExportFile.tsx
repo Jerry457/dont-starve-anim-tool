@@ -1,13 +1,13 @@
 import { JSX, Accessor, For, createSignal, createEffect } from "solid-js"
 import JSZip from "jszip"
 
-import { TextButton } from "./components/TextButton"
-import { RowData, DataViewer } from "./components/DataViewer"
+import { TextButton } from "../components/TextButton"
+import { RowData, DataViewer } from "../components/DataViewer"
 
 import { banks, builds } from "./data"
-import { Build, compileBuild } from "./lib/kfiles/build"
-import { Anim, Bank, compileAnim } from "./lib/kfiles/anim"
-import { convertDyn } from "./lib/kfiles/dyn"
+import { Build, compileBuild } from "../lib/kfiles/build"
+import { Anim, Bank, compileAnim } from "../lib/kfiles/anim"
+import { convertDyn } from "../lib/kfiles/dyn"
 
 import style from "./ExportFile.module.css"
 
@@ -218,7 +218,7 @@ export default function ExportFile() {
             if (hasAtlas()) {
                 if (splitAtlas()) {
                     promises.push(
-                        build.getSpitAtlas((blob, symbolName, frameName) => files.push({ data: blob, name: `${frameName}.png`, path: symbolName }))
+                        build.getSplitAtlas((blob, symbolName, frameName) => files.push({ data: blob, name: `${frameName}.png`, path: symbolName }))
                     )
                 } else {
                     if (repack) build.packAtlas()

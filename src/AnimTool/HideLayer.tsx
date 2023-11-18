@@ -5,7 +5,7 @@ import DeleteIcon from "~icons/mdi/delete-outline"
 
 import { IconButton } from "../components/IconButton"
 import { TextButton } from "../components/TextButton"
-import { hideLayers, setHideLayers, updateData } from "../data"
+import { hideLayers, setHideLayers, updateData } from "./data"
 
 import style from "./HideLayer.module.css"
 

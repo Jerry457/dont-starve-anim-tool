@@ -1,0 +1,33 @@
+.Navigation {
+    left: 50%;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+
+    background: rgb(36, 41, 47);
+}
+
+.Navigation > * {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.githubButton {
+    --button-normal-color: white;
+    --button-hover-color: white;
+    --button-active-color: white;
+
+    font-size: 2rem;
+}
+
+.navItem {
+    --button-normal-color: black;
+}
+
+.navItem div {
+    color: white;
+}
+
+.currentNavItem div {
+    text-decoration: underline;
+}
