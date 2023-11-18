@@ -26,6 +26,7 @@ table {
 }
 
 thead {
+    font-size: 0.8rem;
     position: sticky;
     top: 0;
 }
