@@ -22,7 +22,11 @@ export default function ColorPicker(prop: JSX.ElementProp & { noIcon?: boolean; 
             <Show when={!prop.noIcon}>
                 <IconButton icon={ColorPickerIcon} onClick={() => colorInput.click()} classList={{ [style.colorPickerIcon]: true }} />
             </Show>
-            <div ref={colorDiv!} style={`background: ${color()}`} classList={{ [style.colorDiv]: true, ...prop.classList }}></div>
+            <div
+                ref={colorDiv!}
+                style={`background: ${color()}`}
+                classList={{ [style.colorDiv]: true, ...prop.classList }}
+                onClick={() => colorInput.click()}></div>
             <input type="color" value={color()} onInput={onPickColor} ref={colorInput!} />
         </div>
     )

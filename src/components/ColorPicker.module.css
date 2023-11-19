@@ -17,4 +17,8 @@
 .colorDiv {
     width: 100px;
     height: 20px;
+
+    cursor: pointer;
+
+    border: solid 1px var(--border-color);
 }
