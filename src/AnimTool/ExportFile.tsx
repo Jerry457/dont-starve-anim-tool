@@ -249,7 +249,7 @@ export default function ExportFile() {
                 const buildJson = JSON.stringify(
                     build,
                     (key, value) => {
-                        return (key !== "canvas" && key !== "ktex") ?? value
+                        return key !== "canvas" && key !== "ktex" ? value : undefined
                     },
                     4
                 )
