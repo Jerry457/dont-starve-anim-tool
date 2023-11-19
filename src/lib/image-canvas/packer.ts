@@ -2,7 +2,7 @@ import { newCanvas, paste } from "."
 import { nextTwoPower } from "../math"
 import { bbox } from "./type"
 
-type block = {
+export type block = {
     canvas: HTMLCanvasElement
     insertBBox?: bbox
 }

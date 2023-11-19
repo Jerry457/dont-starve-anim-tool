@@ -75,23 +75,6 @@
     --button-normal-color: hsl(0, 0%, 0%);
 }
 
-.colorPicker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.colorPickerIcon {
-    --button-normal-color: hsl(0, 0%, 0%);
-}
-
-input[type="color"] {
-    border: none;
-    width: 100px;
-    height: 20px;
-    background-color: transparent;
-}
-
 input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 0;
 }

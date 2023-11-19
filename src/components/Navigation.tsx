@@ -1,7 +1,7 @@
 import { For } from "solid-js"
 
-import { TextButton } from "./TextButton"
-import { IconButton } from "../components/IconButton"
+import TextButton from "./TextButton"
+import IconButton from "../components/IconButton"
 
 import GitHub from "~icons/mdi/github"
 

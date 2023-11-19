@@ -13,8 +13,8 @@ import { banks, builds, addbuildAtlas, findRelevantAtlases } from "./data"
 
 import { toRowData } from "../components/DataViewer"
 
-import { TextButton } from "../components/TextButton"
-import { Popup } from "../components/Popup"
+import TextButton from "../components/TextButton"
+import Popup from "../components/Popup"
 import ResizeBar from "../components/ResizeBar"
 import Navigation from "../components/Navigation"
 

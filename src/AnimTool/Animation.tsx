@@ -10,12 +10,12 @@ import Pause from "~icons/mdi/pause"
 import Play from "~icons/mdi/play"
 import Previous from "~icons/mdi/skip-previous"
 import Next from "~icons/mdi/skip-next"
-import ColorPickerIcon from "~icons/mdi/palette"
 import DownloadIcon from "~icons/mdi/download"
 
-import { Popup } from "../components/Popup"
-import { IconButton } from "../components/IconButton"
-import { TextButton } from "../components/TextButton"
+import Popup from "../components/Popup"
+import IconButton from "../components/IconButton"
+import TextButton from "../components/TextButton"
+import ColorPicker from "../components/ColorPicker"
 import ProgressBar from "../components/ProgressBar"
 import ZoomDragDiv from "../components/ZoomDragDiv"
 
@@ -345,13 +345,7 @@ function AnimationPlayer() {
 }
 
 export default function AnimationArea() {
-    let colorInput: HTMLInputElement
-
     const [color, setColor] = createSignal<string>("#C8C8C8")
-
-    function onPickColor(e: JSX.InputChangeEvent) {
-        setColor(e.target.value)
-    }
 
     function onClick() {
         dispatchEvent(new CustomEvent("downloadAnim"))
@@ -365,10 +359,7 @@ export default function AnimationArea() {
                 <input type="checkbox" />
             </div>
             <div class={style.toolMenu}>
-                <div class={style.colorPicker}>
-                    <IconButton icon={ColorPickerIcon} onClick={() => colorInput.click()} classList={{ [style.colorPickerIcon]: true }} />
-                    <input type="color" value={color()} onInput={onPickColor} ref={colorInput!} />
-                </div>
+                <ColorPicker defauleColor={color()} onChange={color => setColor(color)} />
                 <div>
                     <TextButton
                         checkbox={true}

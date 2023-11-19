@@ -1,8 +1,8 @@
 import { JSX, Accessor, For, createSignal, createEffect } from "solid-js"
 import JSZip from "jszip"
 
-import { TextButton } from "../components/TextButton"
 import { RowData, DataViewer } from "../components/DataViewer"
+import TextButton from "../components/TextButton"
 import Select from "../components/Select"
 
 import { banks, builds } from "./data"
@@ -249,7 +249,7 @@ export default function ExportFile() {
                 const buildJson = JSON.stringify(
                     build,
                     (key, value) => {
-                        return key !== "canvas" && key !== "ktex" ? value : undefined
+                        return (key !== "canvas" && key !== "ktex") ?? value
                     },
                     4
                 )

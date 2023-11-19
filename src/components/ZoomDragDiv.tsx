@@ -1,7 +1,7 @@
 import ReSzie from "~icons/mdi/restore"
 import { onMount, onCleanup, JSX, Show } from "solid-js"
 
-import { IconButton } from "./IconButton"
+import IconButton from "./IconButton"
 
 import style from "./ZoomDragDiv.module.css"
 

@@ -1,0 +1,16 @@
+.ColorPicker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ColorPicker input[type="color"] {
+    border: none;
+    width: 100px;
+    height: 20px;
+    background-color: transparent;
+}
+
+.colorPickerIcon {
+    --button-normal-color: hsl(0, 0%, 0%);
+}

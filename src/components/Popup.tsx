@@ -1,13 +1,13 @@
 import Close from "~icons/mdi/close"
 import { createSignal, Show, JSX } from "solid-js"
 
-import { TextButton } from "./TextButton"
-import { IconButton } from "./IconButton"
+import TextButton from "./TextButton"
+import IconButton from "./IconButton"
 import ZoomDragDiv from "./ZoomDragDiv"
 
 import style from "./Popup.module.css"
 
-export function Popup(props: { buttonText: string; buttonClassList?: { [k: string]: boolean | undefined } } & JSX.ElementProp) {
+export default function Popup(props: { buttonText: string; buttonClassList?: { [k: string]: boolean | undefined } } & JSX.ElementProp) {
     const [shown, setShown] = createSignal(false)
     return (
         <>

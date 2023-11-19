@@ -2,7 +2,7 @@ import { Show } from "solid-js"
 
 import style from "./TextButton.module.css"
 
-export function TextButton(props: {
+export default function TextButton(props: {
     text: string
     classList?: { [k: string]: boolean | undefined }
     textClassList?: { [k: string]: boolean | undefined }

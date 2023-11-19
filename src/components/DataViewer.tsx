@@ -2,7 +2,7 @@ import { JSX, Show, For, createSignal, Setter } from "solid-js"
 import AddIcon from "~icons/mdi/plus-box-outline"
 import DeleteIcon from "~icons/mdi/delete-outline"
 
-import { IconButton } from "./IconButton"
+import IconButton from "./IconButton"
 import { Bank, Animation, AnimFrame, AnimElement } from "../lib/kfiles/anim"
 import { Build, Atlas, BuildSymbol, BuildFrame } from "../lib/kfiles/build"
 
