@@ -124,14 +124,14 @@ export function unPreMultiplyAlpha(canvas: HTMLCanvasElement) {
     return unPreMultiplied
 }
 
-export function applyColourCube(canvas: HTMLCanvasElement, colourCubeKtex: Ktex) {
-    if (colourCubeKtex.header.pixelFormat !== PixelFormat.RGB || colourCubeKtex.mipmaps[0].dataSize !== 32 * 32 * 32 * 3) {
-        throw new TypeError("this ktex no colour cube file")
+export function applyColorCube(canvas: HTMLCanvasElement, colorCubeKtex: Ktex) {
+    if (colorCubeKtex.header.pixelFormat !== PixelFormat.RGB || colorCubeKtex.mipmaps[0].dataSize !== 32 * 32 * 32 * 3) {
+        throw new TypeError("this ktex no color cube file")
     }
 
     const imageData = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height)
     const pixelData = imageData.data
-    const colourCubeData = colourCubeKtex.mipmaps[0].blockData!
+    const colorCubeData = colorCubeKtex.mipmaps[0].blockData!
     for (let i = 0; i < pixelData.length; i += 4) {
         let r = pixelData[i]
         let g = pixelData[i + 1]
@@ -144,9 +144,9 @@ export function applyColourCube(canvas: HTMLCanvasElement, colourCubeKtex: Ktex)
 
         let offset = (((31 - g) << 10) + (b << 5) + r) * 3 // ((31 - g) * 32 * 32 + b * 32 + r * 1) * 3
 
-        pixelData[i] = colourCubeData[offset]
-        pixelData[i + 1] = colourCubeData[offset + 1]
-        pixelData[i + 2] = colourCubeData[offset + 2]
+        pixelData[i] = colorCubeData[offset]
+        pixelData[i + 1] = colorCubeData[offset + 1]
+        pixelData[i + 2] = colorCubeData[offset + 2]
         pixelData[i + 3] = a
     }
 

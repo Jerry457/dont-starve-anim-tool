@@ -5,12 +5,16 @@
 }
 
 .ColorPicker input[type="color"] {
-    border: none;
-    width: 100px;
-    height: 20px;
-    background-color: transparent;
+    visibility: hidden;
+    width: 1px;
+    height: 1px;
 }
 
 .colorPickerIcon {
     --button-normal-color: hsl(0, 0%, 0%);
+}
+
+.colorDiv {
+    width: 100px;
+    height: 20px;
 }

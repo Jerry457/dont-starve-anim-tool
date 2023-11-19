@@ -2,7 +2,7 @@ import { JSX, createSignal, createEffect, onMount, onCleanup, Show } from "solid
 import { createStore, produce } from "solid-js/store"
 import { Animation, AnimElement, AnimFrame } from "../lib/kfiles/anim"
 import { BuildFrame, BuildSymbol } from "../lib/kfiles/build"
-import { newCanvas, applyColourCube, transform, paste } from "../lib/image-canvas"
+import { newCanvas, applyColorCube, transform, paste } from "../lib/image-canvas"
 import { encodeDownload } from "../lib/gif"
 import { clamp } from "../lib/math"
 
@@ -19,9 +19,9 @@ import ColorPicker from "../components/ColorPicker"
 import ProgressBar from "../components/ProgressBar"
 import ZoomDragDiv from "../components/ZoomDragDiv"
 
-import { builds, playAnimation, colourCube, playFrame } from "./data"
-import { colourCubes } from "./data/colourCubes"
-import { SelectColourCube } from "./SelectColourCube"
+import { builds, playAnimation, colorCube, playFrame } from "./data"
+import { colorCubes } from "./data/colorCubes"
+import { SelectColorCube } from "./SelectColorCube"
 import { isHided, HideLayer } from "./HideLayer"
 import { OverrideSymbol, mapSymbol } from "./OverrideSymbol"
 
@@ -222,9 +222,9 @@ function AnimationPlayer() {
 
             if (!canvas) continue
 
-            const colourCubeKtex = colourCubes[colourCube()]
-            if (colourCubeKtex) {
-                canvas = applyColourCube(canvas, colourCubeKtex)
+            const colorCubeKtex = colorCubes[colorCube()]
+            if (colorCubeKtex) {
+                canvas = applyColorCube(canvas, colorCubeKtex)
             }
 
             const transfromed = transform(canvas, m_a, m_b, m_c, m_d, 0, 0)
@@ -291,13 +291,11 @@ function AnimationPlayer() {
 
     onMount(() => {
         addEventListener("downloadAnim", onDownloadAnim)
-        addEventListener("updateColourCube", onUpdateAnimation)
         addEventListener("updateData", onUpdateAnimation)
     })
 
     onCleanup(() => {
         removeEventListener("downloadAnim", onDownloadAnim)
-        removeEventListener("updateColourCube", onUpdateAnimation)
         removeEventListener("updateData", onUpdateAnimation)
     })
 
@@ -370,7 +368,7 @@ export default function AnimationArea() {
                         }}></TextButton>
                 </div>
                 <div>
-                    <SelectColourCube />
+                    <SelectColorCube />
                 </div>
                 <div>
                     <Popup buttonText={"HideLayer"} buttonClassList={{ [style.toolButton]: true }} classList={{ [style.hideLayerPopup]: true }}>

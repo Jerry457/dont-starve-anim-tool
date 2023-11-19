@@ -6,7 +6,7 @@ function en_zh(en: string, zh: string) {
     return language === "zh-CN" || language === "zh-TW" ? zh : en
 }
 
-export const colourCubeNames = [
+export const colorCubeNames = [
     [en_zh("Autumn-day", "秋季-白天"), "day05_cc"],
     [en_zh("Autumn-dusk", "秋季-黄昏"), "dusk03_cc"],
     [en_zh("Autumn-night", "秋季-夜晚"), "night03_cc"],
@@ -85,15 +85,15 @@ export const colourCubeNames = [
     [en_zh("Beaver Vision Light", "海狸视觉"), "beaver_vision_cc"],
 ]
 
-export const colourCubes: { [name: string]: Ktex | undefined } = {}
+export const colorCubes: { [name: string]: Ktex | undefined } = {}
 const promises = []
-for (const [_, fileName] of colourCubeNames) {
+for (const [_, fileName] of colorCubeNames) {
     promises.push(
-        import(`../../assets/colour_cubes/${fileName}.tex`).then(module =>
+        import(`../../assets/color_cubes/${fileName}.tex`).then(module =>
             fetch(module.default).then(response => {
                 response.arrayBuffer().then(arrayBuffer => {
-                    colourCubes[fileName] = new Ktex(fileName)
-                    colourCubes[fileName]!.readKtex(arrayBuffer)
+                    colorCubes[fileName] = new Ktex(fileName)
+                    colorCubes[fileName]!.readKtex(arrayBuffer)
                 })
             })
         )
