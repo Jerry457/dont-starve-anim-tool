@@ -186,18 +186,6 @@ export default function App() {
             else if (fileType === "dyn") handleDyn(file, fileName)
             else if (fileType === "bin") file.arrayBuffer().then(arrayBuffer => handleBin(arrayBuffer))
             else if (fileType === "json") file.text().then(text => handleString(text))
-            // else if (fileType === "png") {
-            //     const ktex = new Ktex(fileName)
-            //     const fileReader = new FileReader()
-            //     fileReader.onload = async e => {
-            //         const image = new Image()
-            //         image.onload = () => {
-            //             ktex.from_image(newCanvas(image.width, image.height, image))
-            //             ktex.to_image().then(canvas => document.body.appendChild(canvas))
-            //         }
-            //         image.src = e.target!.result as string
-            //     }
-            //     fileReader.readAsDataURL(file)
         }
     }
 

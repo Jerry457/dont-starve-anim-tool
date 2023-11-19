@@ -1,0 +1,19 @@
+.Select {
+    --Select-active-color: hsl(204, 85%, 30%);
+
+    width: 100%;
+    font-size: 1rem;
+
+    border: none;
+    outline: none;
+    padding: 5px;
+
+    text-align: center;
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.Select:active {
+    color: var(--Select-active-color);
+}

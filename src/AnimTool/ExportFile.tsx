@@ -3,6 +3,7 @@ import JSZip from "jszip"
 
 import { TextButton } from "../components/TextButton"
 import { RowData, DataViewer } from "../components/DataViewer"
+import Select from "../components/Select"
 
 import { banks, builds } from "./data"
 import { Build, compileBuild } from "../lib/kfiles/build"
@@ -154,7 +155,7 @@ function BuildViewer() {
             </legend>
             <fieldset class={style.fieldset}>
                 <legend>Builds</legend>
-                <select class={style.buildSelect} onChange={onChange}>
+                <Select classList={{ [style.buildSelect]: true }} onChange={onChange}>
                     <For each={builds}>
                         {(rowData, index) => {
                             const build = rowData.data as Build
@@ -165,7 +166,7 @@ function BuildViewer() {
                             )
                         }}
                     </For>
-                </select>
+                </Select>
             </fieldset>
             <fieldset class={style.fieldset}>
                 <legend>Symbol</legend>
