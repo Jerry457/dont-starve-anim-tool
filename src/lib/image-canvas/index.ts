@@ -18,6 +18,12 @@ export function newOffscreenCanvas(width: number, height: number, image?: Canvas
     return canvas
 }
 
+export function toBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+    return new Promise(resolve => {
+        canvas.toBlob(blob => resolve(blob))
+    })
+}
+
 export function loadImage(url: string): Promise<HTMLImageElement> {
     return new Promise(resolve => {
         const image = new Image()

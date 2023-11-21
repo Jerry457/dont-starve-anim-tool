@@ -98,7 +98,7 @@ function AtlasViewer(props: { atlasSignal: Accessor<RowData[]> }) {
                 />
                 <div classList={{ [style.buttonLegend]: true, [style.unUse]: splitAtlas() }}>
                     <TextButton
-                        text="splitAtlas"
+                        text="split"
                         checkbox={true}
                         check={splitAtlas()}
                         classList={{ [style.normalButton]: true, [style.useControl]: true }}
@@ -191,11 +191,9 @@ export default function ExportFile() {
 
         const type = outputType()
         const files: { data: Uint8Array | Blob; name: string; path?: string }[] = []
-        const promises = []
 
-        if (hasBuild() && builds[selectedBuild]) {
-            build = builds[selectedBuild].data as Build
-        }
+        if (hasBuild() && builds[selectedBuild]) build = builds[selectedBuild].data as Build
+
         if (hasAnim()) {
             const packBanks = selectedBanks.filter((use, index) => use && banks[index]).map((use, index) => banks[index].data as Bank)
             if (packBanks.length > 0) anim = new Anim(packBanks)
@@ -209,15 +207,15 @@ export default function ExportFile() {
                 const animJson = JSON.stringify(anim, undefined, 4)
                 files.push({ data: textEncoder.encode(animJson), name: "anim.json" })
             } else if (type === "bin") {
-                promises.push(compileAnim(anim).then(buffer => files.push({ data: buffer, name: "anim.bin" })))
+                const buffer = await compileAnim(anim)
+                files.push({ data: buffer, name: "anim.bin" })
             }
         }
         if (build) {
             if (hasAtlas()) {
                 if (splitAtlas()) {
-                    promises.push(
-                        build.getSplitAtlas((blob, symbolName, frameName) => files.push({ data: blob, name: `${frameName}.png`, path: symbolName }))
-                    )
+                    const splitedAtlas = await build.getSplitAtlas()
+                    files.push(...splitedAtlas)
                 } else {
                     if (repack || !build.hasAtlas()) build.packAtlas()
 
@@ -226,17 +224,12 @@ export default function ExportFile() {
                         for (const atlas of build.atlases) {
                             if (atlas.ktex) zipFile.file(atlas.name, atlas.ktex.compile(), { binary: true })
                         }
-                        zipFile
-                            .generateInternalStream({ type: "arraybuffer" })
-                            .accumulate()
-                            .then(arrayBuffer => {
-                                convertDyn(arrayBuffer, true).then(uint8Array => downloadFile(new Blob([uint8Array]), `${build!.name}.dyn`))
-                            })
+                        const arrayBuffer = await zipFile.generateInternalStream({ type: "arraybuffer" }).accumulate()
+                        const uint8Array = await convertDyn(arrayBuffer, true)
+                        downloadFile(new Blob([uint8Array]), `${build!.name}.dyn`)
                     } else {
                         for (const atlas of build.atlases) {
-                            if (atlas.ktex) {
-                                files.push({ data: atlas.ktex.compile(), name: atlas.name })
-                            }
+                            if (atlas.ktex) files.push({ data: atlas.ktex.compile(), name: atlas.name })
                         }
                     }
                 }
@@ -252,27 +245,26 @@ export default function ExportFile() {
                 )
                 files.push({ data: textEncoder.encode(buildJson), name: "build.json" })
             } else if (type === "bin") {
-                promises.push(compileBuild(build).then(buffer => files.push({ data: buffer, name: "build.bin" })))
+                const Uint8Array = await compileBuild(build)
+                files.push({ data: Uint8Array, name: "build.bin" })
             }
         }
 
-        Promise.all(promises).then(() => {
-            if (useZip()) {
-                let fileName = build ? build.name : "pack"
-                if (zipFileName !== "") fileName = zipFileName
+        if (useZip()) {
+            let fileName = build ? build.name : "pack"
+            if (zipFileName !== "") fileName = zipFileName
 
-                const zipFile = new JSZip()
-                for (const { name, data, path } of files) {
-                    const targetFolder = path ? zipFile.folder(path)! : zipFile
-                    targetFolder.file(name, data, { binary: true })
-                }
-                zipFile.generateAsync({ type: "blob", compression: "DEFLATE" }).then(blob => downloadFile(blob, `${fileName}.zip`))
-            } else {
-                for (const { name, data } of files) {
-                    downloadFile(data instanceof Blob ? data : new Blob([data]), name)
-                }
+            const zipFile = new JSZip()
+            for (const { name, data, path } of files) {
+                const targetFolder = path ? zipFile.folder(path)! : zipFile
+                targetFolder.file(name, data, { binary: true })
             }
-        })
+            zipFile.generateAsync({ type: "blob", compression: "DEFLATE" }).then(blob => downloadFile(blob, `${fileName}.zip`))
+        } else {
+            for (const { name, data } of files) {
+                downloadFile(data instanceof Blob ? data : new Blob([data]), name)
+            }
+        }
     }
 
     return (

@@ -1,6 +1,6 @@
 import { strHash } from "./util"
 import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
-import { newCanvas, resize, crop, paste } from "../image-canvas"
+import { newCanvas, resize, crop, paste, toBlob } from "../image-canvas"
 import { getRegion } from "../image-canvas/analyze"
 import { pack } from "../image-canvas/packer"
 import { bbox } from "../image-canvas/type"
@@ -362,25 +362,17 @@ export class Build {
         }
     }
 
-    async getSplitAtlas(callback: (blob: Blob, symbolName: string, frameName: string) => void) {
-        const promises = []
+    async getSplitAtlas() {
+        const results: { data: Blob; name: string; path: string }[] = []
+
         for (const symbol of this.symbols) {
             for (const frame of symbol.frames) {
-                promises.push(
-                    new Promise<Blob>(resolve => {
-                        frame.canvas?.toBlob(
-                            blob => {
-                                callback(blob!, symbol.name, frame.name)
-                                resolve(blob!)
-                            },
-                            "image/png",
-                            1
-                        )
-                    })
-                )
+                if (!frame.canvas) continue
+                const blob = await toBlob(frame.canvas)
+                if (blob) results.push({ data: blob, name: `${frame.name}.png`, path: symbol.name })
             }
         }
-        return await Promise.all(promises)
+        return results
     }
 }
 
