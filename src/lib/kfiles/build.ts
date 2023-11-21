@@ -257,7 +257,7 @@ export class Build {
 
         // debug
         // document.body.appendChild(atlas)
-        if (this.scale !== 1) atlas = resize(atlas, atlas.width * this.scale, atlas.height * this.scale)
+        this.scale = 1
 
         const ktex = new Ktex("atlas-0.tex")
         ktex.fromImage(atlas)
