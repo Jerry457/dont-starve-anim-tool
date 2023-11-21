@@ -72,7 +72,7 @@
 
 .zipFileName > input {
     outline: 0;
-    border: 1px solid #bbb;
+    border: 1px solid var(--border-color);
     padding: 0.4rem;
     width: 10rem;
 }
@@ -97,8 +97,6 @@
     border: solid 1px var(--border-color);
 
     margin-left: 10px;
-}
 
-.downloadButton > div {
-    font-size: 0.8rem;
+    --button-font-size: 0.8rem;
 }

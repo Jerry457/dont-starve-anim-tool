@@ -11,10 +11,5 @@ export function SelectColorCube() {
         updateData()
     }
 
-    return (
-        <Select onChange={onChange}>
-            <option value="">ColorCube</option>
-            <For each={colorCubeNames}>{([name, fileName]) => <option value={fileName}>{name}</option>}</For>
-        </Select>
-    )
+    return <Select onChange={onChange} options={[{ name: "ColorCube", value: "" }, ...colorCubeNames]}></Select>
 }

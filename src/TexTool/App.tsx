@@ -55,14 +55,14 @@ export default function App() {
     function OnClickExport() {}
 
     return (
-        <file-drop multiple={true} class={style.App} onfiledrop={handleFiles}>
+        <div class={style.App}>
             <Navigation current="TexTool" />
-            <div class={style.ioBar}>
+            <file-drop multiple={true} class={style.ioBar} onfiledrop={handleFiles}>
                 <input type="file" multiple={true} class={style.inputFile} onChange={handleFiles} ref={inputFile!} accept=".xml, .png, .tex" />
                 <TextButton text={"Open"} classList={{ [style.ioButton]: true }} onClick={OnClickOpen} />
                 <TextButton text={"Export"} classList={{ [style.ioButton]: true }} onClick={OnClickExport} />
-            </div>
+            </file-drop>
             <TexViewer />
-        </file-drop>
+        </div>
     )
 }

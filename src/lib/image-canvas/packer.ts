@@ -1,9 +1,11 @@
-import { newCanvas, paste } from "."
+import { crop, newCanvas, paste } from "."
 import { nextTwoPower } from "../math"
 import { bbox } from "./type"
 
 export type block = {
     canvas: HTMLCanvasElement
+
+    name?: string
     insertBBox?: bbox
 }
 
@@ -83,4 +85,10 @@ export function pack(blocks: block[]) {
     }
     // document.body.appendChild(packed)
     return packed
+}
+
+export function split(canvas: HTMLCanvasElement, bboxs: bbox[]): block[] {
+    return bboxs.map(({ x, y, w, h, name }) => {
+        return { name, canvas: crop(canvas, x, y, w, h) }
+    })
 }

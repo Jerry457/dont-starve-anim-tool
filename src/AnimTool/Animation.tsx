@@ -1,4 +1,4 @@
-import { JSX, createSignal, createEffect, onMount, onCleanup, Show } from "solid-js"
+import { createSignal, createEffect, onMount, onCleanup, Show } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import { Animation, AnimElement, AnimFrame } from "../lib/kfiles/anim"
 import { BuildFrame, BuildSymbol } from "../lib/kfiles/build"

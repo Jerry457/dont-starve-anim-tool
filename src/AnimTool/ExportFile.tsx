@@ -155,18 +155,15 @@ function BuildViewer() {
             </legend>
             <fieldset class={style.fieldset}>
                 <legend>Builds</legend>
-                <Select classList={{ [style.buildSelect]: true }} onChange={onChange}>
-                    <For each={builds}>
-                        {(rowData, index) => {
-                            const build = rowData.data as Build
-                            return (
-                                <option value={index()} selected={selectedBuild === index()}>
-                                    {build.name}
-                                </option>
-                            )
-                        }}
-                    </For>
-                </Select>
+                <Select
+                    classList={{ [style.buildSelect]: true }}
+                    onChange={onChange}
+                    options={builds.map((rowData, index) => {
+                        const build = rowData.data as Build
+                        return { name: build.name, value: index }
+                    })}
+                    default={(builds[selectedBuild].data as Build).name}
+                />
             </fieldset>
             <fieldset class={style.fieldset}>
                 <legend>Symbol</legend>
@@ -222,7 +219,7 @@ export default function ExportFile() {
                         build.getSplitAtlas((blob, symbolName, frameName) => files.push({ data: blob, name: `${frameName}.png`, path: symbolName }))
                     )
                 } else {
-                    if (repack) build.packAtlas()
+                    if (repack || !build.hasAtlas()) build.packAtlas()
 
                     if (dynFormat) {
                         const zipFile = new JSZip()

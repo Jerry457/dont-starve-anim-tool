@@ -7,7 +7,15 @@ import style from "./ZoomDragDiv.module.css"
 
 const SCALE_FACTOR = 1.2
 
-export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolean; dragable?: boolean }) {
+export default function ZoomDragDiv(
+    prop: JSX.ElementProp & {
+        zoomable?: boolean
+        dragable?: boolean
+        containerclassList?: {
+            [k: string]: boolean | undefined
+        }
+    }
+) {
     let container: HTMLDivElement
     let zoomDragDiv: HTMLDivElement
 
@@ -23,11 +31,11 @@ export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolea
     }
 
     onMount(() => {
-        if (props.zoomable) {
+        if (prop.zoomable) {
             container.addEventListener("mousewheel", onWheel as EventListener, { passive: false })
         }
 
-        if (props.dragable) {
+        if (prop.dragable) {
             container.addEventListener("mousedown", onMouseDown, { passive: false })
             removeEventListener("alert", onMouseUp)
             addEventListener("mouseup", onMouseUp)
@@ -36,11 +44,11 @@ export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolea
     })
 
     onCleanup(() => {
-        if (props.zoomable) {
+        if (prop.zoomable) {
             container.removeEventListener("mousewheel", onWheel as EventListener)
         }
 
-        if (props.dragable) {
+        if (prop.dragable) {
             container.removeEventListener("mousedown", onMouseDown)
             removeEventListener("alert", onMouseUp)
             removeEventListener("mouseup", onMouseUp)
@@ -100,12 +108,12 @@ export default function ZoomDragDiv(props: JSX.ElementProp & { zoomable?: boolea
     }
 
     return (
-        <div class={style.container} ref={container!}>
-            <Show when={props.zoomable}>
+        <div classList={{ [style.container]: true, ...prop.containerclassList }} ref={container!}>
+            <Show when={prop.zoomable}>
                 <IconButton icon={ReSzie} onClick={onReszie} classList={{ [style.reSstIcon]: true }} />
             </Show>
-            <div class={style.ZoomDragDiv} ref={zoomDragDiv!} classList={{ ...props.classList }}>
-                {props.children}
+            <div class={style.ZoomDragDiv} ref={zoomDragDiv!} classList={{ ...prop.classList }}>
+                {prop.children}
             </div>
         </div>
     )
