@@ -10,7 +10,7 @@ import { hideLayers, setHideLayers, updateData } from "./data"
 import style from "./HideLayer.module.css"
 
 export function isHided(layer: string) {
-    return hideLayers[layer]
+    return hideLayers[layer] || hideLayers[layer.toLocaleLowerCase()]
 }
 
 export function HideLayer() {

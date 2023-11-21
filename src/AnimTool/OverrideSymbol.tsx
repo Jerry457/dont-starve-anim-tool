@@ -12,7 +12,7 @@ import { symbolMaps, setSymbolMaps } from "./data"
 import style from "./OverrideSymbol.module.css"
 
 export function mapSymbol(symbol_name: string) {
-    const symbolMapData = symbolMaps[symbol_name]
+    const symbolMapData = symbolMaps[symbol_name] && symbolMaps[symbol_name.toLowerCase()]
 
     if (!symbolMapData || !symbolMapData.used) {
         return

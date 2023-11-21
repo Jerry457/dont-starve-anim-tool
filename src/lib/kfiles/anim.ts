@@ -55,9 +55,9 @@ export class AnimElement {
         m_tx: number = 0,
         m_ty: number = 1
     ) {
-        this.symbol = symbol.toLowerCase()
+        this.symbol = symbol
         this.frame = frame
-        this.layerName = layerName.toLowerCase()
+        this.layerName = layerName
         this.m_a = m_a
         this.m_b = m_b
         this.m_c = m_c

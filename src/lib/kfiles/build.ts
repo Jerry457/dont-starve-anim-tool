@@ -14,8 +14,7 @@ export class BuildFrame {
     y: number
     w: number
     h: number
-    xOffset: number
-    yOffset: number
+
     vertIdx: number
     vertNum: number
 
@@ -32,9 +31,6 @@ export class BuildFrame {
         this.vertIdx = vertIdx
         this.vertNum = vertNum
         this.name = name
-
-        this.xOffset = x - Math.floor(w / 2)
-        this.yOffset = y - Math.floor(h / 2)
     }
 
     getRelativePivot() {
@@ -67,7 +63,7 @@ export class BuildSymbol {
     frames: BuildFrame[]
 
     constructor(name: string = "", frames: BuildFrame[] = []) {
-        this.name = name.toLowerCase()
+        this.name = name
         this.frames = frames
 
         this.sort()
@@ -137,7 +133,7 @@ export class Build {
     verts: Vert[] = []
 
     constructor(name: string = "", symbols: BuildSymbol[] = []) {
-        this.name = name.toLowerCase()
+        this.name = name
         this.symbols = symbols
     }
 
@@ -164,7 +160,7 @@ export class Build {
 
     getSymbol(name: string) {
         for (const symbol of this.symbols) {
-            if (symbol.name === name) return symbol
+            if (symbol.name.toLowerCase() === name.toLowerCase()) return symbol
         }
     }
 
@@ -224,10 +220,13 @@ export class Build {
         for (const { frame, regions, regionsLeft, regionsTop, insertBBox } of blocks) {
             frame.vertIdx = this.verts.length
             frame.vertNum = regions.length * 6
+
+            const xOffset = frame.x - Math.floor(frame.w / 2)
+            const yOffset = frame.y - Math.floor(frame.h / 2)
             for (const region of regions) {
-                const regionLeft = frame.xOffset + region.x
+                const regionLeft = xOffset + region.x
                 const regionRight = regionLeft + region.w
-                const regionTop = frame.yOffset + region.y
+                const regionTop = yOffset + region.y
                 const regionBottom = regionTop + region.h
 
                 const regionInsertLeft = insertBBox!.x + region.x - regionsLeft
@@ -279,6 +278,9 @@ export class Build {
                 }
                 const frameVerts = this.verts.slice(frame.vertIdx, frame.vertIdx + frame.vertNum)
 
+                const xOffset = frame.x - Math.floor(frame.w / 2)
+                const yOffset = frame.y - Math.floor(frame.h / 2)
+
                 let uMin = Infinity
                 let uMax = 0
                 let vMin = Infinity
@@ -308,8 +310,8 @@ export class Build {
                 const bboxW = Math.round((uMax - uMin) * atlas.width)
                 const bboxH = Math.round((vMax - vMin) * atlas.height)
 
-                const regionX = Math.round(regionLeft - frame.xOffset)
-                const regionY = Math.round(regionTop - frame.yOffset)
+                const regionX = Math.round(regionLeft - xOffset)
+                const regionY = Math.round(regionTop - yOffset)
                 const regionW = Math.round(regionRight - regionLeft)
                 const regionH = Math.round(regionBottom - regionTop)
 

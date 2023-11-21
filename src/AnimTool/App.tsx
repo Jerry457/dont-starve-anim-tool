@@ -99,7 +99,7 @@ async function handleZip(file: File, fileName: string) {
             }
         }
         for (const name in zip.files) {
-            let [symbolName, frameName] = name.toLowerCase().split("/")
+            let [symbolName, frameName] = name.split("/")
             if (name.endsWith(".png") && frameName) {
                 frameName = frameName.split(".")[0]
                 promises.push(
