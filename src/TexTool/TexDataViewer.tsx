@@ -102,6 +102,14 @@ export default function TexDataViewer() {
                     <input type="text" placeholder="Atlas Name" onChange={e => {}} value={atlasName() ? atlasName()! : ""} />
                 </div>
                 <div>
+                    <label>W:</label>
+                    <span>{texture()?.width}</span>
+                </div>
+                <div>
+                    <label>H:</label>
+                    <span>{texture()?.height}</span>
+                </div>
+                <div>
                     <label>Platform:</label>
                     <Select
                         classList={{ [style.elementSelect]: true }}
@@ -130,15 +138,15 @@ export default function TexDataViewer() {
                 </div>
                 <div>
                     <label>Mipmaps:</label>
-                    <text>{textureInfo().mipmapCount}</text>
+                    <span>{textureInfo().mipmapCount}</span>
                 </div>
                 <div>
                     <label>Flags:</label>
-                    <text>{textureInfo().flags}</text>
+                    <span>{textureInfo().flags}</span>
                 </div>
                 <div>
                     <label>Fill:</label>
-                    <text>{textureInfo().fill}</text>
+                    <span>{textureInfo().fill}</span>
                 </div>
             </div>
             <ZoomDragDiv zoomable={true} dragable={true} classList={{ [style.texViewer]: true }} containerclassList={{ [style.background]: true }}>

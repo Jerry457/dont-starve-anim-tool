@@ -53,6 +53,8 @@
 .frameCollisionBoxCanvas {
     z-index: 2;
     position: absolute;
+    user-select: none;
+    pointer-events: none;
 }
 
 .toolMenu {

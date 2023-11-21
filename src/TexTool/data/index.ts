@@ -55,13 +55,15 @@ export function addAtlasBboxs(name: string, uvbboxs: uvbbox[]) {
     setuvBBoxs(uvbboxs)
 }
 
-export function addTexture(name: string, ktex: Ktex) {
+export function updateTextureInfo(ktex: Ktex) {
     const platform = Platform[ktex.header.platform]
     const pixelFormat = PixelFormat[ktex.header.pixelFormat]
     const textureType = TextureType[ktex.header.textureType]
     const { mipmapCount, flags, fill } = ktex.header
     setTextureInfo({ platform, pixelFormat, textureType, mipmapCount, flags, fill })
+}
 
+export function addTexture(name: string, ktex: Ktex) {
     setTexture(ktex.toImage())
     setAtlasName(name)
 }

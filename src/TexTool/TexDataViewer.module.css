@@ -50,16 +50,13 @@
     padding-bottom: 0.5rem;
     padding-left: 0.1rem;
     display: grid;
-    grid-template-columns: 20rem 15rem 15rem 15rem 10rem 10rem 10rem 10rem;
+    grid-template-columns: 20rem 8rem 8rem 13rem 16rem 16rem 10rem 8rem 8rem;
 }
 
 .texInfo > div {
-    padding-left: 1rem;
-    padding-right: 1rem;
-
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
 }
 
 .texInfo label {
@@ -112,11 +109,13 @@
 }
 
 .texCanvas {
-    z-index: 2;
+    z-index: 1;
     position: absolute;
 }
 
 .bboxCanvas {
-    z-index: 1;
+    user-select: none;
+    pointer-events: none;
+    z-index: 2;
     position: absolute;
 }

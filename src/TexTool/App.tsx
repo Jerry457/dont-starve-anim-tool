@@ -7,7 +7,7 @@ import Navigation from "../components/Navigation"
 
 import TexViewer from "./TexDataViewer"
 
-import { addAtlasBboxs, addTexture, addAtlasImages, texture, uvBBoxs, atlasName, textureInfo } from "./data"
+import { addAtlasBboxs, addTexture, addAtlasImages, texture, uvBBoxs, atlasName, textureInfo, setTextureInfo, updateTextureInfo } from "./data"
 import { crop, loadImage, newCanvas, toBlob } from "../lib/image-canvas"
 import { uvbboxTobbox } from "../lib/image-canvas/type"
 import { Ktex, PixelFormat, Platform, TextureType } from "../lib/kfiles/ktex"
@@ -112,6 +112,8 @@ export default function App() {
                     )
                 }
                 ktex.fromImage(textureCanvas)
+                updateTextureInfo(ktex)
+
                 downloadFile(new Blob([ktex.compile()]), atlasName()!)
             }
         }
