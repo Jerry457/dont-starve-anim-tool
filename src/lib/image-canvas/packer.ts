@@ -1,13 +1,6 @@
 import { crop, newCanvas, paste } from "."
 import { nextTwoPower } from "../math"
-import { bbox } from "./type"
-
-export type block = {
-    canvas: HTMLCanvasElement
-
-    name?: string
-    insertBBox?: bbox
-}
+import { bbox, block } from "./type"
 
 function nextMultipleOf(n: number, target: number) {
     let remainder = n % target

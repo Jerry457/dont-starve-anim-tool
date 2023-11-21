@@ -24,10 +24,8 @@
     --button-active-color: hsl(204, 85%, 30%);
 
     border: solid 1px var(--border-color);
-}
 
-.ioButton div {
-    font-size: 0.8rem;
+    --button-font-size: 0.8rem;
 }
 
 .exportPopup {

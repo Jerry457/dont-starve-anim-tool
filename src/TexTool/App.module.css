@@ -4,6 +4,11 @@
     grid-template-rows: max-content max-content auto;
 }
 
+.unUse {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
 .ioBar {
     display: flex;
     align-items: center;
@@ -28,4 +33,25 @@
 
 .ioButton div {
     font-size: 0.8rem;
+}
+
+.normalButton {
+    --button-normal-color: hsl(0, 0%, 0%);
+    cursor: default;
+}
+
+.xmlName > input {
+    outline: 0;
+    border: 1px solid var(--border-color);
+    padding: 0.4rem;
+    width: 10rem;
+    height: 1.5rem;
+}
+
+.xmlName > input:placeholder-shown {
+    font-size: 13px;
+}
+
+.xmlName > input:focus {
+    border: 1px solid hsl(204, 80%, 55%);
 }

@@ -9,6 +9,7 @@ import { banks, builds } from "./data"
 import { Build, compileBuild } from "../lib/kfiles/build"
 import { Anim, Bank, compileAnim } from "../lib/kfiles/anim"
 import { convertDyn } from "../lib/kfiles/dyn"
+import { downloadFile } from "../lib/util"
 
 import style from "./ExportFile.module.css"
 
@@ -172,14 +173,6 @@ function BuildViewer() {
             <AtlasViewer atlasSignal={atlas} />
         </fieldset>
     )
-}
-
-function downloadFile(blob: Blob, fileName: string) {
-    const downloadLink = document.createElement("a")
-    downloadLink.href = URL.createObjectURL(blob)
-    downloadLink.download = fileName
-    downloadLink.click()
-    URL.revokeObjectURL(downloadLink.href)
 }
 
 export default function ExportFile() {

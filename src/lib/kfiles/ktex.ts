@@ -73,12 +73,12 @@ class KtexHeader {
     fill: number = this.specification.maxFill
 
     setSpecification(
-        specification: typeof Specifications.PreCaveSpec | typeof Specifications.PostCaveSpec,
         platform: Platform,
         pixelFormat: PixelFormat,
         textureType: TextureType,
         flags: number,
-        fill: number
+        fill: number,
+        specification: typeof Specifications.PreCaveSpec | typeof Specifications.PostCaveSpec = Specifications.PostCaveSpec
     ) {
         this.specification = specification
 

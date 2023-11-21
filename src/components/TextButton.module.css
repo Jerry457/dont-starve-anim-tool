@@ -2,6 +2,7 @@
     --button-normal-color: hsl(204, 85%, 40%);
     --button-hover-color: rgba(0, 0, 0, 0.1);
     --button-active-color: hsl(204, 85%, 30%);
+    --button-font-size: 1rem;
 
     border: none;
 
@@ -28,7 +29,7 @@
 }
 
 .text {
-    font-size: 1rem;
+    font-size: var(--button-font-size);
     text-align: center;
 }
 
