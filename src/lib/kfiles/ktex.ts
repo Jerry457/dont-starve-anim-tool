@@ -235,8 +235,6 @@ export class Ktex {
 
             width = width > 1 ? Math.floor(width / 2) : width
             height = height > 1 ? Math.floor(height / 2) : height
-
-            break
         }
         this.header.mipmapCount = this.mipmaps.length
     }

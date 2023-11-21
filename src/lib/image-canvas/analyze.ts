@@ -20,6 +20,18 @@ export function analyze(canvas: HTMLCanvasElement, bbox: bbox) {
     else return "opaque"
 }
 
+function removeRepeatRegion(regions: bbox[], bbox: bbox) {
+    let removed = false
+    for (const [index, region] of regions.entries()) {
+        if (region.x >= bbox.x && region.x + region.w <= bbox.x + bbox.w && region.y >= bbox.y && region.y + region.h <= bbox.y + bbox.h) {
+            removed = true
+            regions.splice(index, 1)
+            break
+        }
+    }
+    if (removed) removeRepeatRegion(regions, bbox)
+}
+
 function MergeRegion(regions: bbox[]) {
     const MergedRegions: bbox[] = []
     for (const o of regions) {
@@ -83,7 +95,7 @@ export function getRegion(canvas: HTMLCanvasElement, blocksize = 32) {
 
             if (isSameType && (leftTopType !== "alpha" || isLastDiv)) {
                 if (leftTopType === "alpha") alphaRegions.push(bbox)
-                if (leftTopType === "opaque") opaqueRegions.push(bbox)
+                else if (leftTopType === "opaque") opaqueRegions.push(bbox)
                 return leftTopType
             } else {
                 const type1 = quadTreeAnalyze(canvas, leftTopBbox)
@@ -92,6 +104,7 @@ export function getRegion(canvas: HTMLCanvasElement, blocksize = 32) {
                 const type4 = quadTreeAnalyze(canvas, rightBottomBbox)
 
                 if (type1 === type2 && type1 === type3 && type1 === type4 && type1 === "alpha") {
+                    removeRepeatRegion(alphaRegions, bbox)
                     alphaRegions.push(bbox)
                     return "alpha"
                 }
@@ -106,6 +119,9 @@ export function getRegion(canvas: HTMLCanvasElement, blocksize = 32) {
         return "unknow"
     }
     quadTreeAnalyze(canvas, bbox)
+
+    opaqueRegions.sort((a, b) => b.w * b.h - a.w * a.h)
+    alphaRegions.sort((a, b) => b.w * b.h - a.w * a.h)
 
     // debug
     // const ctx = canvas.getContext("2d")!

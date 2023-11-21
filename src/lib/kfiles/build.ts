@@ -191,7 +191,7 @@ export class Build {
                 if (!frame.canvas) continue
 
                 const [opaqueRegions, alphaRegions] = getRegion(frame.canvas)
-                const regions = [...opaqueRegions, ...alphaRegions]
+                const regions = [...alphaRegions, ...opaqueRegions]
 
                 if (regions.length === 0) continue
 
@@ -218,6 +218,8 @@ export class Build {
         const atlasIdx = 0
         this.verts = []
         for (const { frame, regions, regionsLeft, regionsTop, insertBBox } of blocks) {
+            console.log(frame.name)
+
             frame.vertIdx = this.verts.length
             frame.vertNum = regions.length * 6
 
@@ -234,6 +236,11 @@ export class Build {
                 const regionInsertTop = insertBBox!.y + region.y - regionsTop
                 const regionInsertBottom = regionInsertTop + region.h
 
+                // debug
+                // const ctx = atlas.getContext("2d")!
+                // ctx.strokeStyle = "red"
+                // ctx.strokeRect(regionInsertLeft, regionInsertTop, region.w, region.h)
+
                 const uMin = clamp(regionInsertLeft / atlas.width, 0, 1)
                 const uMax = clamp(regionInsertRight / atlas.width, 0, 1)
                 const vMin = clamp(1 - regionInsertTop / atlas.height, 0, 1)
@@ -247,6 +254,9 @@ export class Build {
                 this.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
             }
         }
+
+        // debug
+        // document.body.appendChild(atlas)
         if (this.scale !== 1) atlas = resize(atlas, atlas.width * this.scale, atlas.height * this.scale)
 
         const ktex = new Ktex("atlas-0.tex")
