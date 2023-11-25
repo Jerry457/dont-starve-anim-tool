@@ -1,6 +1,6 @@
 import dxt from "dxt-js"
 import { flags } from "dxt-js"
-import { newCanvas, resize, flipY, unPreMultiplyAlpha } from "../image-canvas"
+import { newCanvas, resize, flipY, preMultiplyAlpha } from "../image-canvas"
 
 import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
 
@@ -215,10 +215,10 @@ export class Ktex {
         }
     }
 
-    fromImage(canvas: HTMLCanvasElement, preMultiplyAlpha: boolean = true) {
-        this.preMultiplyAlpha = preMultiplyAlpha
+    fromImage(canvas: HTMLCanvasElement, usePreMultiplyAlpha: boolean = true) {
+        this.preMultiplyAlpha = usePreMultiplyAlpha
 
-        canvas = unPreMultiplyAlpha(canvas)
+        canvas = preMultiplyAlpha(canvas)
         canvas = flipY(canvas)
 
         let width = canvas.width
