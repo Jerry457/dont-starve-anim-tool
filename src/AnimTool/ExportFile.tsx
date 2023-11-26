@@ -1,4 +1,4 @@
-import { JSX, Accessor, For, createSignal, createEffect } from "solid-js"
+import { JSX, Accessor, For, createSignal, createEffect, onMount, onCleanup } from "solid-js"
 import JSZip from "jszip"
 
 import { RowData, DataViewer } from "../components/DataViewer"
@@ -139,9 +139,18 @@ function BuildViewer() {
             setAtlas(build.getAtlasSubRow())
         }
     }
-    onChange()
-    addEventListener("updateData", () => onChange())
-    createEffect(() => onChange())
+
+    function onReRendering() {
+        onChange()
+    }
+
+    onMount(() => {
+        onChange()
+        addEventListener("reRendering", onReRendering)
+    })
+    onCleanup(() => {
+        removeEventListener("reRendering", onReRendering)
+    })
 
     return (
         <fieldset classList={{ [style.fieldset]: true, [style.build]: true, [style.unUse]: !hasBuild() }}>

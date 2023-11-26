@@ -1,29 +1,35 @@
 import { createSignal } from "solid-js"
 
-import { banks, setPlayAnimation, setPlayFrame, updateData } from "./data"
+import { banks, setPlayAnimation, setPlayFrame, reRendering } from "./data"
 import { RowData, DataViewer } from "../components/DataViewer"
 
 import style from "./AnimDataViewer.module.css"
-
-function rowChecked(row: RowData, index: number) {
-    return row.shown
-}
-
-function onCheckChange(index: number, row: RowData, checked: boolean) {
-    row.shown = checked
-    updateData()
-}
-
-function onRowDataChange(index: number, row: RowData, key: string, value: string | number) {
-    const data = row.data as any as { [key: string]: string | number }
-    data[key] = value
-    updateData()
-}
 
 export default function AnimDataViewer() {
     const [animations, setAnimations] = createSignal<RowData[]>([])
     const [animFrames, setAnimFrames] = createSignal<RowData[]>([])
     const [animElements, setAnimElements] = createSignal<RowData[]>([])
+
+    function rowChecked(row: RowData, index: number) {
+        return row.shown
+    }
+
+    function onCheckChange(index: number, row: RowData, checked: boolean) {
+        row.shown = checked
+        reRendering()
+    }
+
+    function onAnimationChange(index: number, row: RowData, key: string) {
+        if (key === "frameRate") dispatchEvent(new CustomEvent("frameRateChange"))
+    }
+
+    function onAnimFrameChange(index: number, row: RowData, key: string) {
+        if (key !== "idx") dispatchEvent(new CustomEvent("frameBorderChange", { detail: { index, row } }))
+    }
+
+    function onAnimElementChange(index: number, row: RowData, key: string) {
+        reRendering()
+    }
 
     return (
         <div class={style.AnimDataViewer}>
@@ -33,7 +39,7 @@ export default function AnimDataViewer() {
                 keys={[{ key: "name" }, { key: "frameRate" }]}
                 titles={{ title: "Animation", subTitles: ["Name", "Rate"], hasButton: true }}
                 subSignal={setAnimFrames}
-                onRowDataChange={onRowDataChange}
+                onRowDataChange={onAnimationChange}
                 onChosenRow={row => setPlayAnimation(row)}
             />
             <DataViewer
@@ -47,7 +53,7 @@ export default function AnimDataViewer() {
                 checkable={true}
                 rowChecked={rowChecked}
                 onRowCheckChange={onCheckChange}
-                onRowDataChange={onRowDataChange}
+                onRowDataChange={onAnimFrameChange}
                 subSignal={setAnimElements}
                 onChosenRow={(row, index) => setPlayFrame(index)}
             />
@@ -73,7 +79,7 @@ export default function AnimDataViewer() {
                 checkable={true}
                 rowChecked={rowChecked}
                 onRowCheckChange={onCheckChange}
-                onRowDataChange={onRowDataChange}
+                onRowDataChange={onAnimElementChange}
             />
         </div>
     )

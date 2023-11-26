@@ -6,8 +6,8 @@ import { RowData } from "../../components/DataViewer"
 import { Ktex } from "../../lib/kfiles/ktex"
 import { Build } from "../../lib/kfiles/build"
 
-export function updateData() {
-    dispatchEvent(new CustomEvent("updateData"))
+export function reRendering() {
+    dispatchEvent(new CustomEvent("reRendering"))
 }
 
 export const banks = createMutable<RowData[]>([])
@@ -16,7 +16,6 @@ export const builds = createMutable<RowData[]>([])
 export const [playAnimation, setPlayAnimation] = createSignal<RowData>()
 export const [playFrame, setPlayFrame] = createSignal<number>(0)
 
-export const [colorCube, setColorCube] = createSignal("")
 export const [hideLayers, setHideLayers] = createStore<{ [layer: string]: boolean | undefined }>({})
 export const [symbolMaps, setSymbolMaps] = createStore(
     Object.entries(SymbolMaps).reduce(
@@ -50,7 +49,7 @@ function linkBuildAtlases(buildAtlas: buildAtlas, build: Build) {
     const { buildName, atlases } = buildAtlas
     if (build.name === buildName) {
         build.splitAtlas(atlases)
-        updateData()
+        reRendering()
 
         return true
     }

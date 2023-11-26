@@ -18,8 +18,9 @@ import TextButton from "../components/TextButton"
 import ColorPicker from "../components/ColorPicker"
 import ProgressBar from "../components/ProgressBar"
 import ZoomDragDiv from "../components/ZoomDragDiv"
+import { RowData } from "../components/DataViewer"
 
-import { builds, playAnimation, colorCube, playFrame } from "./data"
+import { builds, playAnimation, playFrame } from "./data"
 import { colorCubes } from "./data/colorCubes"
 import { SelectColorCube } from "./SelectColorCube"
 import { isHided, HideLayer } from "./HideLayer"
@@ -27,12 +28,35 @@ import { OverrideSymbol, mapSymbol } from "./OverrideSymbol"
 
 import style from "./Animation.module.css"
 
+const [showCollisionBox, SetShowCollisionBox] = createSignal<boolean>(false)
+const transfromedElements = new Map<HTMLCanvasElement, { m_a: number; m_b: number; m_c: number; m_d: number; transfromed: HTMLCanvasElement }[]>()
+
+function transfromElement(origin: HTMLCanvasElement, m_a: number, m_b: number, m_c: number, m_d: number) {
+    let transfromeds = transfromedElements.get(origin)
+    if (transfromeds) {
+        for (const element of transfromeds) {
+            if (m_a === element.m_a && m_b === element.m_b && m_c === element.m_c && m_d === element.m_d) {
+                return element.transfromed
+            }
+        }
+    }
+    const transfromed = transform(origin, m_a, m_b, m_c, m_d, 0, 0)
+    if (transfromed) {
+        if (!transfromeds) {
+            transfromeds = []
+            transfromedElements.set(origin, transfromeds)
+        }
+        transfromeds.push({ m_a, m_b, m_c, m_d, transfromed })
+        return transfromed
+    }
+}
+
 function getBuildFrame(symbol_name: string, frame_num: number) {
     for (const build of builds) {
         if (!build.sub || !build.shown) continue
 
         for (const symbol of build.sub!) {
-            if (!symbol.sub || !symbol.shown || (symbol.data as BuildSymbol).name !== symbol_name) {
+            if (!symbol.sub || !symbol.shown || (symbol.data as BuildSymbol).name.toLowerCase() !== symbol_name.toLowerCase()) {
                 continue
             }
 
@@ -48,7 +72,6 @@ function getBuildFrame(symbol_name: string, frame_num: number) {
     }
 }
 
-const [showCollisionBox, SetShowCollisionBox] = createSignal<boolean>(false)
 function AnimationPlayer() {
     let animCanvas: HTMLCanvasElement
     let frameCollisionBoxCanvas: HTMLCanvasElement
@@ -61,11 +84,13 @@ function AnimationPlayer() {
     let frameTop = Infinity
     let frameLeft = Infinity
     let lastAnimation = ""
+    let colorCube = ""
+    let renderedcolorCubeFrames: (HTMLCanvasElement | undefined)[] = []
 
-    let [frameIndex, setFrameIndex] = createSignal(0)
-    let [frameNum, setFrameNum] = createSignal(1)
-    let [renderedFrames, setRenderFrames] = createStore<(HTMLCanvasElement | undefined)[]>([])
-    let [frameCollisions, setFrameCollisions] = createStore<{ x: number; y: number; w: number; h: number }[]>([])
+    const [frameIndex, setFrameIndex] = createSignal(0)
+    const [frameNum, setFrameNum] = createSignal(1)
+    const [renderedFrames, setRenderFrames] = createStore<(HTMLCanvasElement | undefined)[]>([])
+    const [frameCollisions, setFrameCollisions] = createStore<{ x: number; y: number; w: number; h: number }[]>([])
 
     const [pause, setPause] = createSignal(true)
 
@@ -89,15 +114,37 @@ function AnimationPlayer() {
         setFrameIndex(getPreFrameIndex(frameIndex()))
     }
 
-    function calculateFrameBorder() {
+    function onFrameRateChange() {
         const animation = playAnimation()
 
-        if (!animation || !animation.sub) {
-            return
-        }
+        if (!animation) return
 
-        frameTop = Infinity
-        frameLeft = Infinity
+        const data = animation.data as Animation
+        frameRate = data.frameRate
+        frameDuration = 1000 / frameRate
+    }
+
+    function onFrameBorderChange(e: Event) {
+        const { index, row } = (e as CustomEvent<{ index: number; row: RowData }>).detail
+        const { x, y, w, h } = row.data as AnimFrame
+        setFrameCollisions(produce(pre => (pre[index] = { x, y, w, h })))
+    }
+
+    function onColorCubeChange(e: Event) {
+        colorCube = (e as CustomEvent<{ colorCube: string }>).detail.colorCube
+        renderedcolorCubeFrames = []
+        drawFrame(frameIndex())
+    }
+
+    function calculateFrameBorder(calculateWithBuild: boolean = true) {
+        const animation = playAnimation()
+
+        if (!animation || !animation.sub!) return
+
+        if (calculateWithBuild) {
+            frameTop = Infinity
+            frameLeft = Infinity
+        }
         let frameBottom = -Infinity
         let frameRight = -Infinity
 
@@ -107,9 +154,7 @@ function AnimationPlayer() {
             const { x, y, w, h } = animFrame.data as AnimFrame
             frameCollisions.push({ x, y, w, h })
 
-            if (!animFrame.sub) {
-                continue
-            }
+            if (!calculateWithBuild || !animFrame.sub) continue
 
             for (let i = animFrame.sub.length - 1; i >= 0; i--) {
                 const animElement = animFrame.sub[i]
@@ -148,19 +193,40 @@ function AnimationPlayer() {
 
         const width = Math.round(frameRight - frameLeft)
         const height = Math.round(frameBottom - frameTop)
-        animCanvas.width = width
-        animCanvas.height = height
+        if (width > 0 && height > 0) {
+            animCanvas.width = width
+            animCanvas.height = height
+        }
 
         setFrameCollisions(frameCollisions)
     }
 
     function drawFrame(index: number) {
-        if (!animCanvasContext) if (!animCanvas) return
-        animCanvasContext = animCanvas.getContext("2d", { willReadFrequently: true })!
+        const animation = playAnimation()
+        if (!animation || !animation.sub || !animation.sub[index]) return
+
+        const animFrame = animation.sub[index]
+
+        if (!animCanvasContext) {
+            if (!animCanvas) return
+            animCanvasContext = animCanvas.getContext("2d", { willReadFrequently: true })!
+        }
 
         animCanvasContext.clearRect(0, 0, animCanvas.width, animCanvas.height)
-        const renderedFrame = renderedFrames[index]
-        if (renderedFrame) animCanvasContext.drawImage(renderedFrame, 0, 0)
+
+        let renderedFrame = renderedFrames[index]
+        if (renderedFrame && animFrame.shown) {
+            if (colorCube !== "") {
+                if (renderedcolorCubeFrames[index]) renderedFrame = renderedcolorCubeFrames[index]!
+                else {
+                    const colorCubeKtex = colorCubes[colorCube]!
+                    renderedFrame = applyColorCube(renderedFrame, colorCubeKtex)
+                    renderedcolorCubeFrames[index] = renderedFrame
+                }
+            }
+
+            animCanvasContext.drawImage(renderedFrame, 0, 0)
+        }
     }
 
     function drawFrameCollisionBox(index: number) {
@@ -189,19 +255,13 @@ function AnimationPlayer() {
     }
 
     async function renderFrame(index: number) {
-        if (isRendered(index) || animCanvas.width <= 0 || animCanvas.height <= 0) {
-            return
-        }
+        if (isRendered(index) || animCanvas.width <= 0 || animCanvas.height <= 0) return
 
         const animation = playAnimation()
-        if (!animation || !animation.sub) {
-            return
-        }
+        if (!animation || !animation.sub) return
 
         const animFrame = animation.sub[index]
-        if (!animFrame.shown || !animFrame.sub) {
-            return
-        }
+        if (!animFrame.sub) return
 
         const renderedFrame = newCanvas(animCanvas.width, animCanvas.height)
         for (let i = animFrame.sub!.length - 1; i >= 0; i--) {
@@ -222,12 +282,7 @@ function AnimationPlayer() {
 
             if (!canvas) continue
 
-            const colorCubeKtex = colorCubes[colorCube()]
-            if (colorCubeKtex) {
-                canvas = applyColorCube(canvas, colorCubeKtex)
-            }
-
-            const transfromed = transform(canvas, m_a, m_b, m_c, m_d, 0, 0)
+            const transfromed = transfromElement(canvas, m_a, m_b, m_c, m_d)
             if (!transfromed || transfromed.width <= 0 || transfromed.height <= 0) continue
 
             const offestX = m_tx + x * m_a + y * m_c
@@ -245,6 +300,7 @@ function AnimationPlayer() {
     }
 
     async function onUpdateAnimation() {
+        renderedcolorCubeFrames = []
         setRenderFrames([])
         calculateFrameBorder()
         renderedIndex = 0
@@ -290,13 +346,21 @@ function AnimationPlayer() {
     })
 
     onMount(() => {
+        addEventListener("frameRateChange", onFrameRateChange)
+        addEventListener("frameBorderChange", onFrameBorderChange)
+        addEventListener("colorCubeChange", onColorCubeChange)
+
         addEventListener("downloadAnim", onDownloadAnim)
-        addEventListener("updateData", onUpdateAnimation)
+        addEventListener("reRendering", onUpdateAnimation)
     })
 
     onCleanup(() => {
+        removeEventListener("frameRateChange", onFrameRateChange)
+        removeEventListener("frameBorderChange", onFrameBorderChange)
+        removeEventListener("colorCubeChange", onColorCubeChange)
+
         removeEventListener("downloadAnim", onDownloadAnim)
-        removeEventListener("updateData", onUpdateAnimation)
+        removeEventListener("reRendering", onUpdateAnimation)
     })
 
     let startTime: number | undefined = undefined

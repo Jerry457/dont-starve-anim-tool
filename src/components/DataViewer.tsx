@@ -82,6 +82,8 @@ function DataViewerCell(props: { value: string | number; setValue?: (value: stri
                 e.target.value = String(props.value)
                 return
             }
+            props.setValue?.(number)
+            return
         }
         props.setValue?.(value)
     }

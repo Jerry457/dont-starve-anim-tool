@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js"
 
-import { builds, updateData } from "./data"
+import { builds, reRendering } from "./data"
 import { RowData, DataViewer } from "../components/DataViewer"
 
 import style from "./BuildViewer.module.css"
@@ -11,13 +11,13 @@ function rowChecked(row: RowData, index: number) {
 
 function onCheckChange(index: number, row: RowData, checked: boolean) {
     row.shown = checked
-    updateData()
+    reRendering()
 }
 
 function onRowDataChange(index: number, row: RowData, key: string, value: string | number) {
     const data = row.data as any as { [key: string]: string | number }
     data[key] = value
-    updateData()
+    reRendering()
 }
 
 export default function BuildViewer() {

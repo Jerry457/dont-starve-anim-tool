@@ -1,5 +1,5 @@
 import { Ktex } from "../../lib/kfiles/ktex"
-import { updateData } from "./index"
+import { reRendering } from "./index"
 
 const language = navigator.language
 function en_zh(en: string, zh: string) {
@@ -99,4 +99,4 @@ for (const { value } of colorCubeNames) {
         )
     )
 }
-Promise.all(promises).then(updateData)
+Promise.all(promises).then(reRendering)

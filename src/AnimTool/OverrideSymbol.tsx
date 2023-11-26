@@ -14,14 +14,10 @@ import style from "./OverrideSymbol.module.css"
 export function mapSymbol(symbol_name: string) {
     const symbolMapData = symbolMaps[symbol_name] && symbolMaps[symbol_name.toLowerCase()]
 
-    if (!symbolMapData || !symbolMapData.used) {
-        return
-    }
+    if (!symbolMapData || !symbolMapData.used) return
 
     for (const [overSymbol, used] of Object.entries(symbolMapData.overSymbols)) {
-        if (used) {
-            return overSymbol
-        }
+        if (used) return overSymbol
     }
 
     return
@@ -31,11 +27,7 @@ export function OverrideSymbol() {
     function onOverSymbolCheck(data: string[], e: JSX.InputChangeEvent) {
         const [symbol, overSymbol] = data
 
-        setSymbolMaps(
-            produce(pre => {
-                pre[symbol]!.overSymbols[overSymbol] = e.target.checked
-            })
-        )
+        setSymbolMaps(produce(pre => (pre[symbol]!.overSymbols[overSymbol] = e.target.checked)))
     }
 
     function onChangeOverSymbol(data: string[], e: JSX.InputChangeEvent) {
