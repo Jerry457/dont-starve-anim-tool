@@ -138,8 +138,7 @@ class KtexMipmap {
     constructor(width: number, height: number, data?: Uint8Array) {
         this.width = width
         this.height = height
-        this.pitch = Math.floor((width + 3) / 4) * 16
-        // Math.floor((width + 3) / 4) * (datafmt == "RGB" ? 3 : 4) * 4
+        this.pitch = Math.floor((width + 3) / 4) * 16 // DXT5
 
         this.data = data
     }
@@ -147,11 +146,17 @@ class KtexMipmap {
     compress(pixelFormat: PixelFormat) {
         switch (pixelFormat) {
             case PixelFormat.DXT1:
+                this.pitch = Math.floor((this.width + 3) / 4) * 8
             case PixelFormat.DXT3:
             case PixelFormat.DXT5:
                 this.blockData = dxt.compress(this.data!, this.width, this.height, flags[PixelFormat[pixelFormat] as keyof flags])
                 break
-            default:
+            case PixelFormat.RGB:
+                this.pitch = this.width * 3
+                this.blockData = this.data!
+                break
+            default: // PixelFormat.RGBA
+                this.pitch = this.width * 4
                 this.blockData = this.data!
         }
         this.dataSize = this.blockData.length
