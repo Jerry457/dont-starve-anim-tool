@@ -158,10 +158,10 @@ function AnimationPlayer() {
 
             for (let i = animFrame.sub.length - 1; i >= 0; i--) {
                 const animElement = animFrame.sub[i]
-                const { symbol, frame, m_a, m_b, m_c, m_d, m_tx, m_ty } = animElement.data as AnimElement
+                const { symbol, frameNum, m_a, m_b, m_c, m_d, m_tx, m_ty } = animElement.data as AnimElement
 
                 const overSymbol = mapSymbol(symbol) || symbol
-                const buildFrame = getBuildFrame(overSymbol, frame)
+                const buildFrame = getBuildFrame(overSymbol, frameNum)
 
                 if (!buildFrame) continue
 
@@ -269,12 +269,12 @@ function AnimationPlayer() {
 
             if (!element.shown) continue
 
-            const { symbol, frame, layerName: layer, m_a, m_b, m_c, m_d, m_tx, m_ty } = element.data as AnimElement
+            const { symbol, frameNum, layerName: layer, m_a, m_b, m_c, m_d, m_tx, m_ty } = element.data as AnimElement
 
             if (isHided(layer)) continue
 
             const overSymbol = mapSymbol(symbol) || symbol
-            const buildFamre = getBuildFrame(overSymbol, frame)
+            const buildFamre = getBuildFrame(overSymbol, frameNum)
 
             if (!buildFamre || !buildFamre.shown) continue
 

@@ -34,7 +34,7 @@ const faceingDirectionMap: ReadonlyMap<number, string> = new Map([
 export class AnimElement {
     zIndex: number
     symbol: string
-    frame: number
+    frameNum: number
     layerName: string
     m_a: number
     m_b: number
@@ -46,7 +46,7 @@ export class AnimElement {
     constructor(
         zIndex: number = 0,
         symbol: string = "",
-        frame: number = 0,
+        frameNum: number = 0,
         layerName: string = "",
         m_a: number = 1,
         m_b: number = 0,
@@ -56,7 +56,7 @@ export class AnimElement {
         m_ty: number = 1
     ) {
         this.symbol = symbol
-        this.frame = frame
+        this.frameNum = frameNum
         this.layerName = layerName
         this.m_a = m_a
         this.m_b = m_b
@@ -135,6 +135,10 @@ export class Bank {
         this.animations = animations
     }
 
+    sort() {
+        this.animations.sort((a, b) => a.name[0].localeCompare(b.name[0]))
+    }
+
     getSubRow() {
         return this.animations
     }
@@ -167,7 +171,7 @@ export class Anim {
                     let frameRight = -Infinity
 
                     for (const element of frame.elements) {
-                        const buildFrame = build.getSymbol(element.symbol)?.getFrame(element.frame)
+                        const buildFrame = build.getSymbol(element.symbol)?.getFrame(element.frameNum)
                         if (!buildFrame) continue
 
                         const { m_a, m_b, m_c, m_d, m_tx, m_ty } = element
@@ -231,6 +235,7 @@ export class Anim {
 
                 return animation
             })
+            bank.sort()
 
             return bank
         })
@@ -324,6 +329,7 @@ export async function decompileAnim(data: BinaryDataReader | ArrayBuffer) {
         }
         animation.sort()
     }
+    anim.banks.map(bank => bank.sort())
 
     return anim
 }
@@ -408,7 +414,7 @@ export async function compileAnim(anim: Anim) {
 
                     // write element info
                     writer.writeUint32(symbolHash)
-                    writer.writeUint32(element.frame)
+                    writer.writeUint32(element.frameNum)
                     writer.writeUint32(layerNameHash)
                     writer.writeFloat32(element.m_a)
                     writer.writeFloat32(element.m_b)

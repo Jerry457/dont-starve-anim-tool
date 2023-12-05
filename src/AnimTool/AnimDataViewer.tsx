@@ -62,7 +62,7 @@ export default function AnimDataViewer() {
                 keys={[
                     { key: "zIndex", readOnly: true },
                     { key: "symbol" },
-                    { key: "frame" },
+                    { key: "frameNum" },
                     { key: "layerName" },
                     { key: "m_a" },
                     { key: "m_b" },
