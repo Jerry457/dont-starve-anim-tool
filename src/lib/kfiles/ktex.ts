@@ -29,9 +29,9 @@ export enum TextureType {
 
 export const Specifications = Object.freeze({
     PreCaveSpec: Object.freeze({
-        maxPlatform: 8, // 3
-        maxPixelFormat: 8, // 3
-        maxTextureType: 8, // 3
+        maxPlatform: 7, // 3
+        maxPixelFormat: 7, // 3
+        maxTextureType: 7, // 3
         maxMipmapCount: 15, // 4
         maxFlags: 1, // 1
         maxFill: 262143, // 18

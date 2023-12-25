@@ -3,11 +3,12 @@ import { JSX } from "solid-js"
 declare module "solid-js" {
     namespace JSX {
         interface ElementProp {
-            classList?: {
-                [k: string]: boolean | undefined
-            }
+            class?: string
+            classList?: { [k: string]: boolean | undefined }
+            id?: string
             children?: JSX.Element
             onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>
+            style?: string | JSX.CSSProperties
         }
 
         interface InputChangeEvent extends Event {

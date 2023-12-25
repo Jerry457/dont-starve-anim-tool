@@ -1,11 +1,19 @@
 import { Ktex, PixelFormat } from "../kfiles/ktex"
 
-export function newCanvas(width: number, height: number, image?: CanvasImageSource) {
-    const canvas = document.createElement("canvas")
-    canvas.width = width
-    canvas.height = height
+type ImageSource = HTMLCanvasElement | ImageBitmap | OffscreenCanvas | HTMLImageElement
 
-    if (image) canvas.getContext("2d", { willReadFrequently: true })!.drawImage(image, 0, 0)
+export function newCanvas(image: ImageSource): HTMLCanvasElement
+export function newCanvas(width: number, height: number): HTMLCanvasElement
+export function newCanvas(image: number | ImageSource, height?: number): HTMLCanvasElement {
+    const canvas = document.createElement("canvas")
+    if (typeof image === "number") {
+        canvas.width = image
+        canvas.height = height!
+    } else {
+        canvas.width = image.width
+        canvas.height = image.height
+        canvas.getContext("2d", { willReadFrequently: true })!.drawImage(image, 0, 0)
+    }
 
     return canvas
 }
@@ -40,7 +48,7 @@ export function flipY(canvas: HTMLCanvasElement) {
     ctx.scale(1, -1)
     ctx.drawImage(canvas, 0, 0)
 
-    return newCanvas(flipped.width, flipped.height, flipped)
+    return newCanvas(flipped)
 }
 
 export function resize(canvas: HTMLCanvasElement, width: number, height: number) {
@@ -50,9 +58,9 @@ export function resize(canvas: HTMLCanvasElement, width: number, height: number)
     return resized
 }
 
-export function transform(canvas: HTMLCanvasElement, m_a: number, m_b: number, m_c: number, m_d: number, m_tx: number, m_ty: number) {
-    const borderX = [0, canvas.width * m_a, canvas.height * m_c, canvas.width * m_a + canvas.height * m_c]
-    const borderY = [0, canvas.width * m_b, canvas.height * m_d, canvas.width * m_b + canvas.height * m_d]
+export function transform(canvas: HTMLCanvasElement, a: number, b: number, c: number, d: number, tx: number, ty: number) {
+    const borderX = [0, canvas.width * a, canvas.height * c, canvas.width * a + canvas.height * c]
+    const borderY = [0, canvas.width * b, canvas.height * d, canvas.width * b + canvas.height * d]
 
     const left = Math.min(...borderX)
     const right = Math.max(...borderX)
@@ -67,10 +75,10 @@ export function transform(canvas: HTMLCanvasElement, m_a: number, m_b: number, m
     const transformed = newCanvas(transformedWidth, transformedHeight)
 
     const transformedContext = transformed.getContext("2d")!
-    transformedContext.setTransform(m_a, m_b, m_c, m_d, -left + m_tx, -bottom + m_ty)
+    transformedContext.setTransform(a, b, c, d, -left + tx, -bottom + ty)
     transformedContext.drawImage(canvas, 0, 0)
 
-    return newCanvas(transformed.width, transformed.height, transformed)
+    return newCanvas(transformed)
 }
 
 export function crop(canvas: HTMLCanvasElement, x: number, y: number, w: number, h: number) {
@@ -156,8 +164,45 @@ export function applyColorCube(canvas: HTMLCanvasElement, colorCubeKtex: Ktex) {
         pixelData[i + 3] = a
     }
 
-    const applied = newCanvas(canvas.width, canvas.height, canvas)
+    const applied = newCanvas(canvas)
     applied.getContext("2d")!.putImageData(imageData, 0, 0)
 
     return applied
+}
+
+export function drawArrow(canvas: HTMLCanvasElement, x: number, y: number, direction: "left" | "up", size = 8, tipSize = 4, lineColor = "black") {
+    const context = canvas.getContext("2d")!
+
+    context.beginPath()
+    context.moveTo(x, y)
+    if (direction === "left") {
+        context.moveTo(x, y)
+        context.lineTo(x + size + tipSize, y - size)
+        context.lineTo(x + size, y)
+        context.lineTo(x + size + tipSize, y + size)
+    } else if (direction === "up") {
+        context.moveTo(x, y)
+        context.lineTo(x - size, y + size + tipSize)
+        context.lineTo(x, y + size)
+        context.lineTo(x + size, y + size + tipSize)
+    }
+    context.closePath()
+    context.fillStyle = lineColor
+    context.fill()
+}
+
+export function drawCoordinate(canvas: HTMLCanvasElement, lineColor = "black") {
+    const context = canvas.getContext("2d")!
+    context.clearRect(0, 0, canvas.width, canvas.height)
+
+    context.beginPath()
+    context.moveTo(0, canvas.height / 2)
+    context.lineTo(canvas.width, canvas.height / 2)
+    context.moveTo(canvas.width / 2, 0)
+    context.lineTo(canvas.width / 2, canvas.height)
+    context.strokeStyle = lineColor
+    context.stroke()
+
+    drawArrow(canvas, 0, canvas.height / 2, "left", undefined, undefined, lineColor)
+    drawArrow(canvas, canvas.width / 2, 0, "up", undefined, undefined, lineColor)
 }

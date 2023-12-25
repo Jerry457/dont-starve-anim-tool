@@ -1,12 +1,4 @@
-.githubButton {
-    position: absolute;
-    left: 0px;
-
-    --button-normal-color: black;
-    font-size: 2rem;
-}
-
-.OverrideSymbolPopup {
+.SymbolMapViewer {
     display: grid;
     grid-template-rows: max-content max-content auto max-content;
 
@@ -14,11 +6,11 @@
     height: 400px;
 }
 
-.OverrideSymbolPopup h2 {
+.SymbolMapViewer h2 {
     text-align: center;
 }
 
-.OverrideSymbolPopup a {
+.SymbolMapViewer a {
     text-align: center;
 }
 
@@ -74,4 +66,12 @@
 .expandButtion {
     font-size: 0.7em;
     transform: rotate(180deg);
+}
+
+.githubButton {
+    position: absolute;
+    left: 0px;
+
+    --button-normal-color: black;
+    font-size: 2rem;
 }

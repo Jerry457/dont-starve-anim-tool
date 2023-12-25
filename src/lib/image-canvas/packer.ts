@@ -30,19 +30,14 @@ function tryInsert(block: block, w: number, h: number, fittedBlocks: bbox[]): bb
             for (const bbox of tempBBoxs) {
                 if (bboxIntersects(bbox, testBBox)) {
                     x = nextMultipleOf(bbox.x + bbox.w, align)
-                    if (!minY) {
-                        minY = bbox.h + bbox.y
-                    } else {
-                        minY = Math.min(minY, bbox.h + bbox.y)
-                    }
+                    if (minY === undefined) minY = bbox.h + bbox.y
+                    else minY = Math.min(minY, bbox.h + bbox.y)
 
                     intersects = true
                     break
                 }
             }
-            if (!intersects) {
-                return { x, y, w: bboxW, h: bboxH }
-            }
+            if (!intersects) return { x, y, w: bboxW, h: bboxH }
         }
         if (minY) y = Math.max(nextMultipleOf(minY, align), y + align)
         else y += align
@@ -81,7 +76,5 @@ export function pack(blocks: block[]) {
 }
 
 export function split(canvas: HTMLCanvasElement, bboxs: bbox[]): block[] {
-    return bboxs.map(({ x, y, w, h, name }) => {
-        return { name, canvas: crop(canvas, x, y, w, h) }
-    })
+    return bboxs.map(({ x, y, w, h, name }) => ({ name, canvas: crop(canvas, x, y, w, h) }))
 }

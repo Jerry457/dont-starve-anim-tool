@@ -1,5 +1,5 @@
 import { Ktex } from "../../lib/kfiles/ktex"
-import { reRendering } from "./index"
+// import { reRendering } from "./index"
 
 const language = navigator.language
 function en_zh(en: string, zh: string) {
@@ -85,18 +85,14 @@ export const colorCubeNames = [
     { name: en_zh("Beaver Vision Light", "海狸视觉"), value: "beaver_vision_cc" },
 ]
 
-export const colorCubes: { [name: string]: Ktex | undefined } = {}
-const promises = []
+export const colorCubes: { [name: string]: Ktex } = {}
+
 for (const { value } of colorCubeNames) {
-    promises.push(
-        import(`../../assets/color_cubes/${value}.tex`).then(module =>
-            fetch(module.default).then(response => {
-                response.arrayBuffer().then(arrayBuffer => {
-                    colorCubes[value] = new Ktex(value)
-                    colorCubes[value]!.readKtex(arrayBuffer)
-                })
-            })
-        )
-    )
+    const module = await import(`../../assets/color_cubes/${value}.tex`)
+    const response = await fetch(module.default)
+    const arrayBuffer = await response.arrayBuffer()
+    colorCubes[value] = new Ktex(value)
+    colorCubes[value].readKtex(arrayBuffer)
 }
-Promise.all(promises).then(reRendering)
+
+// Promise.all(promises).then(reRendering)

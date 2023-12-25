@@ -12,3 +12,7 @@
     --button-normal-color: hsl(0, 0%, 0%);
     z-index: 998;
 }
+
+.dragging {
+    cursor: move;
+}

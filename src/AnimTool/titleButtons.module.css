@@ -1,0 +1,14 @@
+.titleButton {
+    margin: 0.3rem;
+}
+
+.subTitle div {
+    border: solid 1px var(--table-border-color);
+    padding: 0.2rem 0;
+    overflow: hidden;
+}
+
+.mainTitle {
+    border-left: solid 1px var(--table-border-color);
+    border-right: solid 1px var(--table-border-color);
+}

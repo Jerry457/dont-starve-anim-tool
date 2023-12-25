@@ -1,0 +1,21 @@
+.Input[type="text"] {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0.5em;
+    box-sizing: border-box;
+
+    background-color: transparent;
+
+    text-align: center;
+    outline: none;
+    border: 1px solid transparent;
+}
+
+.Input[readonly] {
+    cursor: default;
+}
+
+.Input:focus {
+    border-color: hsl(204, 80%, 55%);
+}

@@ -1,0 +1,30 @@
+.TableList {
+    overflow: auto;
+    content-visibility: auto;
+
+    --table-border-color: hsl(0, 0%, 85%);
+}
+
+.TableList div {
+    text-align: center;
+}
+
+.head {
+    position: sticky;
+    top: 0;
+    background-color: rgb(242, 242, 242);
+    z-index: 1;
+}
+
+.body {
+    content-visibility: auto;
+}
+
+.row div > div {
+    border: solid 1px var(--table-border-color);
+    border-spacing: 0;
+}
+
+.chosenRow div {
+    background-color: hsl(217 85% 95%);
+}

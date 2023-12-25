@@ -1,4 +1,4 @@
-.HideLayerPopup {
+.HideLayerViewer {
     width: 330px;
     height: 400px;
 
@@ -6,7 +6,7 @@
     grid-template-rows: max-content auto max-content;
 }
 
-.HideLayerPopup h2 {
+.HideLayerViewer h2 {
     text-align: center;
 }
 

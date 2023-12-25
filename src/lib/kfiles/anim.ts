@@ -36,38 +36,38 @@ export class AnimElement {
     symbol: string
     frameNum: number
     layerName: string
-    m_a: number
-    m_b: number
-    m_c: number
-    m_d: number
-    m_tx: number
-    m_ty: number
+    a: number
+    b: number
+    c: number
+    d: number
+    tx: number
+    ty: number
 
     constructor(
         zIndex: number = 0,
         symbol: string = "",
         frameNum: number = 0,
         layerName: string = "",
-        m_a: number = 1,
-        m_b: number = 0,
-        m_c: number = 0,
-        m_d: number = 1,
-        m_tx: number = 0,
-        m_ty: number = 1
+        a: number = 1,
+        b: number = 0,
+        c: number = 0,
+        d: number = 1,
+        tx: number = 0,
+        ty: number = 1
     ) {
         this.symbol = symbol
         this.frameNum = frameNum
         this.layerName = layerName
-        this.m_a = m_a
-        this.m_b = m_b
-        this.m_c = m_c
-        this.m_d = m_d
-        this.m_tx = m_tx
-        this.m_ty = m_ty
+        this.a = a
+        this.b = b
+        this.c = c
+        this.d = d
+        this.tx = tx
+        this.ty = ty
         this.zIndex = zIndex
     }
 
-    getSubRow = undefined
+    getSubRows = undefined
 }
 
 export class AnimFrame {
@@ -79,15 +79,7 @@ export class AnimFrame {
     elements: AnimElement[]
     events: string[]
 
-    constructor(
-        idx: number = 0,
-        x: number = 0,
-        y: number = 0,
-        w: number = 9999,
-        h: number = 9999,
-        elements: AnimElement[] = [],
-        events: string[] = []
-    ) {
+    constructor(idx: number = 0, x: number = 0, y: number = 0, w: number = 1, h: number = 1, elements: AnimElement[] = [], events: string[] = []) {
         this.idx = idx
         this.x = x
         this.y = y
@@ -101,7 +93,7 @@ export class AnimFrame {
         this.elements.sort((a, b) => a.zIndex - b.zIndex)
     }
 
-    getSubRow() {
+    getSubRows() {
         return this.elements
     }
 }
@@ -121,7 +113,7 @@ export class Animation {
         this.frames.sort((a, b) => a.idx - b.idx)
     }
 
-    getSubRow() {
+    getSubRows() {
         return this.frames
     }
 }
@@ -139,7 +131,7 @@ export class Bank {
         this.animations.sort((a, b) => a.name[0].localeCompare(b.name[0]))
     }
 
-    getSubRow() {
+    getSubRows() {
         return this.animations
     }
 }
@@ -171,21 +163,22 @@ export class Anim {
                     let frameRight = -Infinity
 
                     for (const element of frame.elements) {
-                        const buildFrame = build.getSymbol(element.symbol)?.getFrame(element.frameNum)
+                        const buildFrame = build.getSymbol(element.symbol)?.[0].getFrame(element.frameNum)?.[0]
+
                         if (!buildFrame) continue
 
-                        const { m_a, m_b, m_c, m_d, m_tx, m_ty } = element
+                        const { a, b, c, d, tx, ty } = element
                         const { x, y, w, h } = buildFrame
 
-                        const borderX = [0, w * m_a, h * m_c, w * m_a + h * m_c]
-                        const borderY = [0, w * m_b, h * m_d, w * m_b + h * m_d]
+                        const borderX = [0, w * a, h * c, w * a + h * c]
+                        const borderY = [0, w * b, h * d, w * b + h * d]
                         const transformedWidth = Math.round(Math.max(...borderX) - Math.min(...borderX))
                         const transformedHeight = Math.round(Math.max(...borderY) - Math.min(...borderY))
 
                         if (transformedWidth <= 0 || transformedHeight <= 0) continue
 
-                        const offsetX = m_tx + x * m_a + y * m_c
-                        const offsetY = m_ty + x * m_b + y * m_d
+                        const offsetX = tx + x * a + y * c
+                        const offsetY = ty + x * b + y * d
 
                         const elementTop = offsetY - transformedHeight / 2
                         const elementBottom = offsetY + transformedHeight / 2
@@ -314,15 +307,15 @@ export async function decompileAnim(data: BinaryDataReader | ArrayBuffer) {
                 const layerNameHash = reader.readUint32()
                 const layerName = hashMap.get(layerNameHash)!
 
-                const m_a = reader.readFloat32()
-                const m_b = reader.readFloat32()
-                const m_c = reader.readFloat32()
-                const m_d = reader.readFloat32()
-                const m_tx = reader.readFloat32()
-                const m_ty = reader.readFloat32()
+                const a = reader.readFloat32()
+                const b = reader.readFloat32()
+                const c = reader.readFloat32()
+                const d = reader.readFloat32()
+                const tx = reader.readFloat32()
+                const ty = reader.readFloat32()
                 const z = reader.readFloat32()
 
-                const element = new AnimElement(zIndex, symbol, frame, layerName, m_a, m_b, m_c, m_d, m_tx, m_ty)
+                const element = new AnimElement(zIndex, symbol, frame, layerName, a, b, c, d, tx, ty)
                 animFrame.elements.push(element)
             }
             animFrame.sort()
@@ -416,12 +409,12 @@ export async function compileAnim(anim: Anim) {
                     writer.writeUint32(symbolHash)
                     writer.writeUint32(element.frameNum)
                     writer.writeUint32(layerNameHash)
-                    writer.writeFloat32(element.m_a)
-                    writer.writeFloat32(element.m_b)
-                    writer.writeFloat32(element.m_c)
-                    writer.writeFloat32(element.m_d)
-                    writer.writeFloat32(element.m_tx)
-                    writer.writeFloat32(element.m_ty)
+                    writer.writeFloat32(element.a)
+                    writer.writeFloat32(element.b)
+                    writer.writeFloat32(element.c)
+                    writer.writeFloat32(element.d)
+                    writer.writeFloat32(element.tx)
+                    writer.writeFloat32(element.ty)
                     writer.writeFloat32((element.zIndex / frame.elements.length) * exportDepth - exportDepth * 10)
                 }
             }

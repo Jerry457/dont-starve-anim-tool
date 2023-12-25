@@ -1,11 +1,11 @@
-import { Show } from "solid-js"
+import { JSX, Show } from "solid-js"
 
 import style from "./TextButton.module.css"
 
 export default function TextButton(props: {
     text: string
-    classList?: { [k: string]: boolean | undefined }
-    textClassList?: { [k: string]: boolean | undefined }
+    style?: JSX.ElementProp["style"]
+    classList?: JSX.ElementProp["classList"]
     checkbox?: boolean
     check?: boolean
     onClick?: (checkBox?: HTMLInputElement) => void
@@ -21,12 +21,7 @@ export default function TextButton(props: {
     }
 
     return (
-        <div
-            classList={{
-                [style.TextButton]: true,
-                ...props.classList,
-            }}
-            onClick={onClick}>
+        <div class={style.TextButton} classList={props.classList} onClick={onClick} style={props.style}>
             <Show when={props.checkbox}>
                 <input type="checkbox" ref={checkBox} class={style.checkBox} checked={props.check} />
             </Show>

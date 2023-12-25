@@ -1,9 +1,14 @@
-.vertical {
-    height: 7px;
-    z-index: 1;
+.resizeBar {
+    --bar-width: 0.5rem;
 
     position: absolute;
-    top: 0;
+    z-index: 1;
+}
+
+.vertical {
+    height: var(--bar-width);
+
+    top: calc(var(--bar-width) / -2);
     left: 0;
     right: 0;
 
@@ -15,11 +20,9 @@
 }
 
 .horizontal {
-    width: 7px;
-    z-index: 1;
+    width: var(--bar-width);
 
-    position: absolute;
-    right: 0;
+    right: calc(var(--bar-width) / -2);
     top: 0;
     bottom: 0;
 

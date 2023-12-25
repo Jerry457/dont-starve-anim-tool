@@ -1,4 +1,4 @@
-//https://github.com/UNOWEN-OwO/dyn_decrypt
+// https://github.com/UNOWEN-OwO/dyn_decrypt
 
 import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
 
@@ -23,7 +23,7 @@ function processChunk(chunk: Uint8Array, isEncrypt?: boolean) {
     }
 }
 
-export async function convertDyn(buffer: ArrayBuffer, isEncrypt?: boolean) {
+export default async function convertDyn(buffer: ArrayBuffer, isEncrypt?: boolean) {
     const reader = new BinaryDataReader(buffer)
     const dynWriter = new BinaryDataWriter()
 

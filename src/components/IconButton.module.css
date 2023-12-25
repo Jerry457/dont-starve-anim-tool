@@ -5,13 +5,9 @@
     --button-hover-color: hsl(204, 85%, 35%);
     --button-active-color: hsl(204, 85%, 30%);
 
-    --button-normal-color-light: hsl(204, 85%, 96%);
-    --button-hover-color-light: hsl(204, 85%, 93%);
-
     display: inline-flex;
 
     border: none;
-    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 
     /* For the icon inside */

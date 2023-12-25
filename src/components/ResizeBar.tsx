@@ -1,10 +1,11 @@
 import { JSX, onMount, onCleanup } from "solid-js"
 
-import classes from "./ResizeBar.module.css"
+import style from "./ResizeBar.module.css"
 
 export default function ResizeBar(
     props: {
         onDrag: (dx: number, dy: number) => void
+        onDblClick?: () => void
         resizeDirection: "vertical" | "horizontal"
     } & JSX.ElementProp
 ) {
@@ -22,13 +23,13 @@ export default function ResizeBar(
     }
 
     onMount(() => {
-        addEventListener("mouseup", onMouseUp)
-        addEventListener("mousemove", onMouseMove)
+        window.addEventListener("mouseup", onMouseUp)
+        window.addEventListener("mousemove", onMouseMove)
     })
 
     onCleanup(() => {
-        removeEventListener("mouseup", onMouseUp)
-        removeEventListener("mousemove", onMouseMove)
+        window.removeEventListener("mouseup", onMouseUp)
+        window.removeEventListener("mousemove", onMouseMove)
     })
 
     return (
@@ -37,10 +38,12 @@ export default function ResizeBar(
                 e.preventDefault()
                 dragging = true
             }}
+            onDblClick={props.onDblClick}
             ref={resizeBar!}
             classList={{
                 ...props.classList,
-                [classes[props.resizeDirection]]: true,
+                [style.resizeBar]: true,
+                [style[props.resizeDirection]]: true,
             }}></div>
     )
 }

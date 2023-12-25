@@ -22,7 +22,7 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 main: resolve(__dirname, "index.html"),
-                ["tex-tool"]: resolve(__dirname, "tex-tool.html"),
+                // texTool: resolve(__dirname, "tex-tool.html"),
             },
         },
     },

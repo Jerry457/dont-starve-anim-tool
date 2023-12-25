@@ -1,3 +1,5 @@
+import stringify from "json-stringify-pretty-compact"
+
 import { strHash } from "./util"
 import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
 import { newCanvas, resize, crop, paste, toBlob } from "../image-canvas"
@@ -15,22 +17,17 @@ export class BuildFrame {
     w: number
     h: number
 
-    vertIdx: number
-    vertNum: number
+    verts: Vert[] = []
 
-    name: string
     canvas?: HTMLCanvasElement
 
-    constructor(frameNum = 0, duration = 0, x = 0, y = 0, w = 1, h = 1, vertIdx = 0, vertNum = 0, name: string = "") {
+    constructor(frameNum = 0, duration = 0, x = 0, y = 0, w = 1, h = 1) {
         this.frameNum = frameNum
         this.duration = duration
         this.x = x
         this.y = y
         this.w = w
         this.h = h
-        this.vertIdx = vertIdx
-        this.vertNum = vertNum
-        this.name = name
     }
 
     getRelativePivot() {
@@ -55,7 +52,7 @@ export class BuildFrame {
         this.y = -Math.floor(this.w / 2) + pivotY * this.h
     }
 
-    getSubRow = undefined
+    getSubRows = undefined
 }
 
 export class BuildSymbol {
@@ -73,23 +70,24 @@ export class BuildSymbol {
         this.frames.sort((a, b) => a.frameNum - b.frameNum)
     }
 
-    getSubRow() {
+    getSubRows() {
         return this.frames
     }
 
-    getFrameByName(name: string) {
-        for (const frame of this.frames) {
-            if (frame.name === name) return frame
+    getFrame(frameNum: number, getDuration: boolean = true): [BuildFrame, number] | undefined {
+        for (const [index, frame] of this.frames.entries()) {
+            const duration = getDuration ? frame.duration - 1 : 0
+            if (frame.frameNum <= frameNum && frameNum <= frame.frameNum + duration) {
+                return [frame, index]
+            }
         }
     }
 
-    getFrame(frameNum: number, getDuration: boolean = true): BuildFrame | undefined {
-        for (const frame of this.frames) {
-            const duration = getDuration ? frame.duration - 1 : 0
-            if (frame.frameNum <= frameNum && frameNum <= frame.frameNum + duration) {
-                return frame
-            }
-        }
+    addNewFrame() {
+        const frameNum = this.frames.length ? this.frames[this.frames.length - 1].frameNum + this.frames[this.frames.length - 1].duration : 0
+        const frame = new BuildFrame(frameNum)
+        this.frames.push(frame)
+        return frame
     }
 }
 
@@ -130,11 +128,63 @@ export class Build {
     symbols: BuildSymbol[]
 
     atlases: Atlas[] = []
-    verts: Vert[] = []
 
     constructor(name: string = "", symbols: BuildSymbol[] = []) {
         this.name = name
         this.symbols = symbols
+    }
+
+    jsonStringify(indent: number = 4) {
+        const buildhead = `"type": "${this.type}", "version": ${this.version}`
+        const buildinfo = `"name": "${this.name}", "sclae": ${this.scale}`
+        const atlasJSON = `"atlases": ${stringify(this.atlases, {
+            replacer: (key, value) => (key === "ktex" ? undefined : value),
+            indent,
+            maxLength: 30,
+        })}`
+
+        const indent1 = `\n${" ".repeat(indent)}`
+        const indent2 = `\n${" ".repeat(indent * 2)}`
+        const indent3 = `\n${" ".repeat(indent * 3)}`
+
+        const verts: Vert[] = []
+        let symbolsJson = this.symbols
+            .map((symbol, symbolIdx) => {
+                const symbolName = `"name": "${symbol.name}"`
+                let framesJson = symbol.frames
+                    .map((frame, idx) => {
+                        verts.push(...frame.verts)
+
+                        const _frame: any = frame
+                        _frame.vertIdx = verts.length
+                        _frame.vertNum = frame.verts.length
+
+                        const frameJson = stringify(_frame, {
+                            replacer: (key, value) => (key === "canvas" || key === "name" || key === "verts" ? undefined : value),
+                            maxLength: Infinity,
+                        })
+
+                        delete _frame.vertIdx
+                        delete _frame.vertNum
+
+                        return `${frameJson}${idx === symbol.frames.length - 1 ? "" : ","}`
+                    })
+                    .join(indent3)
+                framesJson = `"frames": [${indent3}${framesJson}${indent2}]`
+                return `{${indent2}${symbolName},${indent2}${framesJson}${indent1}}${symbolIdx === this.symbols.length - 1 ? "" : ","}`
+            })
+            .join(indent1)
+        symbolsJson = `"symbols": [${indent1}${symbolsJson}\n]`
+
+        let vertsJson = verts
+            .map((vert, idx) => {
+                const vertJson = stringify(vert, { maxLength: Infinity })
+                return `${vertJson}${idx === verts.length - 1 ? "" : ","}`
+            })
+            .join(`${indent1}`)
+        vertsJson = `"verts": [${indent1}${vertsJson}\n]`
+
+        return `{\n${buildhead},\n${buildinfo},\n${atlasJSON},\n${symbolsJson},\n${vertsJson}\n}`
     }
 
     parseJson(source: any) {
@@ -154,13 +204,13 @@ export class Build {
         })
     }
 
-    getSubRow() {
+    getSubRows() {
         return this.symbols
     }
 
-    getSymbol(name: string) {
-        for (const symbol of this.symbols) {
-            if (symbol.name.toLowerCase() === name.toLowerCase()) return symbol
+    getSymbol(name: string): [BuildSymbol, number] | undefined {
+        for (const [index, symbol] of this.symbols.entries()) {
+            if (symbol.name.toLowerCase() === name.toLowerCase()) return [symbol, index]
         }
     }
 
@@ -186,8 +236,7 @@ export class Build {
         }[] = []
         for (const symbol of this.symbols) {
             for (const frame of symbol.frames) {
-                frame.vertIdx = 0
-                frame.vertNum = 0
+                frame.verts = []
                 if (!frame.canvas) continue
 
                 const [opaqueRegions, alphaRegions] = getRegion(frame.canvas)
@@ -216,12 +265,9 @@ export class Build {
         }
         let atlas = pack(blocks)
         const atlasIdx = 0
-        this.verts = []
-        for (const { frame, regions, regionsLeft, regionsTop, insertBBox } of blocks) {
-            console.log(frame.name)
 
-            frame.vertIdx = this.verts.length
-            frame.vertNum = regions.length * 6
+        for (const { frame, regions, regionsLeft, regionsTop, insertBBox } of blocks) {
+            frame.verts = []
 
             const xOffset = frame.x - Math.floor(frame.w / 2)
             const yOffset = frame.y - Math.floor(frame.h / 2)
@@ -246,12 +292,12 @@ export class Build {
                 const vMin = clamp(1 - regionInsertTop / atlas.height, 0, 1)
                 const vMax = clamp(1 - regionInsertBottom / atlas.height, 0, 1)
 
-                this.verts.push(new Vert(regionLeft, regionTop, 0, uMin, vMin, atlasIdx))
-                this.verts.push(new Vert(regionRight, regionTop, 0, uMax, vMin, atlasIdx))
-                this.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
-                this.verts.push(new Vert(regionRight, regionTop, 0, uMax, vMin, atlasIdx))
-                this.verts.push(new Vert(regionRight, regionBottom, 0, uMax, vMax, atlasIdx))
-                this.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
+                frame.verts.push(new Vert(regionLeft, regionTop, 0, uMin, vMin, atlasIdx))
+                frame.verts.push(new Vert(regionRight, regionTop, 0, uMax, vMin, atlasIdx))
+                frame.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
+                frame.verts.push(new Vert(regionRight, regionTop, 0, uMax, vMin, atlasIdx))
+                frame.verts.push(new Vert(regionRight, regionBottom, 0, uMax, vMax, atlasIdx))
+                frame.verts.push(new Vert(regionLeft, regionBottom, 0, uMin, vMax, atlasIdx))
             }
         }
 
@@ -280,13 +326,14 @@ export class Build {
 
         for (const symbol of this.symbols) {
             for (const frame of symbol.frames) {
-                if (frame.vertNum === 0) continue
-                else if (frame.vertNum % 6 !== 0) {
-                    const errorMessage = "vert num error"
-                    alert(errorMessage)
-                    throw Error(errorMessage)
-                }
-                const frameVerts = this.verts.slice(frame.vertIdx, frame.vertIdx + frame.vertNum)
+                // if (!frame.vertNum) continue
+                // else if (frame.vertNum % 6 !== 0) {
+                //     const errorMessage = "vert num error"
+                //     alert(errorMessage)
+                //     throw Error(errorMessage)
+                // }
+                const frameVerts = frame.verts
+                if (!frameVerts) continue
 
                 const xOffset = frame.x - Math.floor(frame.w / 2)
                 const yOffset = frame.y - Math.floor(frame.h / 2)
@@ -341,7 +388,9 @@ export class Build {
                     let _w = regionX + cropped.width
                     let _h = regionY + cropped.height
                     if (_w <= 0 || _w > frame.w || _h <= 0 || _h > frame.h) {
-                        console.log(`Build: ${this.name}, Symbol: ${frame.name} data error, this maybe scml file image width or height error`)
+                        console.log(
+                            `Build: ${this.name}, Symbol: ${symbol.name}-${frame.frameNum} data error, this maybe scml file image width or height error`
+                        )
                         // const [pivotX, pivotY] = frame.getRelativePivot() // get pivot
                         // frame.w = cropped.width
                         // frame.h = cropped.height
@@ -369,7 +418,7 @@ export class Build {
             for (const frame of symbol.frames) {
                 if (!frame.canvas) continue
                 const blob = await toBlob(frame.canvas)
-                if (blob) results.push({ data: blob, name: `${frame.name}.png`, path: symbol.name })
+                if (blob) results.push({ data: blob, name: `${symbol.name}-${frame.frameNum}.png`, path: symbol.name })
             }
         }
         return results
@@ -412,6 +461,7 @@ export async function decompileBuild(data: BinaryDataReader | ArrayBuffer) {
 
     // read vert info
     const vertsNum = reader.readUint32()
+    const verts = []
     for (let vertIdx = 0; vertIdx < vertsNum; vertIdx++) {
         const x = reader.readFloat32()
         const y = reader.readFloat32()
@@ -420,7 +470,7 @@ export async function decompileBuild(data: BinaryDataReader | ArrayBuffer) {
         const v = reader.readFloat32()
         const w = reader.readFloat32()
 
-        build.verts.push(new Vert(x, y, z, u, v, w))
+        verts.push(new Vert(x, y, z, u, v, w))
     }
 
     const hashNum = reader.readUint32()
@@ -449,7 +499,9 @@ export async function decompileBuild(data: BinaryDataReader | ArrayBuffer) {
             const vertIdx = reader.readUint32()
             const vertNum = reader.readUint32()
 
-            symbol.frames.push(new BuildFrame(frameNum, duration, x, y, w, h, vertIdx, vertNum, `${symbolName}-${frameNum}`))
+            const frame = new BuildFrame(frameNum, duration, x, y, w, h)
+            frame.verts = verts.slice(vertIdx, vertIdx + vertNum)
+            symbol.frames.push(frame)
         }
         symbol.sort()
         build.symbols.push(symbol)
@@ -492,6 +544,7 @@ export async function compileBuild(build: Build) {
     }
 
     // write symbol info
+    const verts = []
     hashs.sort((a, b) => a - b)
     for (const hash of hashs) {
         const str = hashMap.get(hash)!
@@ -500,21 +553,27 @@ export async function compileBuild(build: Build) {
         writer.writeUint32(symbol.frames.length)
 
         // write frame info
+        symbol.sort()
         for (const frame of symbol.frames) {
-            writer.writeUint32(frame.frameNum)
-            writer.writeUint32(frame.duration)
+            writer.writeUint32(Math.floor(frame.frameNum))
+            writer.writeUint32(Math.floor(frame.duration))
             writer.writeFloat32(frame.x)
             writer.writeFloat32(frame.y)
             writer.writeFloat32(frame.w)
             writer.writeFloat32(frame.h)
-            writer.writeUint32(frame.vertIdx)
-            writer.writeUint32(frame.vertNum)
+
+            const vertIdx = verts.length
+            const vertNum = frame.verts.length
+            verts.push(...frame.verts)
+
+            writer.writeUint32(Math.floor(vertIdx))
+            writer.writeUint32(Math.floor(vertNum))
         }
     }
 
     // write vert info
-    writer.writeUint32(build.verts.length)
-    for (const vert of build.verts) {
+    writer.writeUint32(verts.length)
+    for (const vert of verts) {
         writer.writeFloat32(vert.x)
         writer.writeFloat32(vert.y)
         writer.writeFloat32(vert.z)

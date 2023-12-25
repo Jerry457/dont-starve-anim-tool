@@ -1,0 +1,8 @@
+.LabelInput {
+    outline: 0;
+    border: solid 1px var(--border-color) !important;
+}
+
+.LabelInput:focus {
+    --border-color: hsl(204, 80%, 55%);
+}

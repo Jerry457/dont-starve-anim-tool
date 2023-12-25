@@ -1,0 +1,20 @@
+.AnimationPlayerBar {
+    display: flex;
+    align-items: center;
+
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(100px);
+}
+
+.animationPlayer {
+    border-left: solid 1px var(--border-color);
+    border-right: solid 1px var(--border-color);
+}
+
+.controlButton {
+    font-size: 1.2rem;
+}
+
+.downloadButton {
+    --button-normal-color: hsl(0, 0%, 0%);
+}

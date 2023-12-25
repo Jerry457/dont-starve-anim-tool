@@ -1,102 +1,12 @@
-.ExportFile {
-    width: 700px;
-
-    margin: 2em 1em 0em 1em;
-}
-
-.unUse > *:not(.useControl) {
-    pointer-events: none;
-    opacity: 0.5;
-}
-
 .fieldset {
     border: solid 1px rgba(0, 0, 0, 0.2);
-    height: 100%;
-    width: 100%;
     overflow: auto;
 }
 
-.fileTypeFieldset {
+.typeFieldset {
     display: flex;
 }
 
-.fileTypeFieldset > div {
+.typeFieldset > div {
     margin: 10px;
-}
-
-.main {
-    height: 500px;
-    display: grid;
-    grid-template-columns: 1fr 10px 1fr;
-}
-
-.anim {
-    display: grid;
-    grid-template-rows: 1fr 1fr;
-}
-
-.buttonLegend {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.build {
-    display: grid;
-    grid-template-rows: max-content 1fr 1fr;
-}
-
-.buildSelect {
-    border: solid 1px var(--border-color);
-}
-
-.main fieldset {
-    padding: 10px;
-}
-
-.download {
-    margin: 10px;
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-}
-
-.normalButton {
-    --button-normal-color: hsl(0, 0%, 0%);
-    cursor: default;
-}
-
-.chosenButton {
-    justify-content: left;
-}
-
-.zipFileName > input {
-    outline: 0;
-    border: 1px solid var(--border-color);
-    padding: 0.4rem;
-    width: 10rem;
-}
-
-.zipFileName > input:placeholder-shown {
-    font-size: 13px;
-}
-
-.zipFileName > input:focus {
-    border: 1px solid hsl(204, 80%, 55%);
-}
-
-.downloadButton {
-    width: 100px;
-
-    background-color: rgba(0, 0, 0, 0.1);
-    --button-normal-color: black;
-    --button-hover-color: rgba(0, 0, 0, 0.2);
-
-    --button-active-color: hsl(204, 85%, 30%);
-
-    border: solid 1px var(--border-color);
-
-    margin-left: 10px;
-
-    --button-font-size: 0.8rem;
 }

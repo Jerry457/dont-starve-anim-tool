@@ -1,5 +1,5 @@
 import ReSzie from "~icons/mdi/restore"
-import { onMount, onCleanup, JSX, Show } from "solid-js"
+import { onMount, onCleanup, JSX, Show, createSignal, createEffect } from "solid-js"
 
 import IconButton from "./IconButton"
 
@@ -8,51 +8,56 @@ import style from "./ZoomDragDiv.module.css"
 const SCALE_FACTOR = 1.2
 
 export default function ZoomDragDiv(
-    prop: JSX.ElementProp & {
+    props: JSX.ElementProp & {
         zoomable?: boolean
         dragable?: boolean
-        containerclassList?: {
-            [k: string]: boolean | undefined
-        }
+        customResize?: (zoomDragDiv: HTMLDivElement) => void
+        customDrag?: (deltaX: number, deltaY: number, zoomDragDiv: HTMLDivElement) => void
+        customZoom?: (scale: number, zoomDragDiv: HTMLDivElement) => void
+        containerStyle?: JSX.ElementProp["style"]
+        containerclassList?: JSX.ElementProp["classList"]
     }
 ) {
     let container: HTMLDivElement
     let zoomDragDiv: HTMLDivElement
 
-    let dragging = false
+    const [dragging, setDragging] = createSignal(false)
     let scale = 1
     let deltaX = 0
     let deltaY = 0
 
     let _alert = window.alert
     window.alert = function (...args) {
-        dragging = false
+        setDragging(false)
         _alert(...args)
     }
 
+    createEffect(() => {
+        dragging() ? document.documentElement.classList.add(style.dragging) : document.documentElement.classList.remove(style.dragging)
+    })
+
     onMount(() => {
-        if (prop.zoomable) {
+        if (props.zoomable) {
             container.addEventListener("mousewheel", onWheel as EventListener, { passive: false })
         }
 
-        if (prop.dragable) {
-            container.addEventListener("mousedown", onMouseDown, { passive: false })
-            removeEventListener("alert", onMouseUp)
-            addEventListener("mouseup", onMouseUp)
-            addEventListener("mousemove", onMouseMove)
+        if (props.dragable) {
+            window.removeEventListener("alert", onMouseUp)
+            window.addEventListener("mouseup", onMouseUp)
+            window.addEventListener("mousemove", onMouseMove)
         }
     })
 
     onCleanup(() => {
-        if (prop.zoomable) {
+        if (props.zoomable) {
             container.removeEventListener("mousewheel", onWheel as EventListener)
         }
 
-        if (prop.dragable) {
-            container.removeEventListener("mousedown", onMouseDown)
-            removeEventListener("alert", onMouseUp)
-            removeEventListener("mouseup", onMouseUp)
-            removeEventListener("mousemove", onMouseMove)
+        if (props.dragable) {
+            window.removeEventListener("alert", onMouseUp)
+            window.removeEventListener("mouseup", onMouseUp)
+            window.removeEventListener("mousemove", onMouseMove)
+            setDragging(false)
         }
     })
 
@@ -62,23 +67,26 @@ export default function ZoomDragDiv(
     }
 
     function onMouseDown(ev: MouseEvent) {
-        if (!(ev.target as HTMLElement).dataset.cantdrag) {
-            dragging = true
+        if (!props.dragable) {
+            return
         }
-
-        // ev.preventDefault()
+        if (!(ev.target as HTMLElement).dataset.cantdrag) {
+            setDragging(true)
+        }
     }
 
     function onMouseUp() {
-        dragging = false
+        setDragging(false)
     }
 
     function onMouseMove(ev: MouseEvent) {
-        if (dragging) {
+        if (dragging()) {
             deltaX += ev.movementX
             deltaY += ev.movementY
 
-            updateStyle()
+            if (props.customDrag) props.customDrag(deltaX, deltaY, zoomDragDiv)
+            else updateStyle()
+
             ev.preventDefault()
         }
     }
@@ -87,33 +95,38 @@ export default function ZoomDragDiv(
         scale = 1
         deltaX = 0
         deltaY = 0
-        updateStyle()
+
+        if (props.customResize) {
+            props.customResize(zoomDragDiv)
+        } else {
+            updateStyle()
+        }
     }
 
     function onWheel(ev: WheelEvent) {
         const delta = ev.deltaX || ev.deltaY || ev.deltaZ
-        if (delta === 0) {
-            return
-        }
+        if (delta === 0) return
 
-        if (delta < 0) {
-            scale *= SCALE_FACTOR
-        } else {
-            // isZoomIn
-            scale /= SCALE_FACTOR
-        }
+        if (delta < 0) scale *= SCALE_FACTOR // isZoomIn
+        else scale /= SCALE_FACTOR
 
-        updateStyle()
+        if (props.customZoom) props.customZoom(scale, zoomDragDiv)
+        else updateStyle()
+
         ev.preventDefault()
     }
 
     return (
-        <div classList={{ [style.container]: true, ...prop.containerclassList }} ref={container!}>
-            <Show when={prop.zoomable}>
+        <div
+            style={props.containerStyle}
+            classList={{ [style.container]: true, ...props.containerclassList }}
+            ref={container!}
+            onMouseDown={onMouseDown}>
+            <Show when={props.zoomable}>
                 <IconButton icon={ReSzie} onClick={onReszie} classList={{ [style.reSstIcon]: true }} />
             </Show>
-            <div class={style.ZoomDragDiv} ref={zoomDragDiv!} classList={{ ...prop.classList }}>
-                {prop.children}
+            <div style={props.style} class={style.ZoomDragDiv} ref={zoomDragDiv!} classList={{ ...props.classList }}>
+                {props.children}
             </div>
         </div>
     )
