@@ -5,14 +5,13 @@ import Input from "../components/Input"
 import TableList from "../components/TableList"
 import { AddButton, DeleteButton } from "./titleButtons"
 
-import { refreshAnimation, refreshBox } from "./AnimationViewer"
+import { refreshAnimation, refreshBox, setPlayIndex } from "./AnimationViewer"
 import { UiData, banks, setBanks, toUiData } from "./data"
 import { AnimElement, AnimFrame, Animation, Bank } from "../lib/kfiles"
 
 import style from "./titleButtons.module.css"
 
 export const [playAnimation, setPlayAnimation] = createSignal<UiData<Animation, AnimFrame, Bank>>()
-
 const [animations, setAnimations] = createStore<UiData<Animation, AnimFrame, Bank>[]>([])
 const [animFrmaes, setAnimFrames] = createStore<UiData<AnimFrame, AnimElement, Animation>[]>([])
 const [animElements, setAnimElements] = createStore<UiData<AnimElement, undefined, AnimFrame>[]>([])
@@ -74,7 +73,6 @@ function BanksList() {
                 </div>
             }
             list={banks}
-            initChonsen={banks.length - 1}
             toRowCells={bankToRowCells}
             onChosen={onChosenBank}></TableList>
     )
@@ -215,6 +213,7 @@ function AnimFramesList() {
 
     function onChosen(data: UiData<AnimFrame, AnimElement, Animation>, index: number) {
         chosenAnimFrame = index
+        setPlayIndex(index)
         setAnimElements(data.sub)
     }
 

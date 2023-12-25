@@ -1,13 +1,14 @@
-import { JSX, Index, createSignal, JSXElement, createEffect } from "solid-js"
+import { JSX, Index, createSignal, JSXElement, createEffect, Show } from "solid-js"
 
 import style from "./TableList.module.css"
 
 export default function TableList<T>(props: {
-    titles: JSX.Element
     list: T[]
-    ref?: HTMLTableSectionElement
     toRowCells: (data: T, index: number) => JSXElement
+
     initChonsen?: number
+    titles?: JSX.Element
+    ref?: HTMLTableSectionElement
     onSort?: (list: T[]) => void
     onChosen?: (data: T, index: number) => void
 }) {
@@ -31,7 +32,10 @@ export default function TableList<T>(props: {
 
     return (
         <div class={style.TableList} style={{ display: "grid", "grid-template-rows": "min-content auto" }}>
-            <div class={style.head}> {props.titles}</div>
+            <Show when={props.titles}>
+                <div class={style.head}> {props.titles}</div>
+            </Show>
+
             <div class={style.body} ref={props.ref}>
                 <Index each={props.list}>
                     {(data, index) => {

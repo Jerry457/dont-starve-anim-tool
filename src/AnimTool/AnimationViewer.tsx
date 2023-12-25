@@ -31,6 +31,13 @@ import { colorCubeNames, colorCubes } from "./data/colorCubes"
 
 import style from "./AnimationViewer.module.css"
 
+const [shownCollisionBox, SetShownCollisionBox] = createSignal<boolean>(false)
+
+export const [colorCube, setColorCube] = createSignal<string>("")
+export const [playIndex, setPlayIndex] = createSignal(0)
+export const [frameNum, setFrameNum] = createSignal(1)
+export const [pause, setPause] = createSignal(true)
+
 export function refreshAnimation() {
     window.dispatchEvent(new CustomEvent("refreshAnimation"))
 }
@@ -38,9 +45,6 @@ export function refreshAnimation() {
 export function refreshBox() {
     window.dispatchEvent(new CustomEvent("refreshBox"))
 }
-
-export const [colorCube, setColorCube] = createSignal<string>("")
-const [shownCollisionBox, SetShownCollisionBox] = createSignal<boolean>(false)
 
 const appliedColorCubeMap: { [name: string]: Map<HTMLCanvasElement, HTMLCanvasElement> } = {}
 for (const name in colorCubes) {
@@ -138,10 +142,6 @@ function AnimationPlayer() {
     const [deltaY, setDeltaY] = createSignal(0)
     const [deltaX, setDeltaX] = createSignal(0)
     const [layers, setLayers] = createStore<HTMLCanvasElement[]>([])
-
-    const [playIndex, setPlayIndex] = createSignal(0)
-    const [frameNum, setFrameNum] = createSignal(1)
-    const [pause, setPause] = createSignal(true)
 
     function getNextIndex(index: number) {
         return (index + 1) % frameNum()

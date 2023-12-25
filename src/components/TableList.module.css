@@ -1,6 +1,7 @@
 .TableList {
     overflow: auto;
     content-visibility: auto;
+    height: 100%;
 
     --table-border-color: hsl(0, 0%, 85%);
 }
