@@ -21,3 +21,15 @@
     align-items: center;
     justify-content: center;
 }
+
+.Input {
+    padding: 0.3rem !important;
+    --border-color: rgba(0, 0, 0, 0.2);
+}
+
+.download {
+    margin: 10px;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+}

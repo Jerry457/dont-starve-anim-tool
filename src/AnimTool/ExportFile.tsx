@@ -18,17 +18,18 @@ const outputTypes = ["bin", "json", "spine"]
 const grid = { display: "grid", "grid-template-columns": "2rem auto" }
 
 const [outputType, setOutputType] = createSignal<string>("bin")
+const [buildName, setBuildName] = createSignal("")
+const [zipFileName, setZipFileName] = createSignal("")
 const [recalculate, setRecalculate] = createSignal(false)
 const [hasAnim, setHasAnim] = createSignal(true)
 const [hasBuild, setHasBuild] = createSignal(true)
 const [hasAtlas, setHasAtlas] = createSignal(true)
-const [splitAtlas, setSplitAtlas] = createSignal(true)
-const [repackAtlas, setRepackAtlas] = createSignal(true)
-const [dynFormat, setDynFormat] = createSignal(true)
+const [splitAtlas, setSplitAtlas] = createSignal(false)
+const [repackAtlas, setRepackAtlas] = createSignal(false)
+const [dynFormat, setDynFormat] = createSignal(false)
 
 const [animations, setAnimations] = createStore<UiData<Animation, AnimFrame, Bank>[]>([])
 const [buildSymbols, setBuildSymbols] = createStore<UiData<BuildSymbol, BuildFrame, Build>[]>([])
-const [atlas, setAtlas] = createStore<Atlas[]>([])
 
 let chosenBank = -1
 
@@ -39,7 +40,15 @@ function TypeSelect() {
             <For each={outputTypes}>
                 {type => (
                     <div>
-                        <TextButton text={type} checkbox={true} check={type === outputType()} onClick={() => setOutputType(type)} />
+                        <TextButton
+                            text={type}
+                            checkbox={true}
+                            check={type === outputType()}
+                            onClick={checkBox => {
+                                if (type === outputType() && checkBox) checkBox.checked = true
+                                setOutputType(type)
+                            }}
+                        />
                     </div>
                 )}
             </For>
@@ -111,21 +120,15 @@ function BuildList() {
         setBuildSymbols(uiData.sub)
     }
 
-    return <TableList<UiData<Build, BuildSymbol, undefined>>
-        list={builds}
-        toRowCells={buildToRowCells}
-        onChosen={onChosenBuild}></TableList>
+    return <TableList<UiData<Build, BuildSymbol, undefined>> list={builds} toRowCells={buildToRowCells} onChosen={onChosenBuild}></TableList>
 }
 
 function BuildSymbolsList() {
     function buildSymbolToRows(uiData: UiData<BuildSymbol, BuildFrame, Build>, index: number) {
-        const { data: symbol, use } = uiData
+        const { data: symbol } = uiData
 
         return (
-            <div style={grid}>
-                <div class="center">
-                    <Input type="checkbox" checked={use} onChange={value => setBuildSymbols(produce(pre => (pre[index].use = value as boolean)))} />
-                </div>
+            <div>
                 <div>
                     <Input value={symbol.name} readOnly={true} />
                 </div>
@@ -133,12 +136,7 @@ function BuildSymbolsList() {
         )
     }
 
-    return (
-        <TableList<UiData<BuildSymbol, BuildFrame, Build>>
-            list={buildSymbols}
-            toRowCells={buildSymbolToRows}
-        ></TableList>
-    )
+    return <TableList<UiData<BuildSymbol, BuildFrame, Build>> list={buildSymbols} toRowCells={buildSymbolToRows}></TableList>
 }
 
 function AnimViewer() {
@@ -155,7 +153,7 @@ function AnimViewer() {
                             text="recalculate collision"
                             checkbox={true}
                             check={recalculate()}
-                            classList={{ [style.unSelect]: !hasBuild() }}
+                            classList={{ [style.unSelect]: !hasBuild() || outputType() === "spine" }}
                             onClick={() => setRecalculate(pre => !pre)}
                         />
                     </legend>
@@ -176,37 +174,20 @@ function BuildViewer() {
             <legend>
                 <TextButton text="Build" checkbox={true} check={hasBuild()} onClick={() => setHasBuild(pre => !pre)} />
             </legend>
-            <div style={{ display: "grid", "grid-template-rows": " min-content 4fr 3fr", overflow: "hidden" }} classList={{ [style.unSelect]: !hasBuild() }}>
+            <div
+                style={{ display: "grid", "grid-template-rows": "min-content min-content 4fr 3fr", overflow: "hidden" }}
+                classList={{ [style.unSelect]: !hasBuild() }}>
                 <div class="center" classList={{ [style.unSelect]: outputType() === "spine", center: true }}>
-                    <TextButton
-                        text="Atlas"
-                        checkbox={true}
-                        check={hasAtlas()}
-                        onClick={() => setHasAtlas(pre => !pre)}
-                    />
+                    <TextButton text="Atlas" checkbox={true} check={hasAtlas()} onClick={() => setHasAtlas(pre => !pre)} />
                     <div classList={{ [style.unSelect]: !hasAtlas(), center: true }}>
-                        <TextButton
-                            text="split"
-                            checkbox={true}
-                            check={splitAtlas()}
-                            onClick={() => setSplitAtlas(pre => !pre)}
-                        />
-                        <div classList={{ [style.unSelect]: !splitAtlas(), center: true }}>
-                            <TextButton
-                                text="repack"
-                                checkbox={true}
-                                check={repackAtlas()}
-                                onClick={() => setRepackAtlas(pre => !pre)}
-                            />
-                            <TextButton
-                                text="dyn"
-                                checkbox={true}
-                                check={dynFormat()}
-                                onClick={() => setDynFormat(pre => !pre)}
-                            />
+                        <TextButton text="split" checkbox={true} check={splitAtlas()} onClick={() => setSplitAtlas(pre => !pre)} />
+                        <div classList={{ [style.unSelect]: splitAtlas(), center: true }}>
+                            <TextButton text="repack" checkbox={true} check={repackAtlas()} onClick={() => setRepackAtlas(pre => !pre)} />
+                            <TextButton text="dyn" checkbox={true} check={dynFormat()} onClick={() => setDynFormat(pre => !pre)} />
                         </div>
                     </div>
                 </div>
+                <Input value={buildName()} placeholder="Merge Build Name" classList={{ [style.Input]: true }} />
                 <fieldset class={style.fieldset}>
                     <legend>Builds</legend>
                     <BuildList />
@@ -216,12 +197,13 @@ function BuildViewer() {
                     <BuildSymbolsList />
                 </fieldset>
             </div>
-
         </fieldset>
     )
 }
 
 export function ExportFile() {
+    function onDownLoad() {}
+
     return (
         <Popup shown={shown} setShown={setShown} style={{ position: "absolute", top: "5rem", left: "30rem" }}>
             <div
@@ -233,14 +215,18 @@ export function ExportFile() {
                     "grid-template-rows": "min-content auto min-content",
                 }}>
                 <TypeSelect />
-                <div
-                    style={{
-                        display: "grid",
-                        "grid-template-columns": "1fr 1fr",
-                        overflow: "hidden",
-                    }}>
+                <div style={{ display: "grid", "grid-template-columns": "1fr 1fr", overflow: "hidden" }}>
                     <AnimViewer />
                     <BuildViewer />
+                </div>
+                <div class={style.download} data-cantdrag={true}>
+                    <TextButton text="DownLoad" classList={{ normalTextButton: true }} onClick={onDownLoad} />
+                    <div>
+                        <Input type="text" placeholder="File Name" value={zipFileName()} classList={{ [style.Input]: true }} />
+                    </div>
+                    <div data-cantdrag={true}>
+                        <TextButton text="zip" checkbox={true} check={true} />
+                    </div>
                 </div>
             </div>
         </Popup>

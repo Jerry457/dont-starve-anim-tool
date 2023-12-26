@@ -1,3 +1,5 @@
+import stringify from "json-stringify-pretty-compact"
+
 import { BinaryDataReader, BinaryDataWriter } from "../binary-data"
 import { Build } from "./build"
 import { strHash } from "./util"

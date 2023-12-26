@@ -21,11 +21,13 @@ export default function TextButton(props: {
     }
 
     return (
-        <div class={style.TextButton} classList={props.classList} onClick={onClick} style={props.style}>
+        <div class={style.TextButton} classList={props.classList} onClick={onClick} style={props.style} data-cantdrag={true}>
             <Show when={props.checkbox}>
-                <input type="checkbox" ref={checkBox} class={style.checkBox} checked={props.check} />
+                <input type="checkbox" ref={checkBox} class={style.checkBox} checked={props.check} data-cantdrag={true} />
             </Show>
-            <div class={style.text}>{props.text}</div>
+            <div class={style.text} data-cantdrag={true}>
+                {props.text}
+            </div>
         </div>
     )
 }
