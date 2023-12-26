@@ -6,9 +6,9 @@ import Popup from "../components/Popup"
 import TableList from "../components/TableList"
 import TextButton from "../components/TextButton"
 
-import { AnimFrame, Animation, Bank } from "../lib/kfiles"
+import { AnimFrame, Animation, Atlas, Bank, Build, BuildFrame, BuildSymbol } from "../lib/kfiles"
 
-import { UiData, banks, setBanks } from "./data"
+import { UiData, banks, builds, setBanks, setBuilds } from "./data"
 
 import style from "./ExportFile.module.css"
 
@@ -18,11 +18,17 @@ const outputTypes = ["bin", "json", "spine"]
 const grid = { display: "grid", "grid-template-columns": "2rem auto" }
 
 const [outputType, setOutputType] = createSignal<string>("bin")
+const [recalculate, setRecalculate] = createSignal(false)
 const [hasAnim, setHasAnim] = createSignal(true)
 const [hasBuild, setHasBuild] = createSignal(true)
-const [recalculate, setRecalculate] = createSignal(false)
+const [hasAtlas, setHasAtlas] = createSignal(true)
+const [splitAtlas, setSplitAtlas] = createSignal(true)
+const [repackAtlas, setRepackAtlas] = createSignal(true)
+const [dynFormat, setDynFormat] = createSignal(true)
 
 const [animations, setAnimations] = createStore<UiData<Animation, AnimFrame, Bank>[]>([])
+const [buildSymbols, setBuildSymbols] = createStore<UiData<BuildSymbol, BuildFrame, Build>[]>([])
+const [atlas, setAtlas] = createStore<Atlas[]>([])
 
 let chosenBank = -1
 
@@ -86,6 +92,55 @@ function AnimationsList() {
     return <TableList<UiData<Animation, AnimFrame, undefined>> list={animations} toRowCells={animationToRowCells}></TableList>
 }
 
+function BuildList() {
+    function buildToRowCells(uiData: UiData<Build, BuildSymbol, undefined>, index: number) {
+        const { data: build, use } = uiData
+        return (
+            <div style={grid}>
+                <div class="center">
+                    <Input type="checkbox" checked={use} onChange={value => setBuilds(produce(pre => (pre[index].use = value as boolean)))} />
+                </div>
+                <div>
+                    <Input value={build.name} readOnly={true} />
+                </div>
+            </div>
+        )
+    }
+
+    function onChosenBuild(uiData: UiData<Build, BuildSymbol, undefined>, index: number) {
+        setBuildSymbols(uiData.sub)
+    }
+
+    return <TableList<UiData<Build, BuildSymbol, undefined>>
+        list={builds}
+        toRowCells={buildToRowCells}
+        onChosen={onChosenBuild}></TableList>
+}
+
+function BuildSymbolsList() {
+    function buildSymbolToRows(uiData: UiData<BuildSymbol, BuildFrame, Build>, index: number) {
+        const { data: symbol, use } = uiData
+
+        return (
+            <div style={grid}>
+                <div class="center">
+                    <Input type="checkbox" checked={use} onChange={value => setBuildSymbols(produce(pre => (pre[index].use = value as boolean)))} />
+                </div>
+                <div>
+                    <Input value={symbol.name} readOnly={true} />
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <TableList<UiData<BuildSymbol, BuildFrame, Build>>
+            list={buildSymbols}
+            toRowCells={buildSymbolToRows}
+        ></TableList>
+    )
+}
+
 function AnimViewer() {
     return (
         <fieldset classList={{ [style.fieldset]: true }} style={{ display: "grid" }}>
@@ -121,7 +176,47 @@ function BuildViewer() {
             <legend>
                 <TextButton text="Build" checkbox={true} check={hasBuild()} onClick={() => setHasBuild(pre => !pre)} />
             </legend>
-            <div style={{ display: "grid", "grid-template-rows": "1fr 1fr", overflow: "hidden" }} classList={{ [style.unSelect]: !hasBuild() }}></div>
+            <div style={{ display: "grid", "grid-template-rows": " min-content 4fr 3fr", overflow: "hidden" }} classList={{ [style.unSelect]: !hasBuild() }}>
+                <div class="center" classList={{ [style.unSelect]: outputType() === "spine", center: true }}>
+                    <TextButton
+                        text="Atlas"
+                        checkbox={true}
+                        check={hasAtlas()}
+                        onClick={() => setHasAtlas(pre => !pre)}
+                    />
+                    <div classList={{ [style.unSelect]: !hasAtlas(), center: true }}>
+                        <TextButton
+                            text="split"
+                            checkbox={true}
+                            check={splitAtlas()}
+                            onClick={() => setSplitAtlas(pre => !pre)}
+                        />
+                        <div classList={{ [style.unSelect]: !splitAtlas(), center: true }}>
+                            <TextButton
+                                text="repack"
+                                checkbox={true}
+                                check={repackAtlas()}
+                                onClick={() => setRepackAtlas(pre => !pre)}
+                            />
+                            <TextButton
+                                text="dyn"
+                                checkbox={true}
+                                check={dynFormat()}
+                                onClick={() => setDynFormat(pre => !pre)}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <fieldset class={style.fieldset}>
+                    <legend>Builds</legend>
+                    <BuildList />
+                </fieldset>
+                <fieldset class={style.fieldset}>
+                    <legend>Symbols</legend>
+                    <BuildSymbolsList />
+                </fieldset>
+            </div>
+
         </fieldset>
     )
 }
