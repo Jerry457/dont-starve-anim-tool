@@ -135,17 +135,17 @@ export class Build {
     }
 
     jsonStringify(indent: number = 4) {
-        const buildhead = `"type": "${this.type}", "version": ${this.version}`
-        const buildinfo = `"name": "${this.name}", "sclae": ${this.scale}`
+        const indent1 = `\n${" ".repeat(indent)}`
+        const indent2 = `\n${" ".repeat(indent * 2)}`
+        const indent3 = `\n${" ".repeat(indent * 3)}`
+
+        const buildHead = `"type": "${this.type}", "version": ${this.version}`
+        const buildInfo = `"name": "${this.name}", "sclae": ${this.scale}`
         const atlasJSON = `"atlases": ${stringify(this.atlases, {
             replacer: (key, value) => (key === "ktex" ? undefined : value),
             indent,
             maxLength: 30,
         })}`
-
-        const indent1 = `\n${" ".repeat(indent)}`
-        const indent2 = `\n${" ".repeat(indent * 2)}`
-        const indent3 = `\n${" ".repeat(indent * 3)}`
 
         const verts: Vert[] = []
         let symbolsJson = this.symbols
@@ -184,7 +184,7 @@ export class Build {
             .join(`${indent1}`)
         vertsJson = `"verts": [${indent1}${vertsJson}\n]`
 
-        return `{\n${buildhead},\n${buildinfo},\n${atlasJSON},\n${symbolsJson},\n${vertsJson}\n}`
+        return `{\n${buildHead},\n${buildInfo},\n${atlasJSON},\n${symbolsJson},\n${vertsJson}\n}`
     }
 
     parseJson(source: any) {
@@ -423,6 +423,17 @@ export class Build {
         }
         return results
     }
+}
+
+export function MergeBiuld(builds: Build[], mergeBiuldName: string = "") {
+    mergeBiuldName = mergeBiuldName === "" ? builds[0].name : mergeBiuldName
+
+    const mergedBiuld = new Build(mergeBiuldName, [])
+    for (const build of builds) {
+        mergedBiuld.symbols.push(...build.symbols)
+    }
+
+    return mergedBiuld
 }
 
 export async function decompileBuild(data: BinaryDataReader | ArrayBuffer) {

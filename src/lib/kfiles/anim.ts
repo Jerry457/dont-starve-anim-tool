@@ -205,6 +205,59 @@ export class Anim {
         }
     }
 
+    jsonStringify(indent: number = 4) {
+        const indent1 = `\n${" ".repeat(indent)}`
+        const indent2 = `\n${" ".repeat(indent * 2)}`
+        const indent3 = `\n${" ".repeat(indent * 3)}`
+        const indent4 = `\n${" ".repeat(indent * 4)}`
+        const indent5 = `\n${" ".repeat(indent * 5)}`
+        const indent6 = `\n${" ".repeat(indent * 6)}`
+        const indent7 = `\n${" ".repeat(indent * 7)}`
+
+        const animHead = `"type": "${this.type}", "version": ${this.version}`
+
+        let bankJson = this.banks
+            .map((bank, bankIdx) => {
+                const bankName = `"name": "${bank.name}"`
+
+                let animationsJson = bank.animations
+                    .map((animation, animationIdx) => {
+                        const animationInfo = `"name": "${animation.name}", "frameRate": ${animation.frameRate}`
+
+                        let framesJson = animation.frames
+                            .map((frame, frameIdx) => {
+                                const frameInfo = `"x": ${frame.x}, "y": ${frame.y}, "w": ${frame.w}, "h": ${frame.h}`
+
+                                let elementJson = frame.elements
+                                    .map((element, elementIdx) => {
+                                        const elementInfo = stringify(element, { maxLength: Infinity })
+                                        return `${elementInfo}${elementIdx === frame.elements.length - 1 ? "" : ","}`
+                                    })
+                                    .join(indent7)
+                                elementJson = `"elemenets": [${indent7}${elementJson}${indent6}]`
+
+                                return `{${indent6}${frameInfo},${indent6}${elementJson}${indent5}}${
+                                    frameIdx === animation.frames.length - 1 ? "" : ","
+                                }`
+                            })
+                            .join(indent5)
+                        framesJson = `"frames": [${indent5}${framesJson}${indent4}]`
+
+                        return `{${indent4}${animationInfo},${indent4}${framesJson}${indent3}}${
+                            animationIdx === bank.animations.length - 1 ? "" : ","
+                        }`
+                    })
+                    .join(indent3)
+                animationsJson = `"animations": [${indent3}${animationsJson}${indent2}]`
+
+                return `{${indent2}${bankName},${indent2}${animationsJson}${indent1}}${bankIdx === this.banks.length - 1 ? "" : ","}`
+            })
+            .join(indent1)
+        bankJson = `"banks": [${indent1}${bankJson}\n]`
+
+        return `{\n${animHead}, \n${bankJson} \n}`
+    }
+
     parseJson(source: any) {
         Object.assign(this, source)
         this.banks = this.banks.map(bankJson => {
