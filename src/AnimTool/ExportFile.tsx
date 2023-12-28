@@ -1,5 +1,6 @@
-import { For, createSignal } from "solid-js"
+import { For, createSignal, createEffect } from "solid-js"
 import { createStore, produce } from "solid-js/store"
+import JSZip from "jszip"
 
 import Input from "../components/Input"
 import Popup from "../components/Popup"
@@ -8,12 +9,25 @@ import TableList from "../components/TableList"
 import TextButton from "../components/TextButton"
 
 import { downloadFile } from "../lib/util"
-import { Anim, AnimFrame, Animation, Bank, Build, BuildFrame, BuildSymbol, MergeBiuld, compileAnim, compileBuild, convertDyn } from "../lib/kfiles"
+import { ConvertToSpine } from "../lib/kfiles/spine"
+import {
+    Anim,
+    AnimElement,
+    AnimFrame,
+    Animation,
+    Bank,
+    Build,
+    BuildFrame,
+    BuildSymbol,
+    MergeBuild,
+    compileAnim,
+    compileBuild,
+    convertDyn,
+} from "../lib/kfiles"
 
 import { UiData, banks, builds, setBanks, setBuilds } from "./data"
 
 import style from "./ExportFile.module.css"
-import JSZip from "jszip"
 
 const textEncoder = new TextEncoder()
 
@@ -36,8 +50,11 @@ const [dynFormat, setDynFormat] = createSignal(false)
 
 const [animations, setAnimations] = createStore<UiData<Animation, AnimFrame, Bank>[]>([])
 const [buildSymbols, setBuildSymbols] = createStore<UiData<BuildSymbol, BuildFrame, Build>[]>([])
+const [animFrmaes, setAnimFrames] = createStore<UiData<AnimFrame, AnimElement, Animation>[]>([])
 
-let chosenBank = -1
+let chosenBank = 0
+let chosenAnimation = 0
+let chosenAnimFrame = 0
 
 function TypeSelect() {
     return (
@@ -86,6 +103,11 @@ function BanksList() {
 }
 
 function AnimationsList() {
+    function onChosen(uiData: UiData<Animation, AnimFrame, Bank>, index: number) {
+        setAnimFrames(uiData.sub)
+        chosenAnimation = index
+    }
+
     function animationToRowCells(uiData: UiData<Animation, AnimFrame, undefined>, index: number) {
         const { data: animation, use } = uiData
         return (
@@ -104,7 +126,7 @@ function AnimationsList() {
         )
     }
 
-    return <TableList<UiData<Animation, AnimFrame, undefined>> list={animations} toRowCells={animationToRowCells}></TableList>
+    return <TableList<UiData<Animation, AnimFrame, undefined>> list={animations} toRowCells={animationToRowCells} onChosen={onChosen}></TableList>
 }
 
 function BuildList() {
@@ -145,13 +167,25 @@ function BuildSymbolsList() {
     return <TableList<UiData<BuildSymbol, BuildFrame, Build>> list={buildSymbols} toRowCells={buildSymbolToRows}></TableList>
 }
 
+function FrameSelect() {
+    return (
+        <Select
+            options={animFrmaes.map((rowData, index) => ({ name: String(index), value: index }))}
+            onChange={e => (chosenAnimFrame = Number(e.target.value))}></Select>
+    )
+}
+
 function AnimViewer() {
+    function onDownLoadSpineSetupPose() {}
+
     return (
         <fieldset classList={{ [style.fieldset]: true }} style={{ display: "grid" }}>
             <legend>
                 <TextButton text="Anim" checkbox={true} check={hasAnim()} onClick={() => setHasAnim(pre => !pre)} />
             </legend>
-            <div style={{ display: "grid", "grid-template-rows": "1fr 1fr", overflow: "hidden" }} classList={{ [style.unSelect]: !hasAnim() }}>
+            <div
+                style={{ display: "grid", "grid-template-rows": "1fr 1fr min-content", overflow: "hidden" }}
+                classList={{ [style.unSelect]: !hasAnim() }}>
                 <fieldset class={style.fieldset}>
                     <legend class={style.withButtonLegend}>
                         <div>Banks</div>
@@ -168,6 +202,15 @@ function AnimViewer() {
                 <fieldset class={style.fieldset}>
                     <legend>Animation</legend>
                     <AnimationsList />
+                </fieldset>
+                <fieldset class={style.fieldset}>
+                    <legend>Spine Setup Pose</legend>
+                    <div style={{ display: "grid", "grid-template-columns": "2fr 1fr" }}>
+                        <FrameSelect />
+                        <div class="center">
+                            <TextButton text="DownLoad" classList={{ normalTextButton: true }} onClick={onDownLoadSpineSetupPose} />
+                        </div>
+                    </div>
                 </fieldset>
             </div>
         </fieldset>
@@ -240,13 +283,13 @@ export function ExportFile() {
             if (use) useBuilds.push(data)
         }
 
-        const build = useBuilds.length === 1 ? useBuilds[0] : MergeBiuld(useBuilds, buildName())
+        const build = useBuilds.length === 1 ? useBuilds[0] : MergeBuild(useBuilds, buildName())
         if (repackAtlas() || !build.hasAtlas()) build.packAtlas()
 
         return build
     }
 
-    async function downDyn(build: Build) {
+    async function downLoadDyn(build: Build) {
         const zipFile = new JSZip()
         for (const atlas of build.atlases) {
             if (atlas.ktex) zipFile.file(atlas.name, atlas.ktex.compile(), { binary: true })
@@ -256,18 +299,30 @@ export function ExportFile() {
         downloadFile(new Blob([uint8Array]), `${build!.name}.dyn`)
     }
 
+    async function downLoadSpine(anim: Anim, build: Build) {
+        const buildPack = { [build.name]: [build] }
+
+        const spineJson = ConvertToSpine(anim, buildPack)
+
+        const zipFile = new JSZip()
+        zipFile.file(`${build.name}.json`, textEncoder.encode(spineJson), { binary: true })
+
+        const splitedAtlas = await build.getSplitAtlas()
+        for (const { name, data, path } of splitedAtlas) {
+            const targetFolder = zipFile.folder(`/images/${build.name}/${path}`)!
+            targetFolder.file(name, data, { binary: true })
+        }
+        zipFile.generateAsync({ type: "blob", compression: "DEFLATE" }).then(blob => downloadFile(blob, `${build.name}.zip`))
+    }
+
     async function onDownLoad() {
         const files: { data: Uint8Array | Blob; name: string; path?: string }[] = []
         const anim = getExportAnim()
         const build = getExportBuild()
 
         if (outputType() === "spine") {
-            if (!anim || !build) {
-                alert("Please Choosen Anim and Build")
-                return
-            }
-
-            return
+            if (!anim || !build) return alert("Please Choosen Anim and Build")
+            return await downLoadSpine(anim, build)
         }
 
         if (anim) {
@@ -275,7 +330,6 @@ export function ExportFile() {
 
             if (outputType() === "json") {
                 const animJson = anim.jsonStringify()
-                textEncoder.encode(animJson)
                 files.push({ data: textEncoder.encode(animJson), name: "anim.json" })
             } else if (outputType() === "bin") {
                 const animBin = await compileAnim(anim)
@@ -289,7 +343,7 @@ export function ExportFile() {
                     const splitedAtlas = await build.getSplitAtlas()
                     files.push(...splitedAtlas)
                 } else {
-                    if (dynFormat()) await downDyn(build)
+                    if (dynFormat()) await downLoadDyn(build)
                     else {
                         for (const atlas of build.atlases) {
                             if (atlas.ktex) files.push({ data: atlas.ktex.compile(), name: atlas.name })
@@ -323,6 +377,14 @@ export function ExportFile() {
             }
         }
     }
+
+    createEffect(() => {
+        if (!shown()) {
+            chosenBank = 0
+            chosenAnimation = 0
+            chosenAnimFrame = 0
+        }
+    })
 
     return (
         <Popup shown={shown} setShown={setShown} style={{ position: "absolute", top: "5rem", left: "30rem" }}>
