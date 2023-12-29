@@ -1,3 +1,3 @@
-import { ConvertToSpine } from "./ConvertToSpine"
+import { convertToSpine } from "./ConvertToSpine"
 
-export { ConvertToSpine }
+export { convertToSpine }

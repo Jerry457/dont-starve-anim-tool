@@ -9,7 +9,7 @@ import TableList from "../components/TableList"
 import TextButton from "../components/TextButton"
 
 import { downloadFile } from "../lib/util"
-import { ConvertToSpine } from "../lib/kfiles/spine"
+import { convertToSpine } from "../lib/kfiles/spine"
 import {
     Anim,
     AnimElement,
@@ -176,8 +176,6 @@ function FrameSelect() {
 }
 
 function AnimViewer() {
-    function onDownLoadSpineSetupPose() {}
-
     return (
         <fieldset classList={{ [style.fieldset]: true }} style={{ display: "grid" }}>
             <legend>
@@ -205,12 +203,7 @@ function AnimViewer() {
                 </fieldset>
                 <fieldset class={style.fieldset}>
                     <legend>Spine Setup Pose</legend>
-                    <div style={{ display: "grid", "grid-template-columns": "2fr 1fr" }}>
-                        <FrameSelect />
-                        <div class="center">
-                            <TextButton text="DownLoad" classList={{ normalTextButton: true }} onClick={onDownLoadSpineSetupPose} />
-                        </div>
-                    </div>
+                    <FrameSelect />
                 </fieldset>
             </div>
         </fieldset>
@@ -302,9 +295,22 @@ export function ExportFile() {
     async function downLoadSpine(anim: Anim, build: Build) {
         const buildPack = { [build.name]: [build] }
 
-        const spineJson = ConvertToSpine(anim, buildPack)
-
         const zipFile = new JSZip()
+
+        let setupPoseFrame: AnimFrame | undefined
+        if (banks[chosenBank] && banks[chosenBank].use) {
+            if (banks[chosenBank].sub[chosenAnimation] && banks[chosenBank].sub[chosenAnimation].use) {
+                if (banks[chosenBank].sub[chosenAnimation].sub[chosenAnimFrame]) {
+                    setupPoseFrame = banks[chosenBank].sub[chosenAnimation].sub[chosenAnimFrame]?.data as AnimFrame
+                    // const animation = banks[chosenBank].sub[chosenAnimation].data as Animation
+                    // const setupPoseJson = convertToSpineSetupPose(animFrame, buildPack)
+                    // zipFile.file(`${animation.name}.json`, textEncoder.encode(setupPoseJson), { binary: true })
+                }
+            }
+        }
+
+        const spineJson = convertToSpine(anim, buildPack, setupPoseFrame)
+
         zipFile.file(`${build.name}.json`, textEncoder.encode(spineJson), { binary: true })
 
         const splitedAtlas = await build.getSplitAtlas()

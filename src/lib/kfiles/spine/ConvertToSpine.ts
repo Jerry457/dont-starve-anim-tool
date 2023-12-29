@@ -6,10 +6,20 @@ import { getMapSymbol } from "../../../AnimTool/SymbolMapViewer"
 
 type BuildPacks = { [name: string]: Build[] }
 
-type SpineSlot = { name: string; bone?: string }
-type SpineBone = { name: string; parent?: string; x?: number; y?: number }
 type SpinAttachment = { name: string; path: string; x: number; y: number; width: number; height: number }
 type SkinAttachment = { [skinPlaceholder: string]: SpinAttachment }
+type SpineSlot = { name: string; bone?: string; attachment?: SpinAttachment["name"] }
+type SpineBone = {
+    name: string
+    parent?: string
+    x?: number
+    y?: number
+    rotation?: number
+    scaleX?: number
+    scaleY?: number
+    shearX?: number
+    shearY?: number
+}
 
 type TimelineKey = { time: number }
 interface AttachmentTimelineKey extends TimelineKey {
@@ -62,7 +72,7 @@ class SlotTimeline {
     addAttachmentTimelineKey(attachment: AttachmentTimelineKey) {
         const lastAttachment = getLast<AttachmentTimelineKey>(this.attachment)
         if (!lastAttachment) {
-            if (attachment.name !== null) this.attachment.push(attachment)
+            this.attachment.push(attachment)
         } else if (lastAttachment.name !== attachment.name) {
             this.attachment.push(attachment)
         }
@@ -172,21 +182,21 @@ class SpineData {
         this.bones.push(this.rootBoon)
     }
 
-    getSlot(slotName: string) {
-        for (const slot of this.slots) {
-            if (slot.name === slotName) return slot
+    getSlot(slotName: string): [SpineSlot, number] | undefined {
+        for (const [index, slot] of this.slots.entries()) {
+            if (slot.name === slotName) return [slot, index]
         }
     }
 
-    getBone(boneName: string) {
-        for (const bone of this.bones) {
-            if (bone.name === boneName) return bone
+    getBone(boneName: string): [SpineBone, number] | undefined {
+        for (const [index, bone] of this.bones.entries()) {
+            if (bone.name === boneName) return [bone, index]
         }
     }
 
-    getSkin(skinName: string) {
-        for (const skin of this.skins) {
-            if (skin.name === skinName) return skin
+    getSkin(skinName: string): [SpineSkin, number] | undefined {
+        for (const [index, skin] of this.skins.entries()) {
+            if (skin.name === skinName) return [skin, index]
         }
     }
 
@@ -294,7 +304,7 @@ function decomposeMatrix(m_a: number, m_b: number, m_c: number, m_d: number, m_t
     return { angle, translate, scale, shear }
 }
 
-export function ConvertToSpine(anim: Anim, buildPacks: BuildPacks) {
+export function convertToSpine(anim: Anim, buildPacks: BuildPacks, setupPoseFrame?: AnimFrame) {
     const spineData = new SpineData()
     const elementTimelineMap: Map<AnimElement, string> = new Map()
 
@@ -330,7 +340,7 @@ export function ConvertToSpine(anim: Anim, buildPacks: BuildPacks) {
                     const skinPlaceholder = `${overSymbol}-${frameNum}`
 
                     // if not, add bone and slot
-                    if (!spineData.getBone(timelineName)) {
+                    if (!spineData.getBone(boneName)) {
                         spineData.addBone({ name: boneName })
                         spineData.addSlots({ name: slotName, bone: boneName })
                     }
@@ -364,6 +374,19 @@ export function ConvertToSpine(anim: Anim, buildPacks: BuildPacks) {
                     boneTimeline.addTranslateTimelineKey({ ...translate, time, curve }, isEnd)
                     boneTimeline.addScaleTimelineKey({ ...scale, time, curve }, isEnd)
                     boneTimeline.addShearTimelineKey({ ...shear, time, curve }, isEnd)
+
+                    if (setupPoseFrame === frame) {
+                        const [bone] = spineData.getBone(boneName)!
+                        const [slot] = spineData.getSlot(slotName)!
+                        slot.attachment = skinPlaceholder
+                        bone.x = translate.x
+                        bone.y = translate.y
+                        bone.scaleX = scale.x
+                        bone.scaleY = scale.y
+                        bone.rotation = angle
+                        bone.shearX = shear.x
+                        bone.shearY = shear.y
+                    }
                 }
 
                 // key attachment
@@ -378,6 +401,52 @@ export function ConvertToSpine(anim: Anim, buildPacks: BuildPacks) {
 
             const animationPath = `${bank.name}/${animation.name}`
             spineData.addAnimation(animationPath, spineAnimation)
+        }
+    }
+
+    // setup pose order
+    if (setupPoseFrame) {
+        const layerNameCount: { [name: string]: number } = {}
+        for (const element of setupPoseFrame.elements) {
+            const { layerName, symbol, frameNum, a, b, c, d, tx, ty, zIndex } = element
+            if (!layerNameCount[layerName]) layerNameCount[layerName] = 0
+            layerNameCount[layerName] += 1
+
+            const slotName = `${layerName}_${layerNameCount[layerName]}`
+            const [slot, index] = spineData.getSlot(slotName)!
+
+            const order = spineData.slots.length - 1 - zIndex
+            spineData.slots.splice(index, 1)
+            spineData.slots.splice(order, 0, slot)
+
+            for (const animationName in spineData.animations) {
+                const spineAnimation = spineData.animations[animationName]
+                const boneTimeline = spineAnimation.getBoneTimeline(slotName)
+
+                if (boneTimeline) {
+                    const [bone] = spineData.getBone(slotName)!
+                    for (const rotateTimeline of boneTimeline.rotate) {
+                        if (bone.rotation) rotateTimeline.angle = rotateTimeline.angle - bone.rotation
+                    }
+                    for (const translateTimeline of boneTimeline.translate) {
+                        if (bone.x) translateTimeline.x = translateTimeline.x - bone.x
+                        if (bone.y) translateTimeline.y = translateTimeline.y - bone.y
+                    }
+                    // for (const scaleTimeline of boneTimeline.scale) {
+                    //     if (bone.scaleX) scaleTimeline.x = scaleTimeline.x - bone.scaleX
+                    //     if (bone.scaleY) scaleTimeline.y = scaleTimeline.y - bone.scaleY
+                    // }
+                    for (const shearTimeline of boneTimeline.shear) {
+                        if (bone.shearX) shearTimeline.x = shearTimeline.x - bone.shearX
+                        if (bone.shearY) shearTimeline.y = shearTimeline.y - bone.shearY
+                    }
+                }
+
+                let slotTimeline = spineAnimation.getSlotTimeline(slotName)
+                if (!slotTimeline) slotTimeline = spineAnimation.addSlotTimeline(slotName)
+                if (!slotTimeline.attachment[0] || slotTimeline.attachment[0].time !== 0)
+                    slotTimeline.attachment.splice(0, 0, { time: 0, name: null })
+            }
         }
     }
 
