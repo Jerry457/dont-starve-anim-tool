@@ -86,13 +86,17 @@ export const colorCubeNames = [
 ]
 
 export const colorCubes: { [name: string]: Ktex } = {}
-
+const promises = []
 for (const { value } of colorCubeNames) {
-    const module = await import(`../../assets/color_cubes/${value}.tex`)
-    const response = await fetch(module.default)
-    const arrayBuffer = await response.arrayBuffer()
-    colorCubes[value] = new Ktex(value)
-    colorCubes[value].readKtex(arrayBuffer)
+    promises.push(
+        import(`../../assets/color_cubes/${value}.tex`).then(module =>
+            fetch(module.default).then(response => {
+                response.arrayBuffer().then(arrayBuffer => {
+                    colorCubes[value] = new Ktex(value)
+                    colorCubes[value]!.readKtex(arrayBuffer)
+                })
+            })
+        )
+    )
 }
-
 // Promise.all(promises).then(reRendering)
