@@ -1,4 +1,4 @@
-import { JSX, Show } from "solid-js"
+import { JSX, Show, createEffect } from "solid-js"
 
 import style from "./TextButton.module.css"
 
@@ -8,6 +8,7 @@ export default function TextButton(props: {
     classList?: JSX.ElementProp["classList"]
     checkbox?: boolean
     check?: boolean
+    indeterminate?: boolean
     onClick?: (checkBox?: HTMLInputElement) => void
 }) {
     let checkBox: HTMLInputElement | undefined
@@ -19,6 +20,12 @@ export default function TextButton(props: {
         }
         props.onClick?.(checkBox)
     }
+
+    createEffect(() => {
+        if (checkBox && props.indeterminate !== undefined) {
+            checkBox.indeterminate = props.indeterminate
+        }
+    })
 
     return (
         <div class={style.TextButton} classList={props.classList} onClick={onClick} style={props.style} data-cantdrag={true}>

@@ -47,14 +47,17 @@ const [hasAtlas, setHasAtlas] = createSignal(true)
 const [splitAtlas, setSplitAtlas] = createSignal(false)
 const [repackAtlas, setRepackAtlas] = createSignal(false)
 const [dynFormat, setDynFormat] = createSignal(false)
+const [usePose, setUsePose] = createSignal(false)
+
+const [useAllAnimation, setUseAllAnimation] = createSignal<string>("all")
 
 const [animations, setAnimations] = createStore<UiData<Animation, AnimFrame, Bank>[]>([])
 const [buildSymbols, setBuildSymbols] = createStore<UiData<BuildSymbol, BuildFrame, Build>[]>([])
 const [animFrmaes, setAnimFrames] = createStore<UiData<AnimFrame, AnimElement, Animation>[]>([])
 
-let chosenBank = 0
-let chosenAnimation = 0
-let chosenAnimFrame = 0
+const [chosenBankIdx, setChosenBankIdx] = createSignal(0)
+const [chosenAnimationIdx, setChosenAnimationIdx] = createSignal(0)
+const [chosenAnimFrameIdx, setChosenAnimFrameIdx] = createSignal(0)
 
 function TypeSelect() {
     return (
@@ -81,7 +84,7 @@ function TypeSelect() {
 
 function BanksList() {
     function onChosenBank(uiData: UiData<Bank, Animation, undefined>, index: number) {
-        chosenBank = index
+        setChosenBankIdx(index)
         setAnimations(uiData.sub)
     }
 
@@ -105,7 +108,7 @@ function BanksList() {
 function AnimationsList() {
     function onChosen(uiData: UiData<Animation, AnimFrame, Bank>, index: number) {
         setAnimFrames(uiData.sub)
-        chosenAnimation = index
+        setChosenAnimationIdx(index)
     }
 
     function animationToRowCells(uiData: UiData<Animation, AnimFrame, undefined>, index: number) {
@@ -116,7 +119,7 @@ function AnimationsList() {
                     <Input
                         type="checkbox"
                         checked={use}
-                        onChange={value => setBanks(produce(pre => (pre[chosenBank].sub[index].use = value as boolean)))}
+                        onChange={value => setBanks(produce(pre => (pre[chosenBankIdx()].sub[index].use = value as boolean)))}
                     />
                 </div>
                 <div>
@@ -171,11 +174,42 @@ function FrameSelect() {
     return (
         <Select
             options={animFrmaes.map((rowData, index) => ({ name: String(index), value: index }))}
-            onChange={e => (chosenAnimFrame = Number(e.target.value))}></Select>
+            onChange={e => setChosenAnimFrameIdx(Number(e.target.value))}></Select>
     )
 }
 
 function AnimViewer() {
+    createEffect(() => {
+        setUseAllAnimation("all")
+        const chosenBank = banks[chosenBankIdx()]
+        if (chosenBank) {
+            let last
+            for (const { use } of chosenBank.sub) {
+                if (last === undefined) last = use
+                else if (last !== use) {
+                    setUseAllAnimation("indeterminate")
+                    return
+                }
+            }
+            if (last || last === undefined) setUseAllAnimation("all")
+            else setUseAllAnimation("none")
+        }
+    })
+
+    function invertAnimation() {
+        setBanks(
+            produce(pre => {
+                const chosenBank = pre[chosenBankIdx()]
+                if (chosenBank) {
+                    const invert = useAllAnimation() !== "all"
+                    for (const animation of chosenBank.sub) {
+                        animation.use = invert
+                    }
+                }
+            })
+        )
+    }
+
     return (
         <fieldset classList={{ [style.fieldset]: true }} style={{ display: "grid" }}>
             <legend>
@@ -198,12 +232,24 @@ function AnimViewer() {
                     <BanksList />
                 </fieldset>
                 <fieldset class={style.fieldset}>
-                    <legend>Animation</legend>
+                    <legend>
+                        <TextButton
+                            text="Animation"
+                            checkbox={true}
+                            check={useAllAnimation() === "all"}
+                            indeterminate={useAllAnimation() === "indeterminate"}
+                            onClick={invertAnimation}
+                        />
+                    </legend>
                     <AnimationsList />
                 </fieldset>
                 <fieldset class={style.fieldset}>
-                    <legend>Spine Setup Pose</legend>
-                    <FrameSelect />
+                    <legend>
+                        <TextButton text="Spine Setup Pose" checkbox={true} check={usePose()} onClick={() => setUsePose(pre => !pre)} />
+                    </legend>
+                    <div classList={{ [style.unSelect]: !usePose() || outputType() !== "spine" }}>
+                        <FrameSelect />
+                    </div>
                 </fieldset>
             </div>
         </fieldset>
@@ -292,24 +338,12 @@ export function ExportFile() {
         downloadFile(new Blob([uint8Array]), `${build!.name}.dyn`)
     }
 
-    async function downLoadSpine(anim: Anim, build: Build) {
+    async function downLoadSpine(build: Build, anim?: Anim, setupPoseFrame?: AnimFrame) {
         const buildPack = { [build.name]: [build] }
 
         const zipFile = new JSZip()
 
-        let setupPoseFrame: AnimFrame | undefined
-        if (banks[chosenBank] && banks[chosenBank].use) {
-            if (banks[chosenBank].sub[chosenAnimation] && banks[chosenBank].sub[chosenAnimation].use) {
-                if (banks[chosenBank].sub[chosenAnimation].sub[chosenAnimFrame]) {
-                    setupPoseFrame = banks[chosenBank].sub[chosenAnimation].sub[chosenAnimFrame]?.data as AnimFrame
-                    // const animation = banks[chosenBank].sub[chosenAnimation].data as Animation
-                    // const setupPoseJson = convertToSpineSetupPose(animFrame, buildPack)
-                    // zipFile.file(`${animation.name}.json`, textEncoder.encode(setupPoseJson), { binary: true })
-                }
-            }
-        }
-
-        const spineJson = convertToSpine(anim, buildPack, setupPoseFrame)
+        const spineJson = convertToSpine(buildPack, anim, setupPoseFrame)
 
         zipFile.file(`${build.name}.json`, textEncoder.encode(spineJson), { binary: true })
 
@@ -327,8 +361,18 @@ export function ExportFile() {
         const build = getExportBuild()
 
         if (outputType() === "spine") {
-            if (!anim || !build) return alert("Please Choosen Anim and Build")
-            return await downLoadSpine(anim, build)
+            let setupPoseFrame: AnimFrame | undefined
+            const chosenBank = banks[chosenBankIdx()]
+            if (chosenBank && usePose()) {
+                const chosenAnimation = chosenBank.sub[chosenAnimationIdx()]
+                if (chosenAnimation) {
+                    const chosenAnimFrame = chosenAnimation.sub[chosenAnimFrameIdx()]
+                    setupPoseFrame = chosenAnimFrame?.data as AnimFrame
+                }
+            }
+
+            if ((!anim && !setupPoseFrame) || !build) return alert("Please Choosen Anim and Build")
+            return await downLoadSpine(build, anim, setupPoseFrame)
         }
 
         if (anim) {
@@ -385,10 +429,10 @@ export function ExportFile() {
     }
 
     createEffect(() => {
-        if (!shown()) {
-            chosenBank = 0
-            chosenAnimation = 0
-            chosenAnimFrame = 0
+        if (shown()) {
+            setChosenBankIdx(0)
+            setChosenAnimationIdx(0)
+            setChosenAnimFrameIdx(0)
         }
     })
 

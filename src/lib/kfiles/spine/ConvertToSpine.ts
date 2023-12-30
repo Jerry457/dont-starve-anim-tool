@@ -1,7 +1,7 @@
 import JsonStringify from "json-stringify-pretty-compact"
 
 import { Build } from "../build"
-import { Anim, AnimElement, AnimFrame } from "../anim"
+import { Anim, AnimElement, AnimFrame, Animation } from "../anim"
 import { getMapSymbol } from "../../../AnimTool/SymbolMapViewer"
 
 type BuildPacks = { [name: string]: Build[] }
@@ -122,7 +122,7 @@ class BoneTimeline {
 class SpineAnimation {
     slots: { [slotName: string]: SlotTimeline } = {}
     bones: { [boneName: string]: BoneTimeline } = {}
-    drawOrder: DrawOrderTimelineKey[] = []
+    drawOrder?: DrawOrderTimelineKey[] = []
 
     getBoneTimeline(boneName: string): BoneTimeline | undefined {
         return this.bones[boneName]
@@ -147,21 +147,23 @@ class SpineAnimation {
     }
 
     addDrawOrderTimelineKey(drawOrder: DrawOrderTimelineKey) {
-        if (drawOrder.offsets.length === 0) return
+        if (!drawOrder.offsets.length) return
 
-        const lastOffsets = getLast(this.drawOrder)?.offsets
+        const lastOffsets = getLast(this.drawOrder!)?.offsets
 
         if (!lastOffsets || JSON.stringify(lastOffsets) !== JSON.stringify(drawOrder.offsets)) {
-            this.drawOrder.push(drawOrder)
+            this.drawOrder!.push(drawOrder)
         }
     }
 
-    clearBoneTimeline() {
+    clear() {
         // delete last curve
         for (const boneName in this.bones) {
             const bone = this.bones[boneName]
             bone.clearTimelineKey()
         }
+
+        if (this.drawOrder && !this.drawOrder.length) delete this.drawOrder
     }
 }
 
@@ -204,7 +206,7 @@ class SpineData {
         return this.animations[animationName]
     }
 
-    addSlots(slot: SpineSlot) {
+    addSlot(slot: SpineSlot) {
         const { name, bone = this.rootBoon.name } = slot
 
         if (this.getSlot(name)) throw Error("name already exists")
@@ -235,7 +237,7 @@ class SpineData {
         this.animations[animationName] = spinAnimation
     }
 
-    jsonStringify(beautify: boolean = false, indent: number = 4) {
+    jsonStringify(beautify: boolean = true, indent: number = 4) {
         return beautify ? JsonStringify(this, { indent, maxLength: 200 }) : JSON.stringify(this)
     }
 }
@@ -304,178 +306,193 @@ function decomposeMatrix(m_a: number, m_b: number, m_c: number, m_d: number, m_t
     return { angle, translate, scale, shear }
 }
 
-export function convertToSpine(anim: Anim, buildPacks: BuildPacks, setupPoseFrame?: AnimFrame) {
+export function convertToSpine(buildPacks: BuildPacks, anim?: Anim, setupPoseFrame?: AnimFrame) {
     const spineData = new SpineData()
+    const setupPoseSlots: string[] = []
     const elementTimelineMap: Map<AnimElement, string> = new Map()
+    const elementSkinPlaceholderMap: Map<AnimElement, string> = new Map()
+    const spineAnimationMap: Map<SpineAnimation, Animation> = new Map()
 
     // convert builds to skin
     for (const name in buildPacks) {
         spineData.addSkin(new SpineSkin(name))
     }
 
-    // convert animaton to bone and slot timeline
-    for (const bank of anim.banks) {
-        for (const animation of bank.animations) {
-            const frameDruation = 1 / animation.frameRate
+    // apply bone and slot timeline
+    if (anim) {
+        for (const bank of anim.banks) {
+            for (const animation of bank.animations) {
+                const spineAnimation = new SpineAnimation()
 
-            const spineAnimation = new SpineAnimation()
-            for (const [frameIdx, frame] of animation.frames.entries()) {
-                const time = frameIdx * frameDruation
-                const isEnd = frameIdx === animation.frames.length - 1
+                for (const frame of animation.frames) {
+                    const layerNameCount: { [name: string]: number } = {}
 
-                const showSlotTimelines = []
-                const layerNameCount: { [name: string]: number } = {}
-                for (const element of frame.elements) {
-                    const { layerName, symbol, frameNum, a, b, c, d, tx, ty } = element
-                    const overSymbol = getMapSymbol(symbol) || symbol
+                    for (const element of frame.elements) {
+                        const { layerName, symbol, frameNum } = element
+                        const overSymbol = getMapSymbol(symbol) || symbol
 
-                    if (!layerNameCount[layerName]) layerNameCount[layerName] = 0
-                    layerNameCount[layerName] += 1
+                        layerNameCount[layerName] = (layerNameCount[layerName] || 0) + 1
 
-                    const timelineName = `${layerName}_${layerNameCount[layerName]}`
-                    elementTimelineMap.set(element, timelineName)
+                        const timelineName = `${layerName}_${layerNameCount[layerName]}`
+                        const boneName = timelineName
+                        const slotName = timelineName
+                        const skinPlaceholder = `${overSymbol}-${frameNum}`
 
-                    const boneName = timelineName
-                    const slotName = timelineName
-                    const skinPlaceholder = `${overSymbol}-${frameNum}`
+                        elementTimelineMap.set(element, timelineName)
+                        elementSkinPlaceholderMap.set(element, skinPlaceholder)
 
-                    // if not, add bone and slot
-                    if (!spineData.getBone(boneName)) {
-                        spineData.addBone({ name: boneName })
-                        spineData.addSlots({ name: slotName, bone: boneName })
-                    }
-
-                    // if not, add attachment and placeholder to skin
-                    for (const skin of spineData.skins) {
-                        if (!skin.getSkinPlaceholder(slotName, skinPlaceholder)) {
-                            const spineAttachment = ConvertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
-                            skin.addSkinPlaceholder(slotName, skinPlaceholder, spineAttachment)
+                        // if not, add bone and slot
+                        if (!spineData.getBone(boneName)) {
+                            spineData.addBone({ name: boneName })
+                            spineData.addSlot({ name: slotName, bone: boneName })
                         }
-                    }
 
-                    // if not, add slot timeline
-                    let slotTimeline = spineAnimation.getSlotTimeline(slotName)
-                    if (!slotTimeline) slotTimeline = spineAnimation.addSlotTimeline(slotName)
+                        // if not, add attachment and placeholder to skin
+                        for (const skin of spineData.skins) {
+                            if (!skin.getSkinPlaceholder(slotName, skinPlaceholder)) {
+                                const spineAttachment = ConvertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
+                                skin.addSkinPlaceholder(slotName, skinPlaceholder, spineAttachment)
+                            }
+                        }
 
-                    // if not, add bone timeline
-                    let boneTimeline = spineAnimation.getBoneTimeline(boneName)
-                    if (!boneTimeline) boneTimeline = spineAnimation.addBoneTimeline(boneName)
+                        // if not, add slot timeline
+                        let slotTimeline = spineAnimation.getSlotTimeline(slotName)
+                        if (!slotTimeline) slotTimeline = spineAnimation.addSlotTimeline(slotName)
 
-                    // key attachment
-                    showSlotTimelines.push(slotName)
-                    slotTimeline.addAttachmentTimelineKey({ time, name: skinPlaceholder })
-
-                    // key bone
-                    const lastScale = getLast(boneTimeline.scale)
-                    const { angle, translate, scale, shear } = decomposeMatrix(a, b, c, d, tx, ty, lastScale)
-
-                    const curve = "stepped"
-                    boneTimeline.addRotateTimelineKey({ angle, time, curve }, isEnd)
-                    boneTimeline.addTranslateTimelineKey({ ...translate, time, curve }, isEnd)
-                    boneTimeline.addScaleTimelineKey({ ...scale, time, curve }, isEnd)
-                    boneTimeline.addShearTimelineKey({ ...shear, time, curve }, isEnd)
-
-                    if (setupPoseFrame === frame) {
-                        const [bone] = spineData.getBone(boneName)!
-                        const [slot] = spineData.getSlot(slotName)!
-                        slot.attachment = skinPlaceholder
-                        bone.x = translate.x
-                        bone.y = translate.y
-                        bone.scaleX = scale.x
-                        bone.scaleY = scale.y
-                        bone.rotation = angle
-                        bone.shearX = shear.x
-                        bone.shearY = shear.y
+                        // if not, add bone timeline
+                        let boneTimeline = spineAnimation.getBoneTimeline(boneName)
+                        if (!boneTimeline) boneTimeline = spineAnimation.addBoneTimeline(boneName)
                     }
                 }
 
-                // key attachment
-                for (const slotTimelineName in spineAnimation.slots) {
-                    const slotTimeline = spineAnimation.slots[slotTimelineName]
-                    if (!showSlotTimelines.includes(slotTimelineName)) {
-                        slotTimeline.addAttachmentTimelineKey({ time, name: null })
-                    }
-                }
+                const animationPath = `${bank.name}/${animation.name}`
+                spineAnimationMap.set(spineAnimation, animation)
+                spineData.addAnimation(animationPath, spineAnimation)
             }
-            spineAnimation.clearBoneTimeline()
-
-            const animationPath = `${bank.name}/${animation.name}`
-            spineData.addAnimation(animationPath, spineAnimation)
         }
     }
 
-    // setup pose order
+    // convert setup pose frame
     if (setupPoseFrame) {
         const layerNameCount: { [name: string]: number } = {}
         for (const element of setupPoseFrame.elements) {
-            const { layerName, symbol, frameNum, a, b, c, d, tx, ty, zIndex } = element
-            if (!layerNameCount[layerName]) layerNameCount[layerName] = 0
-            layerNameCount[layerName] += 1
+            const { a, b, c, d, tx, ty, zIndex, layerName, symbol, frameNum } = element
 
-            const slotName = `${layerName}_${layerNameCount[layerName]}`
+            const overSymbol = getMapSymbol(symbol) || symbol
+
+            layerNameCount[layerName] = (layerNameCount[layerName] || 0) + 1
+            const timelineName = `${layerName}_${layerNameCount[layerName]}`
+            const boneName = timelineName
+            const slotName = timelineName
+            const skinPlaceholder = `${overSymbol}-${frameNum}`
+
+            // if not, add bone and slot
+            let bone = spineData.getBone(boneName)?.[0]
+            if (!bone) {
+                bone = spineData.addBone({ name: boneName })
+                spineData.addSlot({ name: slotName, bone: boneName })
+            }
+
+            // if not, add attachment and placeholder to skin
+            for (const skin of spineData.skins) {
+                if (!skin.getSkinPlaceholder(slotName, skinPlaceholder)) {
+                    const spineAttachment = ConvertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
+                    skin.addSkinPlaceholder(slotName, skinPlaceholder, spineAttachment)
+                }
+            }
+            setupPoseSlots.push(slotName)
             const [slot, index] = spineData.getSlot(slotName)!
+            slot.attachment = skinPlaceholder
+
+            const { angle, translate, scale, shear } = decomposeMatrix(a, b, c, d, tx, ty)
+            bone.x = translate.x
+            bone.y = translate.y
+            bone.scaleX = scale.x
+            bone.scaleY = scale.y
+            bone.rotation = angle
+            bone.shearX = shear.x
+            bone.shearY = shear.y
 
             const order = spineData.slots.length - 1 - zIndex
             spineData.slots.splice(index, 1)
             spineData.slots.splice(order, 0, slot)
-
-            for (const animationName in spineData.animations) {
-                const spineAnimation = spineData.animations[animationName]
-                const boneTimeline = spineAnimation.getBoneTimeline(slotName)
-
-                if (boneTimeline) {
-                    const [bone] = spineData.getBone(slotName)!
-                    for (const rotateTimeline of boneTimeline.rotate) {
-                        if (bone.rotation) rotateTimeline.angle = rotateTimeline.angle - bone.rotation
-                    }
-                    for (const translateTimeline of boneTimeline.translate) {
-                        if (bone.x) translateTimeline.x = translateTimeline.x - bone.x
-                        if (bone.y) translateTimeline.y = translateTimeline.y - bone.y
-                    }
-                    // for (const scaleTimeline of boneTimeline.scale) {
-                    //     if (bone.scaleX) scaleTimeline.x = scaleTimeline.x - bone.scaleX
-                    //     if (bone.scaleY) scaleTimeline.y = scaleTimeline.y - bone.scaleY
-                    // }
-                    for (const shearTimeline of boneTimeline.shear) {
-                        if (bone.shearX) shearTimeline.x = shearTimeline.x - bone.shearX
-                        if (bone.shearY) shearTimeline.y = shearTimeline.y - bone.shearY
-                    }
-                }
-
-                let slotTimeline = spineAnimation.getSlotTimeline(slotName)
-                if (!slotTimeline) slotTimeline = spineAnimation.addSlotTimeline(slotName)
-                if (!slotTimeline.attachment[0] || slotTimeline.attachment[0].time !== 0)
-                    slotTimeline.attachment.splice(0, 0, { time: 0, name: null })
-            }
         }
     }
 
-    // convert animaton order
-    for (const bank of anim.banks) {
-        for (const animation of bank.animations) {
-            const frameDruation = 1 / animation.frameRate
-            const animationPath = `${bank.name}/${animation.name}`
-            const spineAnimation = spineData.getAnimation(animationPath)!
+    // convert animaton to bone and slot timeline
+    for (const [spineAnimation, animation] of spineAnimationMap) {
+        const frameDruation = 1 / animation.frameRate
 
-            for (const [frameIdx, frame] of animation.frames.entries()) {
-                const time = frameIdx * frameDruation
+        for (const setupPoseBone of setupPoseSlots) {
+            if (!spineAnimation.getSlotTimeline(setupPoseBone)) spineAnimation.addSlotTimeline(setupPoseBone)
+        }
 
-                // key draw order
-                const offsets: { slot: string; offset: number }[] = []
-                for (const [slotIndex, slot] of spineData.slots.entries()) {
-                    for (const element of frame.elements) {
-                        if (elementTimelineMap.get(element) === slot.name) {
-                            const order = spineData.slots.length - 1 - element.zIndex
-                            const offset = order - slotIndex
-                            offsets.push({ slot: slot.name, offset })
-                            break
-                        }
+        for (const [frameIdx, frame] of animation.frames.entries()) {
+            const time = frameIdx * frameDruation
+            const isEnd = frameIdx === animation.frames.length - 1
+
+            const showSlotTimelines: string[] = []
+
+            for (const element of frame.elements) {
+                const { a, b, c, d, tx, ty } = element
+
+                const skinPlaceholder = elementSkinPlaceholderMap.get(element)
+                const timelineName = elementTimelineMap.get(element)
+
+                if (!skinPlaceholder || !timelineName) continue
+
+                const slotName = timelineName
+                const boneName = timelineName
+                const [bone] = spineData.getBone(boneName)!
+                const slotTimeline = spineAnimation.getSlotTimeline(slotName)!
+                const boneTimeline = spineAnimation.getBoneTimeline(boneName)!
+
+                // key attachment
+                showSlotTimelines.push(slotName)
+                slotTimeline.addAttachmentTimelineKey({ time, name: skinPlaceholder })
+
+                // key bone
+                const lastScale = getLast(boneTimeline.scale)
+                let { angle, translate, scale, shear } = decomposeMatrix(a, b, c, d, tx, ty, lastScale)
+
+                if (bone.rotation) angle = angle - bone.rotation
+                if (bone.x) translate.x = translate.x - bone.x
+                if (bone.y) translate.y = translate.y - bone.y
+                if (bone.scaleX) scale.x = scale.x / bone.scaleX
+                if (bone.scaleY) scale.y = scale.y / bone.scaleY
+                if (bone.shearX) shear.x = shear.x - bone.shearX
+                if (bone.shearY) shear.y = shear.y - bone.shearY
+
+                const curve = "stepped"
+                boneTimeline.addRotateTimelineKey({ angle, time, curve }, isEnd)
+                boneTimeline.addTranslateTimelineKey({ ...translate, time, curve }, isEnd)
+                boneTimeline.addScaleTimelineKey({ ...scale, time, curve }, isEnd)
+                boneTimeline.addShearTimelineKey({ ...shear, time, curve }, isEnd)
+            }
+
+            // key draw order
+            const offsets: { slot: string; offset: number }[] = []
+            for (const [slotIndex, slot] of spineData.slots.entries()) {
+                for (const element of frame.elements) {
+                    if (elementTimelineMap.get(element) === slot.name) {
+                        const order = spineData.slots.length - 1 - element.zIndex
+                        const offset = order - slotIndex
+                        offsets.push({ slot: slot.name, offset })
+                        break
                     }
                 }
+            }
+            spineAnimation.addDrawOrderTimelineKey({ time, offsets })
 
-                spineAnimation.addDrawOrderTimelineKey({ time, offsets })
+            // key other attachment
+            for (const slotTimelineName in spineAnimation.slots) {
+                const slotTimeline = spineAnimation.slots[slotTimelineName]
+                if (!showSlotTimelines.includes(slotTimelineName)) {
+                    slotTimeline.addAttachmentTimelineKey({ time, name: null })
+                }
             }
         }
+        spineAnimation.clear()
     }
 
     return spineData.jsonStringify()
