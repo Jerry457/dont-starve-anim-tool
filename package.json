@@ -18,6 +18,7 @@
         "vite-plugin-solid": "^2.8.0"
     },
     "dependencies": {
+        "@esotericsoftware/spine-core": "^4.2.34",
         "@material/web": "^1.0.1",
         "@svgr/plugin-jsx": "^8.1.0",
         "@thisbeyond/solid-select": "^0.14.0",
