@@ -349,7 +349,7 @@ export function ExportFile() {
 
         const splitedAtlas = await build.getSplitAtlas()
         for (const { name, data, path } of splitedAtlas) {
-            const targetFolder = zipFile.folder(`/images/${build.name}/${path}`)!
+            const targetFolder = zipFile.folder(`images/${build.name}/${path}`)!
             targetFolder.file(name, data, { binary: true })
         }
         zipFile.generateAsync({ type: "blob", compression: "DEFLATE" }).then(blob => downloadFile(blob, `${build.name}.zip`))
