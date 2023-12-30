@@ -9,7 +9,7 @@ import TableList from "../components/TableList"
 import TextButton from "../components/TextButton"
 
 import { downloadFile } from "../lib/util"
-import { convertToSpine } from "../lib/kfiles/spine"
+import { decompileSpine } from "../lib/kfiles/spine"
 import {
     Anim,
     AnimElement,
@@ -19,7 +19,7 @@ import {
     Build,
     BuildFrame,
     BuildSymbol,
-    MergeBuild,
+    mergeBuild,
     compileAnim,
     compileBuild,
     convertDyn,
@@ -322,7 +322,7 @@ export function ExportFile() {
             if (use) useBuilds.push(data)
         }
 
-        const build = useBuilds.length === 1 ? useBuilds[0] : MergeBuild(useBuilds, buildName())
+        const build = useBuilds.length === 1 ? useBuilds[0] : mergeBuild(useBuilds, buildName())
         if (repackAtlas() || !build.hasAtlas()) build.packAtlas()
 
         return build
@@ -343,7 +343,7 @@ export function ExportFile() {
 
         const zipFile = new JSZip()
 
-        const spineJson = convertToSpine(buildPack, anim, setupPoseFrame)
+        const spineJson = decompileSpine(buildPack, anim, setupPoseFrame)
 
         zipFile.file(`${build.name}.json`, textEncoder.encode(spineJson), { binary: true })
 

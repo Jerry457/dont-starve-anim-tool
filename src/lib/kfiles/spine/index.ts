@@ -1,3 +1,3 @@
-import { convertToSpine } from "./ConvertToSpine"
+import { decompileSpine } from "./decompileSpine"
 
-export { convertToSpine }
+export { decompileSpine }

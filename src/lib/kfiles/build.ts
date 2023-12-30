@@ -425,7 +425,7 @@ export class Build {
     }
 }
 
-export function MergeBuild(builds: Build[], mergeBiuldName: string = "") {
+export function mergeBuild(builds: Build[], mergeBiuldName: string = "") {
     mergeBiuldName = mergeBiuldName === "" ? builds[0].name : mergeBiuldName
 
     const mergedBiuld = new Build(mergeBiuldName, [])

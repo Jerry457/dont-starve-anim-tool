@@ -4,7 +4,6 @@ import solidPlugin from "vite-plugin-solid"
 import Icons from "unplugin-icons/vite"
 
 export default defineConfig({
-    base: "/dont-starve-anim-tool/",
     plugins: [
         /*
         Uncomment the following line to enable solid-devtools.

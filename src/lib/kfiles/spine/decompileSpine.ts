@@ -4,12 +4,12 @@ import { Build } from "../build"
 import { Anim, AnimElement, AnimFrame, Animation } from "../anim"
 import { getMapSymbol } from "../../../AnimTool/SymbolMapViewer"
 
-type BuildPacks = { [name: string]: Build[] }
+export type BuildPacks = { [name: string]: Build[] }
 
-type SpinAttachment = { name: string; path: string; x: number; y: number; width: number; height: number }
-type SkinAttachment = { [skinPlaceholder: string]: SpinAttachment }
-type SpineSlot = { name: string; bone?: string; attachment?: SpinAttachment["name"] }
-type SpineBone = {
+export type SpinAttachment = { name: string; path: string; x: number; y: number; width: number; height: number }
+export type SkinAttachment = { [skinPlaceholder: string]: SpinAttachment }
+export type SpineSlot = { name: string; bone?: string; attachment?: SpinAttachment["name"] }
+export type SpineBone = {
     name: string
     parent?: string
     x?: number
@@ -21,18 +21,18 @@ type SpineBone = {
     shearY?: number
 }
 
-type TimelineKey = { time: number }
-interface AttachmentTimelineKey extends TimelineKey {
+export type TimelineKey = { time: number }
+export interface AttachmentTimelineKey extends TimelineKey {
     name: string | null
 }
-interface DrawOrderTimelineKey extends TimelineKey {
+export interface DrawOrderTimelineKey extends TimelineKey {
     offsets: { slot: string; offset: number }[]
 }
-interface transformTimelineKey extends TimelineKey {
+export interface transformTimelineKey extends TimelineKey {
     curve?: "stepped"
 }
 
-class SpineSkin {
+export class SpineSkin {
     name: string
     attachments: { [slotName: string]: SkinAttachment } = {}
 
@@ -66,7 +66,7 @@ class SpineSkin {
     }
 }
 
-class SlotTimeline {
+export class SlotTimeline {
     attachment: AttachmentTimelineKey[] = []
 
     addAttachmentTimelineKey(attachment: AttachmentTimelineKey) {
@@ -79,7 +79,7 @@ class SlotTimeline {
     }
 }
 
-class BoneTimeline {
+export class BoneTimeline {
     rotate: (transformTimelineKey & { angle: number })[] = []
     translate: (transformTimelineKey & { x: number; y: number })[] = []
     scale: (transformTimelineKey & { x: number; y: number })[] = []
@@ -119,7 +119,7 @@ class BoneTimeline {
     }
 }
 
-class SpineAnimation {
+export class SpineAnimation {
     slots: { [slotName: string]: SlotTimeline } = {}
     bones: { [boneName: string]: BoneTimeline } = {}
     drawOrder?: DrawOrderTimelineKey[] = []
@@ -167,7 +167,7 @@ class SpineAnimation {
     }
 }
 
-class SpineData {
+export class SpineData {
     skeleton = {
         spine: "3.8.75",
         images: "./images",
@@ -237,8 +237,8 @@ class SpineData {
         this.animations[animationName] = spinAnimation
     }
 
-    jsonStringify(beautify: boolean = true, indent: number = 4) {
-        return beautify ? JsonStringify(this, { indent, maxLength: 200 }) : JSON.stringify(this)
+    jsonStringify(indent: number = 4) {
+        return JsonStringify(this, { indent, maxLength: 200 })
     }
 }
 
@@ -260,7 +260,7 @@ function findSymbolFrame(symbolName: string, frameNum: number, builds: Build[]) 
     }
 }
 
-function ConvertToSpineAttachment(buildName: string, symbol: string, frameNum: number, builds: Build[]): SpinAttachment {
+function convertToSpineAttachment(buildName: string, symbol: string, frameNum: number, builds: Build[]): SpinAttachment {
     const attachmentName = `${symbol}-${frameNum}` // skin placeholder
 
     const frame = findSymbolFrame(symbol, frameNum, builds)
@@ -270,7 +270,15 @@ function ConvertToSpineAttachment(buildName: string, symbol: string, frameNum: n
     return attachment
 }
 
-function decomposeMatrix(m_a: number, m_b: number, m_c: number, m_d: number, m_tx: number, m_ty: number, lastScale?: { x: number; y: number }) {
+export function decomposeMatrix(
+    m_a: number,
+    m_b: number,
+    m_c: number,
+    m_d: number,
+    m_tx: number,
+    m_ty: number,
+    lastScale?: { x: number; y: number }
+) {
     const scaleX = Math.sqrt(m_a * m_a + m_b * m_b)
     const normalizeA = m_a / scaleX
     const normalizeB = m_b / scaleX
@@ -306,7 +314,7 @@ function decomposeMatrix(m_a: number, m_b: number, m_c: number, m_d: number, m_t
     return { angle, translate, scale, shear }
 }
 
-export function convertToSpine(buildPacks: BuildPacks, anim?: Anim, setupPoseFrame?: AnimFrame) {
+export function decompileSpine(buildPacks: BuildPacks, anim?: Anim, setupPoseFrame?: AnimFrame) {
     const spineData = new SpineData()
     const setupPoseSlots: string[] = []
     const elementTimelineMap: Map<AnimElement, string> = new Map()
@@ -350,7 +358,7 @@ export function convertToSpine(buildPacks: BuildPacks, anim?: Anim, setupPoseFra
                         // if not, add attachment and placeholder to skin
                         for (const skin of spineData.skins) {
                             if (!skin.getSkinPlaceholder(slotName, skinPlaceholder)) {
-                                const spineAttachment = ConvertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
+                                const spineAttachment = convertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
                                 skin.addSkinPlaceholder(slotName, skinPlaceholder, spineAttachment)
                             }
                         }
@@ -396,7 +404,7 @@ export function convertToSpine(buildPacks: BuildPacks, anim?: Anim, setupPoseFra
             // if not, add attachment and placeholder to skin
             for (const skin of spineData.skins) {
                 if (!skin.getSkinPlaceholder(slotName, skinPlaceholder)) {
-                    const spineAttachment = ConvertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
+                    const spineAttachment = convertToSpineAttachment(skin.name, overSymbol, frameNum, buildPacks[skin.name])
                     skin.addSkinPlaceholder(slotName, skinPlaceholder, spineAttachment)
                 }
             }

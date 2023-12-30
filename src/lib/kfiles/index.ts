@@ -1,5 +1,5 @@
 import { Anim, Bank, Animation, AnimFrame, AnimElement, decompileAnim, compileAnim } from "./anim"
-import { Atlas, Build, BuildSymbol, BuildFrame, MergeBuild, compileBuild, decompileBuild } from "./build"
+import { Atlas, Build, BuildSymbol, BuildFrame, mergeBuild, compileBuild, decompileBuild } from "./build"
 import { Ktex, Platform, PixelFormat, TextureType, Specifications } from "./ktex"
 import convertDyn from "./dyn"
 
@@ -15,7 +15,7 @@ export {
     Build,
     BuildSymbol,
     BuildFrame,
-    MergeBuild,
+    mergeBuild,
     compileBuild,
     decompileBuild,
     Ktex,
